@@ -80,6 +80,74 @@ async function authRoutes(fastify, options) {
       reply.status(500).send({ error: 'Internal Server Error' });
     }
   });
+
+  const loginSchema = {
+    description: 'Login a user',
+    tags: ['User'],
+    body: {
+      type: 'object',
+      required: ['email', 'password'],
+      properties: {
+        email: { type: 'string', format: 'email' },
+        password: { type: 'string' },
+      },
+    },
+    response: {
+      200: {
+        description: 'Successful login',
+        type: 'object',
+        properties: {
+          message: { type: 'string' },
+          user: {
+            type: 'object',
+            properties: {
+              id: { type: 'number' },
+              name: { type: 'string' },
+              email: { type: 'string' },
+              phone: { type: 'string' },
+            },
+          },
+        },
+      },
+      401: {
+        description: 'Unauthorized',
+        type: 'object',
+        properties: {
+          error: { type: 'string' }
+        }
+      }
+    },
+  };
+
+  fastify.post('/api/login', { schema: loginSchema }, async (request, reply) => {
+    const { email, password } = request.body;
+
+    try {
+      const user = await prisma.user.findUnique({
+        where: { email },
+      });
+
+      if (!user) {
+        return reply.status(401).send({ error: 'Invalid email or password' });
+      }
+
+      const isPasswordValid = await bcrypt.compare(password, user.password);
+
+      if (!isPasswordValid) {
+        return reply.status(401).send({ error: 'Invalid email or password' });
+      }
+
+      const { password: _, createdAt, updatedAt, ...userWithoutPassword } = user;
+
+      reply.status(200).send({
+        message: 'Login successful',
+        user: userWithoutPassword,
+      });
+    } catch (error) {
+      fastify.log.error(error);
+      reply.status(500).send({ error: 'Internal Server Error' });
+    }
+  });
 }
 
 module.exports = authRoutes;

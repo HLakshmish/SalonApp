@@ -50,7 +50,29 @@ const start = async () => {
           version: '1.0.0',
         },
         servers: [{ url: 'http://localhost:3000' }],
+        components: {
+          securitySchemes: {
+            bearerAuth: {
+              type: 'http',
+              scheme: 'bearer',
+              bearerFormat: 'JWT',
+            },
+          },
+        },
       },
+    });
+
+    // 1.1 Register JWT and Authenticate Decorator
+    await fastify.register(require('@fastify/jwt'), {
+      secret: process.env.JWT_SECRET || 'supersecret'
+    });
+
+    fastify.decorate('authenticate', async function (request, reply) {
+      try {
+        await request.jwtVerify();
+      } catch (err) {
+        reply.send(err);
+      }
     });
 
     // 2. Register Swagger UI

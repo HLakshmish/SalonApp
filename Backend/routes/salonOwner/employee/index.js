@@ -15,9 +15,11 @@ async function employeeRoutes(fastify, options) {
 
   // Add Employee
   fastify.post('/api/salons/:salonId/employees', {
+    preValidation: [fastify.authenticate],
     schema: {
       description: 'Add a new employee to a salon',
       tags: ['Employees'],
+      security: [{ bearerAuth: [] }],
       params: salonParamsSchema,
       body: {
         type: 'object',
@@ -34,9 +36,10 @@ async function employeeRoutes(fastify, options) {
     const { salonId } = request.params;
     const { name, phone, role, experience } = request.body;
 
-    // Check if salon exists
+    // Check if salon exists and belongs to user
     const salon = await prisma.salon.findUnique({ where: { id: Number(salonId) } });
     if (!salon) return reply.status(404).send({ error: 'Salon not found' });
+    if (salon.ownerId !== request.user.id) return reply.status(403).send({ error: 'Unauthorized to add employees to this salon' });
 
     try {
       const employee = await prisma.employee.create({
@@ -57,13 +60,19 @@ async function employeeRoutes(fastify, options) {
 
   // Get Employees by Salon
   fastify.get('/api/salons/:salonId/employees', {
+    preValidation: [fastify.authenticate],
     schema: {
       description: 'Get all employees for a salon',
       tags: ['Employees'],
+      security: [{ bearerAuth: [] }],
       params: salonParamsSchema
     }
   }, async (request, reply) => {
     const { salonId } = request.params;
+
+    const salon = await prisma.salon.findUnique({ where: { id: Number(salonId) } });
+    if (!salon) return reply.status(404).send({ error: 'Salon not found' });
+    if (salon.ownerId !== request.user.id) return reply.status(403).send({ error: 'Unauthorized to view employees for this salon' });
 
     const employees = await prisma.employee.findMany({
       where: { salonId: Number(salonId) }
@@ -73,9 +82,11 @@ async function employeeRoutes(fastify, options) {
 
   // Edit Employee
   fastify.put('/api/employees/:id', {
+    preValidation: [fastify.authenticate],
     schema: {
       description: 'Edit an employee',
       tags: ['Employees'],
+      security: [{ bearerAuth: [] }],
       params: employeeParamsSchema,
       body: {
         type: 'object',
@@ -92,6 +103,9 @@ async function employeeRoutes(fastify, options) {
     const { name, phone, role, experience } = request.body;
 
     try {
+      const existingEmployee = await prisma.employee.findUnique({ where: { id: Number(id) }, include: { salon: true } });
+      if (!existingEmployee) return reply.status(404).send({ error: 'Employee not found' });
+      if (existingEmployee.salon.ownerId !== request.user.id) return reply.status(403).send({ error: 'Unauthorized to modify this employee' });
       const updatedEmployee = await prisma.employee.update({
         where: { id: Number(id) },
         data: { name, phone, role, experience }
@@ -106,15 +120,20 @@ async function employeeRoutes(fastify, options) {
 
   // Delete Employee
   fastify.delete('/api/employees/:id', {
+    preValidation: [fastify.authenticate],
     schema: {
       description: 'Delete an employee',
       tags: ['Employees'],
+      security: [{ bearerAuth: [] }],
       params: employeeParamsSchema
     }
   }, async (request, reply) => {
     const { id } = request.params;
 
     try {
+      const existingEmployee = await prisma.employee.findUnique({ where: { id: Number(id) }, include: { salon: true } });
+      if (!existingEmployee) return reply.status(404).send({ error: 'Employee not found' });
+      if (existingEmployee.salon.ownerId !== request.user.id) return reply.status(403).send({ error: 'Unauthorized to delete this employee' });
       await prisma.employee.delete({
         where: { id: Number(id) }
       });

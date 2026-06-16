@@ -22,10 +22,12 @@ async function salonOwnerRoutes(fastify, options) {
   };
 
   fastify.post('/api/salons', {
+    preValidation: [fastify.authenticate],
     validatorCompiler: () => () => true, // Bypass strict schema validation for multipart
     schema: {
       description: 'Create a new salon',
       tags: ['Salon'],
+      security: [{ bearerAuth: [] }],
       consumes: ['multipart/form-data'],
       body: {
         type: 'object',
@@ -75,6 +77,7 @@ async function salonOwnerRoutes(fastify, options) {
       }
 
       salonData.photosUrls = photosUrls;
+      salonData.ownerId = request.user.id; // Link salon to the authenticated user
 
       const salon = await prisma.salon.create({
         data: salonData
@@ -87,11 +90,13 @@ async function salonOwnerRoutes(fastify, options) {
     }
   });
 
-  // Get All Salons (GET)
+  // Get All Salons (GET) - restricted to the owner
   fastify.get('/api/salons', {
+    preValidation: [fastify.authenticate],
     schema: {
-      description: 'Get all salons',
+      description: 'Get all salons for logged-in user',
       tags: ['Salon'],
+      security: [{ bearerAuth: [] }],
       response: {
         200: {
           type: 'array',
@@ -103,32 +108,51 @@ async function salonOwnerRoutes(fastify, options) {
       }
     }
   }, async (request, reply) => {
-    const salons = await prisma.salon.findMany();
+    // Only return salons owned by the user, including their registered details
+    const salons = await prisma.salon.findMany({
+      where: { ownerId: request.user.id },
+      include: {
+        owner: {
+          select: { name: true, email: true, phone: true }
+        }
+      }
+    });
     return salons;
   });
 
   // Get Single Salon (GET)
   fastify.get('/api/salons/:id', {
+    preValidation: [fastify.authenticate],
     schema: {
       description: 'Get a salon by ID',
       tags: ['Salon'],
+      security: [{ bearerAuth: [] }],
       params: paramsSchema
     }
   }, async (request, reply) => {
     const { id } = request.params;
     const salon = await prisma.salon.findUnique({
-      where: { id: Number(id) }
+      where: { id: Number(id) },
+      include: {
+        owner: {
+          select: { name: true, email: true, phone: true }
+        }
+      }
     });
 
     if (!salon) return reply.status(404).send({ error: 'Salon not found' });
+    if (salon.ownerId !== request.user.id) return reply.status(403).send({ error: 'Unauthorized to view this salon' });
+    
     return salon;
   });
 
   fastify.put('/api/salons/:id', {
+    preValidation: [fastify.authenticate],
     validatorCompiler: () => () => true, // Bypass strict schema validation for multipart
     schema: {
       description: 'Update a salon',
       tags: ['Salon'],
+      security: [{ bearerAuth: [] }],
       params: paramsSchema,
       consumes: ['multipart/form-data'],
       body: {
@@ -155,6 +179,7 @@ async function salonOwnerRoutes(fastify, options) {
     
     const existing = await prisma.salon.findUnique({ where: { id: Number(id) } });
     if (!existing) return reply.status(404).send({ error: 'Salon not found' });
+    if (existing.ownerId !== request.user.id) return reply.status(403).send({ error: 'Unauthorized to edit this salon' });
 
     try {
       const parts = request.parts();
@@ -203,15 +228,21 @@ async function salonOwnerRoutes(fastify, options) {
 
   // Delete Salon (DELETE)
   fastify.delete('/api/salons/:id', {
+    preValidation: [fastify.authenticate],
     schema: {
       description: 'Delete a salon',
       tags: ['Salon'],
+      security: [{ bearerAuth: [] }],
       params: paramsSchema
     }
   }, async (request, reply) => {
     const { id } = request.params;
 
     try {
+      const existing = await prisma.salon.findUnique({ where: { id: Number(id) } });
+      if (!existing) return reply.status(404).send({ error: 'Salon not found' });
+      if (existing.ownerId !== request.user.id) return reply.status(403).send({ error: 'Unauthorized to delete this salon' });
+
       await prisma.salon.delete({
         where: { id: Number(id) }
       });

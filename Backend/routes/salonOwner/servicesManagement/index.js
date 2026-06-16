@@ -15,9 +15,11 @@ async function servicesManagementRoutes(fastify, options) {
 
   // Add Service
   fastify.post('/api/salons/:salonId/services', {
+    preValidation: [fastify.authenticate],
     schema: {
       description: 'Add a new service to a salon',
       tags: ['Services'],
+      security: [{ bearerAuth: [] }],
       params: salonParamsSchema,
       body: {
         type: 'object',
@@ -35,9 +37,10 @@ async function servicesManagementRoutes(fastify, options) {
     const { salonId } = request.params;
     const { service_name, description, duration_minutes, price, status } = request.body;
 
-    // Check if salon exists
+    // Check if salon exists and belongs to user
     const salon = await prisma.salon.findUnique({ where: { id: Number(salonId) } });
     if (!salon) return reply.status(404).send({ error: 'Salon not found' });
+    if (salon.ownerId !== request.user.id) return reply.status(403).send({ error: 'Unauthorized to add services to this salon' });
 
     try {
       const service = await prisma.service.create({
@@ -59,13 +62,19 @@ async function servicesManagementRoutes(fastify, options) {
 
   // Get Services by Salon
   fastify.get('/api/salons/:salonId/services', {
+    preValidation: [fastify.authenticate],
     schema: {
       description: 'Get all services for a salon',
       tags: ['Services'],
+      security: [{ bearerAuth: [] }],
       params: salonParamsSchema
     }
   }, async (request, reply) => {
     const { salonId } = request.params;
+
+    const salon = await prisma.salon.findUnique({ where: { id: Number(salonId) } });
+    if (!salon) return reply.status(404).send({ error: 'Salon not found' });
+    if (salon.ownerId !== request.user.id) return reply.status(403).send({ error: 'Unauthorized to view services for this salon' });
 
     const services = await prisma.service.findMany({
       where: { salonId: Number(salonId) }
@@ -75,9 +84,11 @@ async function servicesManagementRoutes(fastify, options) {
 
   // Edit Service
   fastify.put('/api/services/:id', {
+    preValidation: [fastify.authenticate],
     schema: {
       description: 'Edit a service',
       tags: ['Services'],
+      security: [{ bearerAuth: [] }],
       params: serviceParamsSchema,
       body: {
         type: 'object',
@@ -95,6 +106,9 @@ async function servicesManagementRoutes(fastify, options) {
     const { service_name, description, duration_minutes, price, status } = request.body;
 
     try {
+      const existingService = await prisma.service.findUnique({ where: { id: Number(id) }, include: { salon: true } });
+      if (!existingService) return reply.status(404).send({ error: 'Service not found' });
+      if (existingService.salon.ownerId !== request.user.id) return reply.status(403).send({ error: 'Unauthorized to modify this service' });
       const updatedService = await prisma.service.update({
         where: { id: Number(id) },
         data: { service_name, description, duration_minutes, price, status }
@@ -109,9 +123,11 @@ async function servicesManagementRoutes(fastify, options) {
 
   // Toggle/Update Status
   fastify.patch('/api/services/:id/status', {
+    preValidation: [fastify.authenticate],
     schema: {
       description: 'Update service status',
       tags: ['Services'],
+      security: [{ bearerAuth: [] }],
       params: serviceParamsSchema,
       body: {
         type: 'object',
@@ -126,6 +142,9 @@ async function servicesManagementRoutes(fastify, options) {
     const { status } = request.body;
 
     try {
+      const existingService = await prisma.service.findUnique({ where: { id: Number(id) }, include: { salon: true } });
+      if (!existingService) return reply.status(404).send({ error: 'Service not found' });
+      if (existingService.salon.ownerId !== request.user.id) return reply.status(403).send({ error: 'Unauthorized to modify this service' });
       const updatedService = await prisma.service.update({
         where: { id: Number(id) },
         data: { status }
@@ -140,15 +159,20 @@ async function servicesManagementRoutes(fastify, options) {
 
   // Delete Service
   fastify.delete('/api/services/:id', {
+    preValidation: [fastify.authenticate],
     schema: {
       description: 'Delete a service',
       tags: ['Services'],
+      security: [{ bearerAuth: [] }],
       params: serviceParamsSchema
     }
   }, async (request, reply) => {
     const { id } = request.params;
 
     try {
+      const existingService = await prisma.service.findUnique({ where: { id: Number(id) }, include: { salon: true } });
+      if (!existingService) return reply.status(404).send({ error: 'Service not found' });
+      if (existingService.salon.ownerId !== request.user.id) return reply.status(403).send({ error: 'Unauthorized to delete this service' });
       await prisma.service.delete({
         where: { id: Number(id) }
       });

@@ -22,6 +22,7 @@ async function authRoutes(fastify, options) {
         type: 'object',
         properties: {
           message: { type: 'string' },
+          token: { type: 'string' },
           user: {
             type: 'object',
             properties: {
@@ -71,8 +72,12 @@ async function authRoutes(fastify, options) {
       // Don't send back the password
       const { password: _, ...userWithoutPassword } = newUser;
 
+      // Generate token
+      const token = fastify.jwt.sign({ id: userWithoutPassword.id, email: userWithoutPassword.email });
+
       reply.status(201).send({
         message: 'User registered successfully',
+        token,
         user: userWithoutPassword,
       });
     } catch (error) {
@@ -98,6 +103,7 @@ async function authRoutes(fastify, options) {
         type: 'object',
         properties: {
           message: { type: 'string' },
+          token: { type: 'string' },
           user: {
             type: 'object',
             properties: {
@@ -139,8 +145,12 @@ async function authRoutes(fastify, options) {
 
       const { password: _, createdAt, updatedAt, ...userWithoutPassword } = user;
 
+      // Generate token
+      const token = fastify.jwt.sign({ id: userWithoutPassword.id, email: userWithoutPassword.email });
+
       reply.status(200).send({
         message: 'Login successful',
+        token,
         user: userWithoutPassword,
       });
     } catch (error) {

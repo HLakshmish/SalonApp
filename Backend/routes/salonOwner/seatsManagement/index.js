@@ -15,9 +15,11 @@ async function seatsManagementRoutes(fastify, options) {
 
   // Add Seat
   fastify.post('/api/salons/:salonId/seats', {
+    preValidation: [fastify.authenticate],
     schema: {
       description: 'Add a new seat to a salon',
       tags: ['Seats'],
+      security: [{ bearerAuth: [] }],
       params: salonParamsSchema,
       body: {
         type: 'object',
@@ -33,9 +35,10 @@ async function seatsManagementRoutes(fastify, options) {
     const { salonId } = request.params;
     const { name, description, isActive } = request.body;
 
-    // Check if salon exists
+    // Check if salon exists and belongs to user
     const salon = await prisma.salon.findUnique({ where: { id: Number(salonId) } });
     if (!salon) return reply.status(404).send({ error: 'Salon not found' });
+    if (salon.ownerId !== request.user.id) return reply.status(403).send({ error: 'Unauthorized to add seats to this salon' });
 
     try {
       const seat = await prisma.seat.create({
@@ -55,13 +58,19 @@ async function seatsManagementRoutes(fastify, options) {
 
   // Get Seats by Salon
   fastify.get('/api/salons/:salonId/seats', {
+    preValidation: [fastify.authenticate],
     schema: {
       description: 'Get all seats for a salon',
       tags: ['Seats'],
+      security: [{ bearerAuth: [] }],
       params: salonParamsSchema
     }
   }, async (request, reply) => {
     const { salonId } = request.params;
+
+    const salon = await prisma.salon.findUnique({ where: { id: Number(salonId) } });
+    if (!salon) return reply.status(404).send({ error: 'Salon not found' });
+    if (salon.ownerId !== request.user.id) return reply.status(403).send({ error: 'Unauthorized to view seats for this salon' });
 
     const seats = await prisma.seat.findMany({
       where: { salonId: Number(salonId) }
@@ -71,9 +80,11 @@ async function seatsManagementRoutes(fastify, options) {
 
   // Edit Seat
   fastify.put('/api/seats/:id', {
+    preValidation: [fastify.authenticate],
     schema: {
       description: 'Edit a seat',
       tags: ['Seats'],
+      security: [{ bearerAuth: [] }],
       params: seatParamsSchema,
       body: {
         type: 'object',
@@ -89,6 +100,9 @@ async function seatsManagementRoutes(fastify, options) {
     const { name, description, isActive } = request.body;
 
     try {
+      const existingSeat = await prisma.seat.findUnique({ where: { id: Number(id) }, include: { salon: true } });
+      if (!existingSeat) return reply.status(404).send({ error: 'Seat not found' });
+      if (existingSeat.salon.ownerId !== request.user.id) return reply.status(403).send({ error: 'Unauthorized to modify this seat' });
       const updatedSeat = await prisma.seat.update({
         where: { id: Number(id) },
         data: { name, description, isActive }
@@ -103,9 +117,11 @@ async function seatsManagementRoutes(fastify, options) {
 
   // Disable/Enable Seat
   fastify.patch('/api/seats/:id/toggle-status', {
+    preValidation: [fastify.authenticate],
     schema: {
       description: 'Toggle seat active status (Disable/Enable)',
       tags: ['Seats'],
+      security: [{ bearerAuth: [] }],
       params: seatParamsSchema,
       body: {
         type: 'object',
@@ -120,6 +136,9 @@ async function seatsManagementRoutes(fastify, options) {
     const { isActive } = request.body;
 
     try {
+      const existingSeat = await prisma.seat.findUnique({ where: { id: Number(id) }, include: { salon: true } });
+      if (!existingSeat) return reply.status(404).send({ error: 'Seat not found' });
+      if (existingSeat.salon.ownerId !== request.user.id) return reply.status(403).send({ error: 'Unauthorized to modify this seat' });
       const updatedSeat = await prisma.seat.update({
         where: { id: Number(id) },
         data: { isActive }
@@ -134,15 +153,20 @@ async function seatsManagementRoutes(fastify, options) {
 
   // Delete Seat
   fastify.delete('/api/seats/:id', {
+    preValidation: [fastify.authenticate],
     schema: {
       description: 'Delete a seat',
       tags: ['Seats'],
+      security: [{ bearerAuth: [] }],
       params: seatParamsSchema
     }
   }, async (request, reply) => {
     const { id } = request.params;
 
     try {
+      const existingSeat = await prisma.seat.findUnique({ where: { id: Number(id) }, include: { salon: true } });
+      if (!existingSeat) return reply.status(404).send({ error: 'Seat not found' });
+      if (existingSeat.salon.ownerId !== request.user.id) return reply.status(403).send({ error: 'Unauthorized to delete this seat' });
       await prisma.seat.delete({
         where: { id: Number(id) }
       });

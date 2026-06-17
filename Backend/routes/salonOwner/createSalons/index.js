@@ -126,6 +126,35 @@ async function salonOwnerRoutes(fastify, options) {
     return salons;
   });
 
+  // Get My Salons (GET) - For logged-in owner
+  fastify.get('/api/salons/my-salons', {
+    preValidation: [fastify.authenticate],
+    schema: {
+      description: 'Get all salons owned by the logged-in user',
+      tags: ['Salon'],
+      security: [{ bearerAuth: [] }],
+      response: {
+        200: {
+          type: 'array',
+          items: {
+            type: 'object',
+            additionalProperties: true
+          }
+        }
+      }
+    }
+  }, async (request, reply) => {
+    const salons = await prisma.salon.findMany({
+      where: { ownerId: request.user.id },
+      include: {
+        owner: {
+          select: { name: true, email: true, phone: true }
+        }
+      }
+    });
+    return salons;
+  });
+
   // Get Single Salon (GET)
   fastify.get('/api/salons/:id', {
     preValidation: [fastify.authenticate],

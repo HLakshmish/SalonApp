@@ -92,6 +92,7 @@ const start = async () => {
     await fastify.register(require('./routes/salonOwner/seatsManagement'), { prisma });
     await fastify.register(require('./routes/salonOwner/servicesManagement'), { prisma });
     await fastify.register(require('./routes/salonOwner/employee'), { prisma });
+    await fastify.register(require('./routes/customer/appointment'), { prisma });
 
 
     // Wait for plugins to initialize

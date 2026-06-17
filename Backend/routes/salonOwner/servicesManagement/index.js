@@ -62,11 +62,9 @@ async function servicesManagementRoutes(fastify, options) {
 
   // Get Services by Salon
   fastify.get('/api/salons/:salonId/services', {
-    preValidation: [fastify.authenticate],
     schema: {
-      description: 'Get all services for a salon',
+      description: 'Get all services for a salon (public)',
       tags: ['Services'],
-      security: [{ bearerAuth: [] }],
       params: salonParamsSchema
     }
   }, async (request, reply) => {
@@ -74,7 +72,6 @@ async function servicesManagementRoutes(fastify, options) {
 
     const salon = await prisma.salon.findUnique({ where: { id: Number(salonId) } });
     if (!salon) return reply.status(404).send({ error: 'Salon not found' });
-    if (salon.ownerId !== request.user.id) return reply.status(403).send({ error: 'Unauthorized to view services for this salon' });
 
     const services = await prisma.service.findMany({
       where: { salonId: Number(salonId) }

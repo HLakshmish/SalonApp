@@ -128,6 +128,16 @@ function App() {
       const payload = mode === 'register' ? form : { email: form.email, password: form.password }
       const result = mode === 'register' ? await registerUser(payload) : await loginUser(payload)
       setStatus(result.message)
+      // store token for authenticated requests
+      if (result && result.token) {
+        try {
+          window.localStorage.setItem('token', result.token)
+        } catch (e) {
+          // ignore storage errors
+        }
+        // switch to salon management after auth
+        setMode('salon')
+      }
       setForm(mode === 'register' ? initialRegister : initialLogin)
     } catch (err) {
       setError(err.message || 'Request failed')
@@ -396,367 +406,441 @@ function App() {
 
   return (
     <div className="app-shell">
-      <div className="card full-width">
-        <div className="tab-list">
-          <button type="button" className={mode === 'register' ? 'tab active' : 'tab'} onClick={() => handleModeChange('register')}>
-            Register
-          </button>
-          <button type="button" className={mode === 'login' ? 'tab active' : 'tab'} onClick={() => handleModeChange('login')}>
-            Login
-          </button>
-          <button type="button" className={mode === 'salon' ? 'tab active' : 'tab'} onClick={() => handleModeChange('salon')}>
-            Salon
-          </button>
-        </div>
-
-        {mode !== 'salon' ? (
-          <>
-            <h1>{mode === 'register' ? 'SalonApp Registration' : 'SalonApp Login'}</h1>
-            <p>
-              {mode === 'register'
-                ? 'Create a new user account using the Swagger /api/register endpoint.'
-                : 'Login with your email and password using the Swagger /api/login endpoint.'}
-            </p>
-
-            <form onSubmit={handleSubmit}>
-              {mode === 'register' && (
-                <label>
-                  Name
-                  <input name="name" type="text" value={form.name} onChange={handleChange} required />
-                </label>
-              )}
-
-              <label>
-                Email
-                <input name="email" type="email" value={form.email} onChange={handleChange} required />
-              </label>
-
-              {mode === 'register' && (
-                <label>
-                  Phone
-                  <input name="phone" type="text" value={form.phone} onChange={handleChange} required />
-                </label>
-              )}
-
-              <label>
-                Password
-                <input name="password" type="password" value={form.password} onChange={handleChange} required />
-              </label>
-
-              <button type="submit" disabled={submitting}>
-                {submitting ? 'Submitting…' : mode === 'register' ? 'Register' : 'Login'}
-              </button>
-            </form>
-          </>
-        ) : (
-          <>
-            <h1>Salon Management</h1>
-            <p>Create salons and manage seats using the Swagger-backed endpoints.</p>
-
-            <form onSubmit={handleSalonSubmit} className="salon-form">
-              <div className="form-grid">
-                <label>
-                  Salon Name
-                  <input name="name" type="text" value={salonForm.name} onChange={handleSalonChange} required />
-                </label>
-                <label>
-                  Address
-                  <input name="address" type="text" value={salonForm.address} onChange={handleSalonChange} required />
-                </label>
-                <label>
-                  City
-                  <input name="city" type="text" value={salonForm.city} onChange={handleSalonChange} required />
-                </label>
-                <label>
-                  State
-                  <input name="state" type="text" value={salonForm.state} onChange={handleSalonChange} required />
-                </label>
-                <label>
-                  Pincode
-                  <input name="pincode" type="text" value={salonForm.pincode} onChange={handleSalonChange} required />
-                </label>
-                <label>
-                  Phone
-                  <input name="phoneNumber" type="text" value={salonForm.phoneNumber} onChange={handleSalonChange} required />
-                </label>
-                <label className="full-width">
-                  Description
-                  <textarea name="description" value={salonForm.description} onChange={handleSalonChange} rows="4" />
-                </label>
-                <label>
-                  Logo
-                  <input name="logo" type="file" accept="image/*" onChange={handleSalonChange} />
-                </label>
-                <label>
-                  Banner
-                  <input name="banner" type="file" accept="image/*" onChange={handleSalonChange} />
-                </label>
-                <label className="full-width">
-                  Photos
-                  <input name="photos" type="file" accept="image/*" multiple onChange={handleSalonChange} />
-                </label>
-              </div>
-
-              <button type="submit" disabled={submitting}>
-                {submitting ? 'Creating salon…' : 'Create Salon'}
-              </button>
-            </form>
-
-            <div className="salon-list">
-              <div className="section-header">
-                <h2>Existing Salons</h2>
-                <button type="button" className="secondary" onClick={loadSalons} disabled={loadingSalons}>
-                  Refresh
-                </button>
-              </div>
-
-              {loadingSalons ? (
-                <p>Loading salons…</p>
-              ) : salons.length === 0 ? (
-                <p>No salons found. Create one above.</p>
-              ) : (
-                salons.map((salon) => (
-                  <div key={salon.id} className="salon-card">
-                    <div>
-                      <strong>{salon.name}</strong>
-                      <p>{salon.address}, {salon.city}, {salon.state} - {salon.pincode}</p>
-                      <p>{salon.phoneNumber}</p>
-                      {salon.description && <p>{salon.description}</p>}
-                    </div>
-                    <div className="card-actions">
-                      <button type="button" className="secondary" onClick={() => handleSalonSelect(salon)}>
-                        Manage Salon
-                      </button>
-                      <button type="button" className="danger" onClick={() => handleSalonDelete(salon.id)}>
-                        Delete
-                      </button>
-                    </div>
-                  </div>
-                ))
+      <div className="app-container">
+        <div className="page-card">
+          <header className="page-header">
+            <div>
+              <h1 className="page-title">
+                {mode === 'salon' ? 'Salon Management' : mode === 'register' ? 'Create your account' : 'Welcome back'}
+              </h1>
+              <p className="page-description">
+                {mode === 'register'
+                  ? 'Start managing salons, seats, services, and employees with a clean dashboard experience.'
+                  : mode === 'login'
+                  ? 'Sign in with your email and password to continue managing your salon.'
+                  : 'Create salons and manage seats, services, and employees from a central place.'}
+              </p>
+              {mode === 'salon' && (
+                <div className="hero-notice">
+                  Salon dashboard is ready — select a salon to manage seats, services, and employees.
+                </div>
               )}
             </div>
+          </header>
 
-            {selectedSalon && (
+          {mode === 'salon' && (
+            <section className="salon-hero">
+              <div className="salon-hero-copy">
+                <span className="hero-eyebrow">Salon showcase</span>
+                <h2>Create a standout salon brand</h2>
+                <p className="hero-copy">
+                  Build an elevated client experience with a premium salon dashboard, lush brand styling, and a polished image-led presentation.
+                </p>
+                <div className="hero-features">
+                  <div className="hero-feature">
+                    <strong>Elegant salon visuals</strong>
+                    <span>Bring salon details to life with sharp layout and luxury styling.</span>
+                  </div>
+                  <div className="hero-feature">
+                    <strong>Easy management</strong>
+                    <span>Keep seats, services, and staff organized with beautiful panels.</span>
+                  </div>
+                  <div className="hero-feature">
+                    <strong>Client-ready brand</strong>
+                    <span>Present your salon like a high-end studio with a refined hero view.</span>
+                  </div>
+                </div>
+              </div>
+              <div className="salon-hero-image" aria-hidden="true">
+                <div className="hero-image-overlay">
+                  <span className="hero-image-label">Signature salon</span>
+                  <div className="hero-image-card">
+                    <p>Feel the atmosphere of a premium beauty studio with a calm, welcoming aesthetic.</p>
+                  </div>
+                </div>
+              </div>
+            </section>
+          )}
+
+          <div className="tab-list">
+            <button type="button" className={mode === 'register' ? 'tab active' : 'tab'} onClick={() => handleModeChange('register')}>
+              Register
+            </button>
+            <button type="button" className={mode === 'login' ? 'tab active' : 'tab'} onClick={() => handleModeChange('login')}>
+              Login
+            </button>
+            <button type="button" className={mode === 'salon' ? 'tab active' : 'tab'} onClick={() => handleModeChange('salon')}>
+              Salon
+            </button>
+          </div>
+
+          <main className="page-content">
+            {mode !== 'salon' ? (
+              <section className="panel" aria-labelledby="auth-title">
+                <div>
+                  <h2 id="auth-title">{mode === 'register' ? 'Account details' : 'Login details'}</h2>
+                  <p className="page-description">
+                    {mode === 'register'
+                      ? 'Create a profile and then visit the salon management tab.'
+                      : 'Enter your email and password to access the salon dashboard.'}
+                  </p>
+                </div>
+
+                <form onSubmit={handleSubmit} className="form-grid">
+                  {mode === 'register' && (
+                    <label>
+                      Name
+                      <input name="name" type="text" value={form.name} onChange={handleChange} required aria-label="Name" />
+                    </label>
+                  )}
+
+                  <label>
+                    Email address
+                    <input name="email" type="email" value={form.email} onChange={handleChange} required aria-label="Email address" />
+                  </label>
+
+                  {mode === 'register' && (
+                    <label>
+                      Phone number
+                      <input name="phone" type="tel" value={form.phone} onChange={handleChange} required aria-label="Phone number" />
+                    </label>
+                  )}
+
+                  <label>
+                    Password
+                    <input name="password" type="password" value={form.password} onChange={handleChange} required aria-label="Password" />
+                  </label>
+
+                  <button type="submit" className="primary" disabled={submitting}>
+                    {submitting ? 'Submitting…' : mode === 'register' ? 'Register account' : 'Login'}
+                  </button>
+                </form>
+              </section>
+            ) : (
               <>
-                <div className="section-header">
-                  <div>
-                    <h2>Manage {selectedSalon.name}</h2>
-                    <p>{selectedSalon.address}, {selectedSalon.city}</p>
-                  </div>
-                </div>
-
-                <div className="management-tabs">
-                  <button
-                    type="button"
-                    className={managementTab === 'seats' ? 'management-tab active' : 'management-tab'}
-                    onClick={() => setManagementTab('seats')}
-                  >
-                    Seats
-                  </button>
-                  <button
-                    type="button"
-                    className={managementTab === 'services' ? 'management-tab active' : 'management-tab'}
-                    onClick={() => setManagementTab('services')}
-                  >
-                    Services
-                  </button>
-                  <button
-                    type="button"
-                    className={managementTab === 'employees' ? 'management-tab active' : 'management-tab'}
-                    onClick={() => setManagementTab('employees')}
-                  >
-                    Employees
-                  </button>
-                </div>
-
-                {managementTab === 'seats' && (
-                  <div className="seat-management">
-                    <div className="section-header">
-                      <h3>Seats</h3>
-                      <button type="button" className="secondary" onClick={() => handleSalonSelect(selectedSalon)} disabled={loadingSeats}>
-                        Reload Seats
-                      </button>
+                <section className="panel" aria-labelledby="salon-create-title">
+                  <div className="section-header">
+                    <div>
+                      <h2 id="salon-create-title">Create a salon</h2>
+                      <p className="page-description">Add a new salon profile with business and contact details.</p>
                     </div>
+                    <button type="button" className="secondary" onClick={loadSalons} disabled={loadingSalons}>
+                      Refresh salons
+                    </button>
+                  </div>
 
-                    <form onSubmit={handleSeatSubmit} className="seat-form">
-                      <div className="form-grid">
-                        <label>
-                          Seat Name
-                          <input name="name" type="text" value={seatForm.name} onChange={handleSeatChange} required />
-                        </label>
-                        <label>
-                          Description
-                          <input name="description" type="text" value={seatForm.description} onChange={handleSeatChange} />
-                        </label>
-                        <label className="checkbox-label">
-                          <input name="isActive" type="checkbox" checked={seatForm.isActive} onChange={handleSeatChange} />
-                          Active
-                        </label>
-                      </div>
-                      <button type="submit" disabled={submitting}>
-                        {submitting ? 'Adding seat…' : 'Add Seat'}
-                      </button>
-                    </form>
+                  <form onSubmit={handleSalonSubmit} className="form-grid">
+                    <label>
+                      Salon name
+                      <input name="name" type="text" value={salonForm.name} onChange={handleSalonChange} required aria-label="Salon name" />
+                    </label>
+                    <label>
+                      Public phone
+                      <input name="phoneNumber" type="tel" value={salonForm.phoneNumber} onChange={handleSalonChange} required aria-label="Public phone" />
+                    </label>
+                    <label>
+                      Address
+                      <input name="address" type="text" value={salonForm.address} onChange={handleSalonChange} required aria-label="Address" />
+                    </label>
+                    <label>
+                      City
+                      <input name="city" type="text" value={salonForm.city} onChange={handleSalonChange} required aria-label="City" />
+                    </label>
+                    <label>
+                      State
+                      <input name="state" type="text" value={salonForm.state} onChange={handleSalonChange} required aria-label="State" />
+                    </label>
+                    <label>
+                      Pincode
+                      <input name="pincode" type="text" value={salonForm.pincode} onChange={handleSalonChange} required aria-label="Pincode" />
+                    </label>
+                    <label className="full-width">
+                      Description
+                      <textarea name="description" value={salonForm.description} onChange={handleSalonChange} rows="4" aria-label="Salon description" />
+                    </label>
+                    <label>
+                      Logo
+                      <input name="logo" type="file" accept="image/*" onChange={handleSalonChange} aria-label="Upload logo" />
+                    </label>
+                    <label>
+                      Banner
+                      <input name="banner" type="file" accept="image/*" onChange={handleSalonChange} aria-label="Upload banner" />
+                    </label>
+                    <label className="full-width">
+                      Photos
+                      <input name="photos" type="file" accept="image/*" multiple onChange={handleSalonChange} aria-label="Upload photos" />
+                    </label>
+                    <button type="submit" className="primary" disabled={submitting}>
+                      {submitting ? 'Creating salon…' : 'Create Salon'}
+                    </button>
+                  </form>
+                </section>
 
-                    {loadingSeats ? (
-                      <p>Loading seats…</p>
-                    ) : seats.length === 0 ? (
-                      <p>No seats found for this salon.</p>
-                    ) : (
-                      seats.map((seat) => (
-                        <div key={seat.id} className="seat-card">
+                <section className="panel" aria-labelledby="salon-list-title">
+                  <div className="section-header">
+                    <div>
+                      <h2 id="salon-list-title">Existing salons</h2>
+                      <p className="page-description">Select a salon to manage seats, services, and employees.</p>
+                    </div>
+                  </div>
+
+                  {loadingSalons ? (
+                    <p>Loading salons…</p>
+                  ) : salons.length === 0 ? (
+                    <p>No salons found. Create one above.</p>
+                  ) : (
+                    <div className="salon-list">
+                      {salons.map((salon) => (
+                        <article key={salon.id} className="salon-card">
                           <div>
-                            <strong>{seat.name}</strong>
-                            <p>{seat.description || 'No description'}</p>
-                            <p>Status: {seat.isActive ? 'Active' : 'Inactive'}</p>
+                            <strong>{salon.name}</strong>
+                            <p>{salon.address}, {salon.city}, {salon.state} {salon.pincode}</p>
+                            <p>{salon.phoneNumber}</p>
+                            {salon.description && <p>{salon.description}</p>}
                           </div>
                           <div className="card-actions">
-                            <button type="button" className="secondary" onClick={() => handleSeatToggle(seat)}>
-                              {seat.isActive ? 'Disable' : 'Enable'}
+                            <button type="button" className="secondary" onClick={() => handleSalonSelect(salon)}>
+                              Manage
                             </button>
-                            <button type="button" className="danger" onClick={() => handleSeatDelete(seat.id)}>
+                            <button type="button" className="danger" onClick={() => handleSalonDelete(salon.id)}>
                               Delete
                             </button>
                           </div>
-                        </div>
-                      ))
-                    )}
-                  </div>
-                )}
+                        </article>
+                      ))}
+                    </div>
+                  )}
+                </section>
 
-                {managementTab === 'services' && (
-                  <div className="service-management">
+                {selectedSalon && (
+                  <section className="panel" aria-labelledby="manage-salon-title">
                     <div className="section-header">
-                      <h3>Services</h3>
-                      <button type="button" className="secondary" onClick={() => handleSalonSelect(selectedSalon)} disabled={loadingServices}>
-                        Reload Services
+                      <div>
+                        <h2 id="manage-salon-title">Manage {selectedSalon.name}</h2>
+                        <p className="page-description">Manage salon resources and keep your business up to date.</p>
+                      </div>
+                    </div>
+
+                    <div className="management-tabs">
+                      <button
+                        type="button"
+                        className={managementTab === 'seats' ? 'management-tab active' : 'management-tab'}
+                        onClick={() => setManagementTab('seats')}
+                      >
+                        Seats
+                      </button>
+                      <button
+                        type="button"
+                        className={managementTab === 'services' ? 'management-tab active' : 'management-tab'}
+                        onClick={() => setManagementTab('services')}
+                      >
+                        Services
+                      </button>
+                      <button
+                        type="button"
+                        className={managementTab === 'employees' ? 'management-tab active' : 'management-tab'}
+                        onClick={() => setManagementTab('employees')}
+                      >
+                        Employees
                       </button>
                     </div>
 
-                    <form onSubmit={handleServiceSubmit} className="service-form">
-                      <div className="form-grid">
-                        <label>
-                          Service Name
-                          <input name="service_name" type="text" value={serviceForm.service_name} onChange={handleServiceChange} required />
-                        </label>
-                        <label>
-                          Description
-                          <input name="description" type="text" value={serviceForm.description} onChange={handleServiceChange} />
-                        </label>
-                        <label>
-                          Duration (minutes)
-                          <input name="duration_minutes" type="number" value={serviceForm.duration_minutes} onChange={handleServiceChange} required />
-                        </label>
-                        <label>
-                          Price
-                          <input name="price" type="number" step="0.01" value={serviceForm.price} onChange={handleServiceChange} required />
-                        </label>
-                        <label>
-                          Status
-                          <select name="status" value={serviceForm.status} onChange={handleServiceChange}>
-                            <option value="active">Active</option>
-                            <option value="inactive">Inactive</option>
-                          </select>
-                        </label>
-                      </div>
-                      <button type="submit" disabled={submitting}>
-                        {submitting ? 'Adding service…' : 'Add Service'}
-                      </button>
-                    </form>
-
-                    {loadingServices ? (
-                      <p>Loading services…</p>
-                    ) : services.length === 0 ? (
-                      <p>No services found for this salon.</p>
-                    ) : (
-                      services.map((service) => (
-                        <div key={service.id} className="seat-card">
+                    {managementTab === 'seats' && (
+                      <div className="section-card" aria-labelledby="seat-management-title">
+                        <div className="section-header">
                           <div>
-                            <strong>{service.service_name}</strong>
-                            <p>{service.description || 'No description'}</p>
-                            <p>Duration: {service.duration_minutes} mins</p>
-                            <p>Price: {service.price}</p>
-                            <p>Status: {service.status}</p>
+                            <h3 id="seat-management-title">Seats</h3>
                           </div>
-                          <div className="card-actions">
-                            <button type="button" className="secondary" onClick={() => handleServiceToggle(service)}>
-                              Set {service.status === 'active' ? 'Inactive' : 'Active'}
-                            </button>
-                            <button type="button" className="danger" onClick={() => handleServiceDelete(service.id)}>
-                              Delete
-                            </button>
-                          </div>
+                          <button type="button" className="secondary" onClick={() => handleSalonSelect(selectedSalon)} disabled={loadingSeats}>
+                            Reload Seats
+                          </button>
                         </div>
-                      ))
-                    )}
-                  </div>
-                )}
 
-                {managementTab === 'employees' && (
-                  <div className="employee-management">
-                    <div className="section-header">
-                      <h3>Employees</h3>
-                      <button type="button" className="secondary" onClick={() => handleSalonSelect(selectedSalon)} disabled={loadingEmployees}>
-                        Reload Employees
-                      </button>
-                    </div>
+                        <form onSubmit={handleSeatSubmit} className="form-grid">
+                          <label>
+                            Seat name
+                            <input name="name" type="text" value={seatForm.name} onChange={handleSeatChange} required aria-label="Seat name" />
+                          </label>
+                          <label>
+                            Description
+                            <input name="description" type="text" value={seatForm.description} onChange={handleSeatChange} aria-label="Seat description" />
+                          </label>
+                          <label className="checkbox-label full-width">
+                            <input name="isActive" type="checkbox" checked={seatForm.isActive} onChange={handleSeatChange} aria-label="Seat active status" />
+                            Active
+                          </label>
+                          <button type="submit" className="primary" disabled={submitting}>
+                            {submitting ? 'Adding seat…' : 'Add Seat'}
+                          </button>
+                        </form>
 
-                    <form onSubmit={handleEmployeeSubmit} className="service-form">
-                      <div className="form-grid">
-                        <label>
-                          Name
-                          <input name="name" type="text" value={employeeForm.name} onChange={handleEmployeeChange} required />
-                        </label>
-                        <label>
-                          Phone
-                          <input name="phone" type="text" value={employeeForm.phone} onChange={handleEmployeeChange} required />
-                        </label>
-                        <label>
-                          Role
-                          <input name="role" type="text" value={employeeForm.role} onChange={handleEmployeeChange} required />
-                        </label>
-                        <label>
-                          Experience
-                          <input name="experience" type="text" value={employeeForm.experience} onChange={handleEmployeeChange} />
-                        </label>
+                        {loadingSeats ? (
+                          <p>Loading seats…</p>
+                        ) : seats.length === 0 ? (
+                          <p>No seats found for this salon.</p>
+                        ) : (
+                          <div className="management-list">
+                            {seats.map((seat) => (
+                              <article key={seat.id} className="seat-card">
+                                <div>
+                                  <strong>{seat.name}</strong>
+                                  <p>{seat.description || 'No description'}</p>
+                                  <p className="status-badge">{seat.isActive ? 'Active' : 'Inactive'}</p>
+                                </div>
+                                <div className="card-actions">
+                                  <button type="button" className="secondary" onClick={() => handleSeatToggle(seat)}>
+                                    {seat.isActive ? 'Disable' : 'Enable'}
+                                  </button>
+                                  <button type="button" className="danger" onClick={() => handleSeatDelete(seat.id)}>
+                                    Delete
+                                  </button>
+                                </div>
+                              </article>
+                            ))}
+                          </div>
+                        )}
                       </div>
-                      <button type="submit" disabled={submitting}>
-                        {submitting ? (editingEmployeeId ? 'Updating employee…' : 'Saving employee…') : (editingEmployeeId ? 'Update Employee' : 'Add Employee')}
-                      </button>
-                    </form>
-
-                    {loadingEmployees ? (
-                      <p>Loading employees…</p>
-                    ) : employees.length === 0 ? (
-                      <p>No employees found for this salon.</p>
-                    ) : (
-                      employees.map((employee) => (
-                        <div key={employee.id} className="seat-card">
-                          <div>
-                            <strong>{employee.name}</strong>
-                            <p>{employee.role} • {employee.phone}</p>
-                            <p>{employee.experience || 'No experience details'}</p>
-                          </div>
-                          <div className="card-actions">
-                            <button type="button" className="secondary" onClick={() => handleEmployeeEdit(employee)}>
-                              Edit
-                            </button>
-                            <button type="button" className="danger" onClick={() => handleEmployeeDelete(employee.id)}>
-                              Delete
-                            </button>
-                          </div>
-                        </div>
-                      ))
                     )}
-                  </div>
+
+                    {managementTab === 'services' && (
+                      <div className="section-card" aria-labelledby="service-management-title">
+                        <div className="section-header">
+                          <div>
+                            <h3 id="service-management-title">Services</h3>
+                          </div>
+                          <button type="button" className="secondary" onClick={() => handleSalonSelect(selectedSalon)} disabled={loadingServices}>
+                            Reload Services
+                          </button>
+                        </div>
+
+                        <form onSubmit={handleServiceSubmit} className="form-grid">
+                          <label>
+                            Service name
+                            <input name="service_name" type="text" value={serviceForm.service_name} onChange={handleServiceChange} required aria-label="Service name" />
+                          </label>
+                          <label>
+                            Duration (minutes)
+                            <input name="duration_minutes" type="number" value={serviceForm.duration_minutes} onChange={handleServiceChange} required aria-label="Service duration" />
+                          </label>
+                          <label>
+                            Price
+                            <input name="price" type="number" step="0.01" value={serviceForm.price} onChange={handleServiceChange} required aria-label="Service price" />
+                          </label>
+                          <label>
+                            Status
+                            <select name="status" value={serviceForm.status} onChange={handleServiceChange} aria-label="Service status">
+                              <option value="active">Active</option>
+                              <option value="inactive">Inactive</option>
+                            </select>
+                          </label>
+                          <label className="full-width">
+                            Description
+                            <input name="description" type="text" value={serviceForm.description} onChange={handleServiceChange} aria-label="Service description" />
+                          </label>
+                          <button type="submit" className="primary" disabled={submitting}>
+                            {submitting ? 'Adding service…' : 'Add Service'}
+                          </button>
+                        </form>
+
+                        {loadingServices ? (
+                          <p>Loading services…</p>
+                        ) : services.length === 0 ? (
+                          <p>No services found for this salon.</p>
+                        ) : (
+                          <div className="management-list">
+                            {services.map((service) => (
+                              <article key={service.id} className="seat-card">
+                                <div>
+                                  <strong>{service.service_name}</strong>
+                                  <p>{service.description || 'No description'}</p>
+                                  <p>Duration: {service.duration_minutes} mins</p>
+                                  <p>Price: {service.price}</p>
+                                  <span className="status-badge">{service.status}</span>
+                                </div>
+                                <div className="card-actions">
+                                  <button type="button" className="secondary" onClick={() => handleServiceToggle(service)}>
+                                    Set {service.status === 'active' ? 'Inactive' : 'Active'}
+                                  </button>
+                                  <button type="button" className="danger" onClick={() => handleServiceDelete(service.id)}>
+                                    Delete
+                                  </button>
+                                </div>
+                              </article>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    )}
+
+                    {managementTab === 'employees' && (
+                      <div className="section-card" aria-labelledby="employee-management-title">
+                        <div className="section-header">
+                          <div>
+                            <h3 id="employee-management-title">Employees</h3>
+                          </div>
+                          <button type="button" className="secondary" onClick={() => handleSalonSelect(selectedSalon)} disabled={loadingEmployees}>
+                            Reload Employees
+                          </button>
+                        </div>
+
+                        <form onSubmit={handleEmployeeSubmit} className="form-grid">
+                          <label>
+                            Name
+                            <input name="name" type="text" value={employeeForm.name} onChange={handleEmployeeChange} required aria-label="Employee name" />
+                          </label>
+                          <label>
+                            Role
+                            <input name="role" type="text" value={employeeForm.role} onChange={handleEmployeeChange} required aria-label="Employee role" />
+                          </label>
+                          <label>
+                            Phone
+                            <input name="phone" type="tel" value={employeeForm.phone} onChange={handleEmployeeChange} required aria-label="Employee phone" />
+                          </label>
+                          <label>
+                            Experience
+                            <input name="experience" type="text" value={employeeForm.experience} onChange={handleEmployeeChange} aria-label="Employee experience" />
+                          </label>
+                          <button type="submit" className="primary" disabled={submitting}>
+                            {submitting ? (editingEmployeeId ? 'Updating employee…' : 'Saving employee…') : (editingEmployeeId ? 'Update Employee' : 'Add Employee')}
+                          </button>
+                        </form>
+
+                        {loadingEmployees ? (
+                          <p>Loading employees…</p>
+                        ) : employees.length === 0 ? (
+                          <p>No employees found for this salon.</p>
+                        ) : (
+                          <div className="management-list">
+                            {employees.map((employee) => (
+                              <article key={employee.id} className="seat-card">
+                                <div>
+                                  <strong>{employee.name}</strong>
+                                  <p>{employee.role} • {employee.phone}</p>
+                                  <p>{employee.experience || 'No experience details'}</p>
+                                </div>
+                                <div className="card-actions">
+                                  <button type="button" className="secondary" onClick={() => handleEmployeeEdit(employee)}>
+                                    Edit
+                                  </button>
+                                  <button type="button" className="danger" onClick={() => handleEmployeeDelete(employee.id)}>
+                                    Delete
+                                  </button>
+                                </div>
+                              </article>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </section>
                 )}
               </>
             )}
-          </>
-        )}
 
-        {status && <div className="feedback success">{status}</div>}
-        {error && <div className="feedback error">{error}</div>}
+            {status && <div className="feedback success" role="status">{status}</div>}
+            {error && <div className="feedback error" role="alert">{error}</div>}
+          </main>
+        </div>
       </div>
     </div>
   )

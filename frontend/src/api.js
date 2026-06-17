@@ -1,7 +1,13 @@
 const BASE_URL = '/api'
 
 async function request(path, options = {}) {
-  const response = await fetch(`${BASE_URL}${path}`, options)
+  // attach JWT if available (skip for FormData)
+  const token = typeof window !== 'undefined' ? window.localStorage.getItem('token') : null
+  const headers = Object.assign({}, options.headers || {})
+  if (token && !(options.body instanceof FormData)) {
+    headers.Authorization = `Bearer ${token}`
+  }
+  const response = await fetch(`${BASE_URL}${path}`, { ...options, headers })
   const data = await response.json()
   if (!response.ok) {
     throw new Error(data.error || data.message || 'Request failed')

@@ -1,6 +1,13 @@
 const BASE_URL = '/api'
 
 async function request(path, options = {}) {
+  // attach JWT if available (skip for FormData)
+  const token = typeof window !== 'undefined' ? window.localStorage.getItem('token') : null
+  const headers = Object.assign({}, options.headers || {})
+  if (token && !(options.body instanceof FormData)) {
+    headers.Authorization = `Bearer ${token}`
+  }
+  const response = await fetch(`${BASE_URL}${path}`, { ...options, headers })
   const token = localStorage.getItem('salonAppToken')
   const headers = { ...(options.headers || {}) }
 

@@ -85,6 +85,31 @@ async function appointmentRoutes(fastify, options) {
       // 3. Calculate endTime
       const end = new Date(start.getTime() + totalDurationMinutes * 60000);
 
+      // 3.5 Check operating hours
+      if (salon.operatingHours) {
+        const days = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
+        const dayOfWeek = days[start.getDay()];
+        const daySchedule = salon.operatingHours[dayOfWeek];
+
+        if (daySchedule && daySchedule.closed) {
+          return reply.status(400).send({ error: 'Salon is closed on this day' });
+        }
+
+        if (daySchedule && daySchedule.open && daySchedule.close) {
+          const startHours = start.getHours().toString().padStart(2, '0');
+          const startMinutes = start.getMinutes().toString().padStart(2, '0');
+          const startTimeString = `${startHours}:${startMinutes}`;
+
+          const endHours = end.getHours().toString().padStart(2, '0');
+          const endMinutes = end.getMinutes().toString().padStart(2, '0');
+          const endTimeString = `${endHours}:${endMinutes}`;
+
+          if (startTimeString < daySchedule.open || endTimeString > daySchedule.close) {
+             return reply.status(400).send({ error: `Appointment time is outside operating hours (${daySchedule.open} - ${daySchedule.close})` });
+          }
+        }
+      }
+
       // 4. Check for overlapping appointments on this seat
       const conflictingAppointments = await prisma.appointment.findMany({
         where: {
@@ -131,7 +156,7 @@ async function appointmentRoutes(fastify, options) {
       });
     } catch (error) {
       fastify.log.error(error);
-      reply.status(500).send({ error: 'Internal Server Error' });
+      reply.status(500).send({ error: 'Internal Server Error', details: error.message, stack: error.stack });
     }
   });
 
@@ -165,6 +190,30 @@ async function appointmentRoutes(fastify, options) {
     }
 
     try {
+      // 1. Fetch seat and its salon to get operating hours
+      const seat = await prisma.seat.findUnique({
+        where: { id: Number(seatId) },
+        include: { salon: { select: { operatingHours: true } } }
+      });
+
+      if (!seat) return reply.status(404).send({ error: 'Seat not found' });
+
+      let isClosed = false;
+      let operatingHoursForDate = null;
+
+      if (seat.salon.operatingHours) {
+        const days = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
+        const [year, month, day] = date.split('-');
+        const localDate = new Date(year, month - 1, day);
+        const dayOfWeek = days[localDate.getDay()];
+        
+        operatingHoursForDate = seat.salon.operatingHours[dayOfWeek];
+        if (operatingHoursForDate && operatingHoursForDate.closed) {
+          isClosed = true;
+        }
+      }
+
+      // 2. Fetch scheduled appointments
       const appointments = await prisma.appointment.findMany({
         where: {
           seatId: Number(seatId),
@@ -183,7 +232,51 @@ async function appointmentRoutes(fastify, options) {
         }
       });
 
-      reply.send({ bookedSlots: appointments });
+      // 3. Calculate available time slots
+      let availableSlots = [];
+      
+      if (!isClosed) {
+        let openTime = new Date(startOfDay);
+        let closeTime = new Date(endOfDay);
+        
+        if (operatingHoursForDate && operatingHoursForDate.open && operatingHoursForDate.close) {
+          const [year, month, day] = date.split('-');
+          const [openH, openM] = operatingHoursForDate.open.split(':');
+          const [closeH, closeM] = operatingHoursForDate.close.split(':');
+          openTime = new Date(year, month - 1, day, openH, openM);
+          closeTime = new Date(year, month - 1, day, closeH, closeM);
+        }
+
+        let currentTime = openTime;
+        for (const app of appointments) {
+          const appStart = new Date(app.startTime);
+          const appEnd = new Date(app.endTime);
+          
+          if (currentTime < appStart) {
+            availableSlots.push({
+              startTime: currentTime,
+              endTime: appStart
+            });
+          }
+          if (currentTime < appEnd) {
+            currentTime = appEnd;
+          }
+        }
+        
+        if (currentTime < closeTime) {
+          availableSlots.push({
+            startTime: currentTime,
+            endTime: closeTime
+          });
+        }
+      }
+
+      reply.send({ 
+        isClosed,
+        operatingHours: operatingHoursForDate,
+        bookedSlots: appointments,
+        availableSlots
+      });
     } catch (error) {
       fastify.log.error(error);
       reply.status(500).send({ error: 'Internal Server Error' });
@@ -227,6 +320,29 @@ async function appointmentRoutes(fastify, options) {
     }
 
     try {
+      // 0. Get the salon operating hours
+      const salon = await prisma.salon.findUnique({
+        where: { id: Number(salonId) },
+        select: { operatingHours: true }
+      });
+
+      if (!salon) return reply.status(404).send({ error: 'Salon not found' });
+
+      let isClosed = false;
+      let operatingHoursForDate = null;
+
+      if (date && salon.operatingHours) {
+        const days = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
+        const [year, month, day] = date.split('-');
+        const localDate = new Date(year, month - 1, day);
+        const dayOfWeek = days[localDate.getDay()];
+        
+        operatingHoursForDate = salon.operatingHours[dayOfWeek];
+        if (operatingHoursForDate && operatingHoursForDate.closed) {
+          isClosed = true;
+        }
+      }
+
       // 1. Get all active seats for the salon
       const seats = await prisma.seat.findMany({
         where: { salonId: Number(salonId), isActive: true },
@@ -257,13 +373,48 @@ async function appointmentRoutes(fastify, options) {
           }))
           .sort((a, b) => new Date(a.startTime) - new Date(b.startTime));
 
+        let availableSlots = [];
+        if (date && !isClosed) {
+          let openTime = new Date(`${date}T00:00:00.000Z`);
+          let closeTime = new Date(`${date}T23:59:59.999Z`);
+          
+          if (operatingHoursForDate && operatingHoursForDate.open && operatingHoursForDate.close) {
+            const [year, month, day] = date.split('-');
+            const [openH, openM] = operatingHoursForDate.open.split(':');
+            const [closeH, closeM] = operatingHoursForDate.close.split(':');
+            openTime = new Date(year, month - 1, day, openH, openM);
+            closeTime = new Date(year, month - 1, day, closeH, closeM);
+          }
+
+          let currentTime = openTime;
+          for (const app of bookedSlots) {
+            const appStart = new Date(app.startTime);
+            const appEnd = new Date(app.endTime);
+            
+            if (currentTime < appStart) {
+              availableSlots.push({ startTime: currentTime, endTime: appStart });
+            }
+            if (currentTime < appEnd) {
+              currentTime = appEnd;
+            }
+          }
+          if (currentTime < closeTime) {
+            availableSlots.push({ startTime: currentTime, endTime: closeTime });
+          }
+        }
+
         return {
           ...seat,
-          bookedSlots
+          bookedSlots,
+          availableSlots
         };
       });
 
-      reply.send({ seats: seatsWithAvailability });
+      reply.send({ 
+        isClosed,
+        operatingHours: date ? operatingHoursForDate : salon.operatingHours,
+        seats: seatsWithAvailability 
+      });
     } catch (error) {
       fastify.log.error(error);
       reply.status(500).send({ error: 'Internal Server Error' });
@@ -305,6 +456,105 @@ async function appointmentRoutes(fastify, options) {
         },
         orderBy: { startTime: 'desc' }
       });
+      reply.send(appointments);
+    } catch (error) {
+      fastify.log.error(error);
+      reply.status(500).send({ error: 'Internal Server Error' });
+    }
+  });
+
+  // Get logged-in user's appointments
+  fastify.get('/api/appointments/me', {
+    preValidation: [fastify.authenticate],
+    schema: {
+      description: 'Get all appointments for the logged-in user',
+      tags: ['Appointments'],
+      security: [{ bearerAuth: [] }]
+    }
+  }, async (request, reply) => {
+    try {
+      const appointments = await prisma.appointment.findMany({
+        where: { userId: request.user.id },
+        include: {
+          salon: { select: { name: true, address: true, city: true, phoneNumber: true } },
+          seat: { select: { name: true } },
+          services: { select: { service_name: true, price: true, duration_minutes: true } }
+        },
+        orderBy: { startTime: 'desc' }
+      });
+      reply.send(appointments);
+    } catch (error) {
+      fastify.log.error(error);
+      reply.status(500).send({ error: 'Internal Server Error' });
+    }
+  });
+
+  // Get appointments by salonId
+  fastify.get('/api/appointments/salon/:salonId', {
+    schema: {
+      description: 'Get all appointments for a specific salon',
+      tags: ['Appointments'],
+      params: {
+        type: 'object',
+        required: ['salonId'],
+        properties: { salonId: { type: 'number' } }
+      }
+    }
+  }, async (request, reply) => {
+    const { salonId } = request.params;
+    try {
+      const appointments = await prisma.appointment.findMany({
+        where: { salonId: Number(salonId) },
+        include: {
+          user: { select: { name: true, email: true, phone: true } },
+          seat: { select: { name: true } },
+          services: { select: { service_name: true, price: true, duration_minutes: true } }
+        },
+        orderBy: { startTime: 'desc' }
+      });
+      reply.send(appointments);
+    } catch (error) {
+      fastify.log.error(error);
+      reply.status(500).send({ error: 'Internal Server Error' });
+    }
+  });
+
+  // Get appointments for all salons owned by the logged-in owner
+  fastify.get('/api/appointments/owner/salons', {
+    preValidation: [fastify.authenticate],
+    schema: {
+      description: 'Get all appointments for salons owned by the logged-in owner',
+      tags: ['Appointments'],
+      security: [{ bearerAuth: [] }]
+    }
+  }, async (request, reply) => {
+    try {
+      const ownerId = request.user.id;
+      
+      // Find all salons owned by this user
+      const ownedSalons = await prisma.salon.findMany({
+        where: { ownerId: ownerId },
+        select: { id: true }
+      });
+      
+      const salonIds = ownedSalons.map(salon => salon.id);
+      
+      if (salonIds.length === 0) {
+        return reply.send([]);
+      }
+
+      // Find all appointments for these salons
+      const appointments = await prisma.appointment.findMany({
+        where: { salonId: { in: salonIds } },
+        include: {
+          salon: { select: { name: true, address: true, city: true } },
+          seat: { select: { name: true } },
+          services: { select: { service_name: true, price: true, duration_minutes: true } },
+          user: { select: { name: true, email: true, phone: true } }
+        },
+        orderBy: { startTime: 'desc' }
+      });
+
       reply.send(appointments);
     } catch (error) {
       fastify.log.error(error);

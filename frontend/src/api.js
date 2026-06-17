@@ -1,7 +1,18 @@
 const BASE_URL = '/api'
 
 async function request(path, options = {}) {
-  const response = await fetch(`${BASE_URL}${path}`, options)
+  const token = localStorage.getItem('salonAppToken')
+  const headers = { ...(options.headers || {}) }
+
+  if (token) {
+    headers.Authorization = `Bearer ${token}`
+  }
+
+  const response = await fetch(`${BASE_URL}${path}`, {
+    ...options,
+    headers,
+  })
+
   const data = await response.json()
   if (!response.ok) {
     throw new Error(data.error || data.message || 'Request failed')
@@ -118,4 +129,46 @@ export function deleteEmployee(id) {
   return request(`/employees/${id}`, {
     method: 'DELETE',
   })
+}
+
+// Salon Management
+export function getSalonById(id) {
+  return request(`/salons/${id}`)
+}
+
+export function getMySalons() {
+  return request('/salons/my-salons')
+}
+
+export function updateSalon(id, formData) {
+  return request(`/salons/${id}`, {
+    method: 'PUT',
+    body: formData,
+  })
+}
+
+// Service Management
+export function editService(id, payload) {
+  return request(`/services/${id}`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload),
+  })
+}
+
+// Appointments
+export function bookAppointment(payload) {
+  return request('/appointments', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload),
+  })
+}
+
+export function getAvailability(seatId, date) {
+  return request(`/seats/${seatId}/availability?date=${date}`)
+}
+
+export function getSalonAvailability(salonId) {
+  return request(`/salons/${salonId}/seats-availability`)
 }

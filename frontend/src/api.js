@@ -1,7 +1,8 @@
 const BASE_URL = '/api'
 
 async function request(path, options = {}) {
-  const token = localStorage.getItem('salonAppToken')
+  // attach JWT if available
+  const token = typeof window !== 'undefined' ? (window.localStorage.getItem('salonAppToken') || window.localStorage.getItem('token')) : null
   const headers = { ...(options.headers || {}) }
 
   if (token) {
@@ -13,12 +14,31 @@ async function request(path, options = {}) {
     headers,
   })
 
-  const data = await response.json()
-  if (!response.ok) {
-    throw new Error(data.error || data.message || 'Request failed')
+  // Safely parse JSON only when body exists and is JSON
+  let data = {}
+  const contentType = response.headers.get('content-type') || ''
+  const text = await response.text()
+  if (text) {
+    if (contentType.includes('application/json')) {
+      try {
+        data = JSON.parse(text)
+      } catch (err) {
+        // Invalid JSON — fallback to raw text
+        data = { message: text }
+      }
+    } else {
+      // Non-JSON response — return as message
+      data = { message: text }
+    }
   }
+
+  if (!response.ok) {
+    throw new Error((data && (data.error || data.message)) || 'Request failed')
+  }
+
   return data
 }
+
 
 export function registerUser(payload) {
   return request('/register', {

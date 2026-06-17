@@ -39,6 +39,7 @@ async function salonOwnerRoutes(fastify, options) {
           pincode: { type: 'string' },
           phoneNumber: { type: 'string' },
           description: { type: 'string' },
+          operatingHours: { type: 'string', description: 'JSON string of operating hours' },
           logo: { type: 'string', format: 'binary' },
           banner: { type: 'string', format: 'binary' },
           photos: {
@@ -71,7 +72,15 @@ async function salonOwnerRoutes(fastify, options) {
           }
         } else {
           if (!['logo', 'banner', 'photos'].includes(part.fieldname)) {
-            salonData[part.fieldname] = part.value;
+            if (part.fieldname === 'operatingHours') {
+              try {
+                salonData[part.fieldname] = JSON.parse(part.value);
+              } catch (e) {
+                return reply.status(400).send({ error: 'Invalid JSON for operatingHours' });
+              }
+            } else {
+              salonData[part.fieldname] = part.value;
+            }
           }
         }
       }
@@ -90,11 +99,38 @@ async function salonOwnerRoutes(fastify, options) {
     }
   });
 
-  // Get All Salons (GET) - restricted to the owner
+  // Get All Salons (GET) - Publicly accessible
   fastify.get('/api/salons', {
+    schema: {
+      description: 'Get all salons (public)',
+      tags: ['Salon'],
+      response: {
+        200: {
+          type: 'array',
+          items: {
+            type: 'object',
+            additionalProperties: true
+          }
+        }
+      }
+    }
+  }, async (request, reply) => {
+    // Return all salons with owner details
+    const salons = await prisma.salon.findMany({
+      include: {
+        owner: {
+          select: { name: true, email: true, phone: true }
+        }
+      }
+    });
+    return salons;
+  });
+
+  // Get My Salons (GET) - For logged-in owner
+  fastify.get('/api/salons/my-salons', {
     preValidation: [fastify.authenticate],
     schema: {
-      description: 'Get all salons for logged-in user',
+      description: 'Get all salons owned by the logged-in user',
       tags: ['Salon'],
       security: [{ bearerAuth: [] }],
       response: {
@@ -108,7 +144,6 @@ async function salonOwnerRoutes(fastify, options) {
       }
     }
   }, async (request, reply) => {
-    // Only return salons owned by the user, including their registered details
     const salons = await prisma.salon.findMany({
       where: { ownerId: request.user.id },
       include: {
@@ -165,6 +200,7 @@ async function salonOwnerRoutes(fastify, options) {
           pincode: { type: 'string' },
           phoneNumber: { type: 'string' },
           description: { type: 'string' },
+          operatingHours: { type: 'string', description: 'JSON string of operating hours' },
           logo: { type: 'string', format: 'binary' },
           banner: { type: 'string', format: 'binary' },
           photos: {
@@ -202,7 +238,15 @@ async function salonOwnerRoutes(fastify, options) {
           }
         } else {
           if (!['logo', 'banner', 'photos'].includes(part.fieldname)) {
-            updateData[part.fieldname] = part.value;
+            if (part.fieldname === 'operatingHours') {
+              try {
+                updateData[part.fieldname] = JSON.parse(part.value);
+              } catch (e) {
+                return reply.status(400).send({ error: 'Invalid JSON for operatingHours' });
+              }
+            } else {
+              updateData[part.fieldname] = part.value;
+            }
           }
         }
       }

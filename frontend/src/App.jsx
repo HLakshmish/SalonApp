@@ -1,29 +1,5 @@
 import { useEffect, useState } from 'react'
-import {
-  addEmployee,
-  addSeat,
-  addService,
-  bookAppointment,
-  createSalon,
-  deleteEmployee,
-  deleteSalon,
-  deleteSeat,
-  deleteService,
-  editService,
-  getAvailability,
-  getEmployeesBySalon,
-  getSalonAvailability,
-  getSalonById,
-  getSalons,
-  getSeatsBySalon,
-  getServicesBySalon,
-  loginUser,
-  registerUser,
-  toggleSeatStatus,
-  toggleServiceStatus,
-  updateEmployee,
-  updateSalon,
-} from './api'
+import { createSalon, getSalons, loginUser, registerUser } from './api'
 import './App.css'
 
 const initialRegister = { name: '', email: '', phone: '', password: '' }
@@ -36,57 +12,29 @@ const initialSalon = {
   pincode: '',
   phoneNumber: '',
   description: '',
-  logo: null,
-  banner: null,
-  photos: [],
 }
-const initialSeat = { name: '', description: '', isActive: true }
-const initialService = { service_name: '', description: '', duration_minutes: '', price: '', status: 'active' }
-const initialEmployee = { name: '', phone: '', role: '', experience: '' }
-const initialAppointment = { seatId: '', date: '', startTime: '', customerName: '', customerPhone: '', customerEmail: '' }
 
 function App() {
   const [mode, setMode] = useState('register')
   const [form, setForm] = useState(initialRegister)
   const [salonForm, setSalonForm] = useState(initialSalon)
   const [salons, setSalons] = useState([])
-  const [selectedSalon, setSelectedSalon] = useState(null)
-  const [seats, setSeats] = useState([])
-  const [seatForm, setSeatForm] = useState(initialSeat)
-  const [services, setServices] = useState([])
-  const [serviceForm, setServiceForm] = useState(initialService)
-  const [employees, setEmployees] = useState([])
-  const [employeeForm, setEmployeeForm] = useState(initialEmployee)
-  const [editingEmployeeId, setEditingEmployeeId] = useState(null)
+  const [user, setUser] = useState(null)
   const [status, setStatus] = useState(null)
   const [error, setError] = useState(null)
   const [submitting, setSubmitting] = useState(false)
   const [loadingSalons, setLoadingSalons] = useState(false)
-  const [user, setUser] = useState(null)
-  const [token, setToken] = useState(null)
-  const [loadingSeats, setLoadingSeats] = useState(false)
-  const [loadingServices, setLoadingServices] = useState(false)
-  const [loadingEmployees, setLoadingEmployees] = useState(false)
-  const [managementTab, setManagementTab] = useState('seats')
-  const [editingSalonId, setEditingSalonId] = useState(null)
-  const [editingServiceId, setEditingServiceId] = useState(null)
-  const [appointmentForm, setAppointmentForm] = useState(initialAppointment)
-  const [appointments, setAppointments] = useState([])
-  const [loadingAppointments, setLoadingAppointments] = useState(false)
-  const [seatAvailability, setSeatAvailability] = useState({})
 
   useEffect(() => {
     const storedToken = localStorage.getItem('salonAppToken')
     const storedUser = localStorage.getItem('salonAppUser')
-
     if (storedToken && storedUser) {
       try {
-        setToken(storedToken)
         setUser(JSON.parse(storedUser))
         setMode('salon')
-      } catch (err) {
-        localStorage.removeItem('salonAppUser')
+      } catch {
         localStorage.removeItem('salonAppToken')
+        localStorage.removeItem('salonAppUser')
       }
     }
   }, [])
@@ -95,102 +43,11 @@ function App() {
     if (mode === 'salon' && user) {
       loadSalons()
     }
-    setStatus(null)
-    setError(null)
-    setSelectedSalon(null)
-    setSeats([])
-    setServices([])
-    setEmployees([])
-    setManagementTab('seats')
   }, [mode, user])
-
-  const handleModeChange = (newMode) => {
-    if (newMode === 'salon' && !user) {
-      setMode('login')
-      setStatus('Please login first to access the salon dashboard.')
-      return
-    }
-    setMode(newMode)
-    setForm(newMode === 'register' ? initialRegister : initialLogin)
-    setSalonForm(initialSalon)
-    setSeatForm(initialSeat)
-    setServiceForm(initialService)
-    setManagementTab('seats')
-  }
-
-  const handleChange = (event) => {
-    const { name, value } = event.target
-    setForm((current) => ({ ...current, [name]: value }))
-  }
-
-  const handleSalonChange = (event) => {
-    const { name, value, files, type, checked } = event.target
-    setSalonForm((current) => {
-      if (name === 'logo' || name === 'banner') {
-        return { ...current, [name]: files[0] || null }
-      }
-      if (name === 'photos') {
-        return { ...current, photos: files ? Array.from(files) : [] }
-      }
-      return { ...current, [name]: value }
-    })
-  }
-
-  const handleSeatChange = (event) => {
-    const { name, value, type, checked } = event.target
-    setSeatForm((current) => ({
-      ...current,
-      [name]: type === 'checkbox' ? checked : value,
-    }))
-  }
-
-  const handleServiceChange = (event) => {
-    const { name, value } = event.target
-    setServiceForm((current) => ({ ...current, [name]: value }))
-  }
-
-  const handleEmployeeChange = (event) => {
-    const { name, value } = event.target
-    setEmployeeForm((current) => ({ ...current, [name]: value }))
-  }
-
-  const handleSubmit = async (event) => {
-    event.preventDefault()
-    setStatus(null)
-    setError(null)
-    setSubmitting(true)
-
-    try {
-      const payload = mode === 'register' ? form : { email: form.email, password: form.password }
-      const result = mode === 'register' ? await registerUser(payload) : await loginUser(payload)
-      if (result.token) {
-        localStorage.setItem('salonAppToken', result.token)
-        localStorage.setItem('salonAppUser', JSON.stringify(result.user))
-        setToken(result.token)
-        setUser(result.user)
-      }
-      setStatus(result.message)
-      // store token for authenticated requests
-      if (result && result.token) {
-        try {
-          window.localStorage.setItem('token', result.token)
-        } catch (e) {
-          // ignore storage errors
-        }
-        // switch to salon management after auth
-        setMode('salon')
-      }
-      setForm(mode === 'register' ? initialRegister : initialLogin)
-      setMode('salon')
-    } catch (err) {
-      setError(err.message || 'Request failed')
-    } finally {
-      setSubmitting(false)
-    }
-  }
 
   const loadSalons = async () => {
     setLoadingSalons(true)
+    setError(null)
     try {
       const result = await getSalons()
       setSalons(result)
@@ -201,29 +58,66 @@ function App() {
     }
   }
 
-  const handleSalonSubmit = async (event) => {
-    event.preventDefault()
+  const handleModeChange = (nextMode) => {
+    if (nextMode === 'salon' && !user) {
+      setStatus('Please login first to access dashboard.')
+      setMode('login')
+      return
+    }
     setStatus(null)
     setError(null)
-    setSubmitting(true)
+    setMode(nextMode)
+    setForm(nextMode === 'register' ? initialRegister : initialLogin)
+  }
 
+  const handleAuthChange = (event) => {
+    const { name, value } = event.target
+    setForm((prev) => ({ ...prev, [name]: value }))
+  }
+
+  const handleSalonChange = (event) => {
+    const { name, value } = event.target
+    setSalonForm((prev) => ({ ...prev, [name]: value }))
+  }
+
+  const handleAuthSubmit = async (event) => {
+    event.preventDefault()
+    setSubmitting(true)
+    setStatus(null)
+    setError(null)
+    try {
+      const payload = mode === 'register' ? form : { email: form.email, password: form.password }
+      const result = mode === 'register' ? await registerUser(payload) : await loginUser(payload)
+      if (result.token) {
+        localStorage.setItem('salonAppToken', result.token)
+        localStorage.setItem('salonAppUser', JSON.stringify(result.user))
+        localStorage.setItem('token', result.token)
+        setUser(result.user)
+        setMode('salon')
+      }
+      setStatus(result.message || (mode === 'register' ? 'Registered successfully' : 'Logged in successfully'))
+      setForm(mode === 'register' ? initialRegister : initialLogin)
+    } catch (err) {
+      setError(err.message || 'Request failed')
+    } finally {
+      setSubmitting(false)
+    }
+  }
+
+  const handleCreateSalon = async (event) => {
+    event.preventDefault()
+    setSubmitting(true)
+    setStatus(null)
+    setError(null)
     try {
       const formData = new FormData()
-      formData.append('name', salonForm.name)
-      formData.append('address', salonForm.address)
-      formData.append('city', salonForm.city)
-      formData.append('state', salonForm.state)
-      formData.append('pincode', salonForm.pincode)
-      formData.append('phoneNumber', salonForm.phoneNumber)
-      if (salonForm.description) formData.append('description', salonForm.description)
-      if (salonForm.logo) formData.append('logo', salonForm.logo)
-      if (salonForm.banner) formData.append('banner', salonForm.banner)
-      salonForm.photos.forEach((photo) => formData.append('photos', photo))
-
+      Object.entries(salonForm).forEach(([key, value]) => {
+        if (value) formData.append(key, value)
+      })
       const result = await createSalon(formData)
-      setStatus(result.message)
+      setStatus(result.message || 'Salon created')
       setSalonForm(initialSalon)
-      loadSalons()
+      await loadSalons()
     } catch (err) {
       setError(err.message || 'Salon creation failed')
     } finally {
@@ -231,943 +125,235 @@ function App() {
     }
   }
 
-  const handleSalonDelete = async (id) => {
-    if (!window.confirm('Delete this salon?')) return
+  const handleLogout = () => {
+    localStorage.removeItem('salonAppToken')
+    localStorage.removeItem('salonAppUser')
+    localStorage.removeItem('token')
+    setUser(null)
+    setSalons([])
+    setStatus('Logged out successfully')
     setError(null)
-    setStatus(null)
-    try {
-      const result = await deleteSalon(id)
-      setStatus(result.message)
-      setSalons((current) => current.filter((salon) => salon.id !== id))
-      if (selectedSalon?.id === id) {
-        setSelectedSalon(null)
-        setSeats([])
-        setServices([])
-        setEmployees([])
-      }
-    } catch (err) {
-      setError(err.message || 'Delete failed')
-    }
+    setMode('login')
+    setForm(initialLogin)
   }
 
-  const handleSalonEdit = (salon) => {
-    setEditingSalonId(salon.id)
-    setSalonForm({
-      name: salon.name || '',
-      address: salon.address || '',
-      city: salon.city || '',
-      state: salon.state || '',
-      pincode: salon.pincode || '',
-      phoneNumber: salon.phoneNumber || '',
-      description: salon.description || '',
-      logo: null,
-      banner: null,
-      photos: [],
-    })
-    setStatus(null)
-    setError(null)
-  }
-
-  const handleSalonUpdate = async (event) => {
-    event.preventDefault()
-    if (!editingSalonId) return
-    setStatus(null)
-    setError(null)
-    setSubmitting(true)
-
-    try {
-      const formData = new FormData()
-      formData.append('name', salonForm.name)
-      formData.append('address', salonForm.address)
-      formData.append('city', salonForm.city)
-      formData.append('state', salonForm.state)
-      formData.append('pincode', salonForm.pincode)
-      formData.append('phoneNumber', salonForm.phoneNumber)
-      if (salonForm.description) formData.append('description', salonForm.description)
-      if (salonForm.logo) formData.append('logo', salonForm.logo)
-      if (salonForm.banner) formData.append('banner', salonForm.banner)
-      salonForm.photos.forEach((photo) => formData.append('photos', photo))
-
-      const result = await updateSalon(editingSalonId, formData)
-      setStatus(result.message)
-      setSalonForm(initialSalon)
-      setEditingSalonId(null)
-      loadSalons()
-    } catch (err) {
-      setError(err.message || 'Salon update failed')
-    } finally {
-      setSubmitting(false)
-    }
-  }
-
-  const cancelSalonEdit = () => {
-    setEditingSalonId(null)
-    setSalonForm(initialSalon)
-    setStatus(null)
-    setError(null)
-  }
-
-  const handleSalonSelect = async (salon) => {
-    setSelectedSalon(salon)
-    setStatus(null)
-    setError(null)
-    setSeatForm(initialSeat)
-    setServiceForm(initialService)
-    setEmployeeForm(initialEmployee)
-    setEditingEmployeeId(null)
-    setManagementTab('seats')
-    try {
-      setLoadingSeats(true)
-      setLoadingServices(true)
-      setLoadingEmployees(true)
-      const seatPromise = getSeatsBySalon(salon.id)
-      const servicePromise = getServicesBySalon(salon.id)
-      let employeePromise = Promise.resolve([])
-      if (user && salon.ownerId && Number(user.id) === Number(salon.ownerId)) {
-        employeePromise = getEmployeesBySalon(salon.id)
-      }
-      const [seatResult, serviceResult, employeeResult] = await Promise.all([
-        seatPromise,
-        servicePromise,
-        employeePromise,
-      ])
-      setSeats(seatResult)
-      setServices(serviceResult)
-      setEmployees(employeeResult || [])
-    } catch (err) {
-      setError(err.message || 'Unable to load salon details')
-    } finally {
-      setLoadingSeats(false)
-      setLoadingServices(false)
-      setLoadingEmployees(false)
-    }
-  }
-
-  const handleSeatSubmit = async (event) => {
-    event.preventDefault()
-    if (!selectedSalon) {
-      setError('Select a salon before adding seats')
-      return
-    }
-    setStatus(null)
-    setError(null)
-    setSubmitting(true)
-
-    try {
-      const payload = {
-        name: seatForm.name,
-        description: seatForm.description,
-        isActive: seatForm.isActive,
-      }
-      const result = await addSeat(selectedSalon.id, payload)
-      setStatus(result.message)
-      setSeatForm(initialSeat)
-      const updatedSeats = await getSeatsBySalon(selectedSalon.id)
-      setSeats(updatedSeats)
-    } catch (err) {
-      setError(err.message || 'Seat creation failed')
-    } finally {
-      setSubmitting(false)
-    }
-  }
-
-  const handleSeatDelete = async (id) => {
-    if (!window.confirm('Delete this seat?')) return
-    setError(null)
-    setStatus(null)
-    try {
-      const result = await deleteSeat(id)
-      setStatus(result.message)
-      setSeats((current) => current.filter((seat) => seat.id !== id))
-    } catch (err) {
-      setError(err.message || 'Seat delete failed')
-    }
-  }
-
-  const handleSeatToggle = async (seat) => {
-    setError(null)
-    setStatus(null)
-    try {
-      const result = await toggleSeatStatus(seat.id, !seat.isActive)
-      setStatus(result.message)
-      setSeats((current) => current.map((item) => (item.id === seat.id ? { ...item, isActive: !item.isActive } : item)))
-    } catch (err) {
-      setError(err.message || 'Seat update failed')
-    }
-  }
-
-  const handleServiceSubmit = async (event) => {
-    event.preventDefault()
-    if (!selectedSalon) {
-      setError('Select a salon before adding services')
-      return
-    }
-    setStatus(null)
-    setError(null)
-    setSubmitting(true)
-
-    try {
-      const payload = {
-        service_name: serviceForm.service_name,
-        description: serviceForm.description,
-        duration_minutes: Number(serviceForm.duration_minutes),
-        price: Number(serviceForm.price),
-        status: serviceForm.status,
-      }
-      const result = await addService(selectedSalon.id, payload)
-      setStatus(result.message)
-      setServiceForm(initialService)
-      const updatedServices = await getServicesBySalon(selectedSalon.id)
-      setServices(updatedServices)
-    } catch (err) {
-      setError(err.message || 'Service creation failed')
-    } finally {
-      setSubmitting(false)
-    }
-  }
-
-  const handleServiceDelete = async (id) => {
-    if (!window.confirm('Delete this service?')) return
-    setError(null)
-    setStatus(null)
-    try {
-      const result = await deleteService(id)
-      setStatus(result.message)
-      setServices((current) => current.filter((service) => service.id !== id))
-    } catch (err) {
-      setError(err.message || 'Service delete failed')
-    }
-  }
-
-  const handleServiceToggle = async (service) => {
-    setError(null)
-    setStatus(null)
-    try {
-      const nextStatus = service.status === 'active' ? 'inactive' : 'active'
-      const result = await toggleServiceStatus(service.id, nextStatus)
-      setStatus(result.message)
-      setServices((current) => current.map((item) => (item.id === service.id ? { ...item, status: nextStatus } : item)))
-    } catch (err) {
-      setError(err.message || 'Service toggle failed')
-    }
-  }
-
-  const handleServiceEdit = (service) => {
-    setEditingServiceId(service.id)
-    setServiceForm({
-      service_name: service.service_name || '',
-      description: service.description || '',
-      duration_minutes: service.duration_minutes || '',
-      price: service.price || '',
-      status: service.status || 'active',
-    })
-    setStatus(null)
-    setError(null)
-  }
-
-  const handleServiceUpdate = async (event) => {
-    event.preventDefault()
-    if (!editingServiceId) return
-    setStatus(null)
-    setError(null)
-    setSubmitting(true)
-
-    try {
-      const payload = {
-        service_name: serviceForm.service_name,
-        description: serviceForm.description,
-        duration_minutes: Number(serviceForm.duration_minutes),
-        price: Number(serviceForm.price),
-        status: serviceForm.status,
-      }
-      const result = await editService(editingServiceId, payload)
-      setStatus(result.message)
-      setServiceForm(initialService)
-      setEditingServiceId(null)
-      const updatedServices = await getServicesBySalon(selectedSalon.id)
-      setServices(updatedServices)
-    } catch (err) {
-      setError(err.message || 'Service update failed')
-    } finally {
-      setSubmitting(false)
-    }
-  }
-
-  const cancelServiceEdit = () => {
-    setEditingServiceId(null)
-    setServiceForm(initialService)
-    setStatus(null)
-    setError(null)
-  }
-
-  const handleEmployeeSubmit = async (event) => {
-    event.preventDefault()
-    if (!selectedSalon) {
-      setError('Select a salon before adding employees')
-      return
-    }
-    setStatus(null)
-    setError(null)
-    setSubmitting(true)
-
-    try {
-      const payload = {
-        name: employeeForm.name,
-        phone: employeeForm.phone,
-        role: employeeForm.role,
-        experience: employeeForm.experience,
-      }
-      const result = editingEmployeeId
-        ? await updateEmployee(editingEmployeeId, payload)
-        : await addEmployee(selectedSalon.id, payload)
-
-      setStatus(result.message)
-      setEmployeeForm(initialEmployee)
-      setEditingEmployeeId(null)
-      const updatedEmployees = await getEmployeesBySalon(selectedSalon.id)
-      setEmployees(updatedEmployees)
-    } catch (err) {
-      setError(err.message || 'Employee save failed')
-    } finally {
-      setSubmitting(false)
-    }
-  }
-
-  const handleEmployeeDelete = async (id) => {
-    if (!window.confirm('Delete this employee?')) return
-    setError(null)
-    setStatus(null)
-    try {
-      const result = await deleteEmployee(id)
-      setStatus(result.message)
-      setEmployees((current) => current.filter((employee) => employee.id !== id))
-    } catch (err) {
-      setError(err.message || 'Employee delete failed')
-    }
-  }
-
-  const handleEmployeeEdit = (employee) => {
-    setEditingEmployeeId(employee.id)
-    setEmployeeForm({
-      name: employee.name || '',
-      phone: employee.phone || '',
-      role: employee.role || '',
-      experience: employee.experience || '',
-    })
-    setStatus(null)
-    setError(null)
-  }
-
-  const handleAppointmentChange = (event) => {
-    const { name, value } = event.target
-    setAppointmentForm((current) => ({ ...current, [name]: value }))
-  }
-
-  const handleAppointmentSubmit = async (event) => {
-    event.preventDefault()
-    if (!selectedSalon) {
-      setError('Select a salon before booking appointment')
-      return
-    }
-    setStatus(null)
-    setError(null)
-    setSubmitting(true)
-
-    try {
-      const payload = {
-        seatId: Number(appointmentForm.seatId),
-        date: appointmentForm.date,
-        startTime: appointmentForm.startTime,
-        customerName: appointmentForm.customerName,
-        customerPhone: appointmentForm.customerPhone,
-        customerEmail: appointmentForm.customerEmail,
-      }
-      const result = await bookAppointment(payload)
-      setStatus(result.message)
-      setAppointmentForm(initialAppointment)
-      setSeatAvailability({})
-    } catch (err) {
-      setError(err.message || 'Appointment booking failed')
-    } finally {
-      setSubmitting(false)
-    }
-  }
+  const userInitial = (user?.name || user?.email || 'U').charAt(0).toUpperCase()
 
   return (
     <div className="app-shell">
-      <div className="app-container">
-        <div className="page-card">
-          <header className="page-header">
-            <div>
-              <h1 className="page-title">
-                {mode === 'salon' ? 'Salon Management' : mode === 'register' ? 'Create your account' : 'Welcome back'}
-              </h1>
-              <p className="page-description">
-                {mode === 'register'
-                  ? 'Start managing salons, seats, services, and employees with a clean dashboard experience.'
-                  : mode === 'login'
-                  ? 'Sign in with your email and password to continue managing your salon.'
-                  : 'Create salons and manage seats, services, and employees from a central place.'}
-              </p>
-              {mode === 'salon' && (
-                <div className="hero-notice">
-                  Salon dashboard is ready — select a salon to manage seats, services, and employees.
-                </div>
-              )}
+      <nav className="top-nav">
+        <div className="brand">
+          <span className="brand-mark">S</span>
+          <div>
+            <strong>Salon Studio</strong>
+            <span>Premium Management</span>
+          </div>
+        </div>
+        {user && (
+          <div className="nav-user">
+            <div className="avatar">{userInitial}</div>
+            <div className="nav-user-meta">
+              <strong>{user.name || 'Owner'}</strong>
+              <span>{user.email}</span>
             </div>
-            {user && (
-              <div style={{ position: 'absolute', top: '3rem', right: '2.5rem', display: 'flex', alignItems: 'center', gap: '1rem', zIndex: 10 }}>
-                <span style={{ fontSize: '0.95rem', fontWeight: 600 }}>
-                  Logged in as <strong style={{ color: 'var(--primary)' }}>{user.name}</strong>
-                </span>
-                <button
-                  type="button"
-                  className="secondary"
-                  style={{ minHeight: 'auto', padding: '0.5rem 1.25rem', borderRadius: '12px' }}
-                  onClick={() => {
-                    localStorage.removeItem('salonAppToken')
-                    localStorage.removeItem('salonAppUser')
-                    localStorage.removeItem('token')
-                    setUser(null)
-                    setToken(null)
-                    setMode('login')
-                    setSalons([])
-                    setSelectedSalon(null)
-                    setSeats([])
-                    setServices([])
-                    setEmployees([])
-                    setStatus('Logged out successfully')
-                    setError(null)
-                  }}
-                >
-                  Logout
-                </button>
-              </div>
-            )}
-          </header>
-
-          <div className="tab-list">
-            <button type="button" className={mode === 'register' ? 'tab active' : 'tab'} onClick={() => handleModeChange('register')}>
-              Register
-            </button>
-            <button type="button" className={mode === 'login' ? 'tab active' : 'tab'} onClick={() => handleModeChange('login')}>
-              Login
-            </button>
-            <button type="button" className={mode === 'salon' ? 'tab active' : 'tab'} onClick={() => handleModeChange('salon')}>
-              Salon
+            <button type="button" className="secondary nav-logout" onClick={handleLogout}>
+              Logout
             </button>
           </div>
+        )}
+      </nav>
 
-          <main className="page-content">
-            {mode !== 'salon' ? (
-              <section className="panel" aria-labelledby="auth-title">
+      <main className="app-container">
+        {mode === 'salon' ? (
+          <div className="dashboard-layout">
+            <aside className="dashboard-sidebar">
+              <p className="sidebar-label">Navigation</p>
+              <button type="button" className="sidebar-link active">Overview</button>
+              <button type="button" className="sidebar-link">Salons</button>
+              <button type="button" className="sidebar-link">Appointments</button>
+              <button type="button" className="sidebar-link">Team</button>
+              <div className="sidebar-promo">
+                <span className="hero-eyebrow">Pro Tip</span>
+                <p>Keep salon profiles updated with photos and descriptions for a premium client experience.</p>
+              </div>
+            </aside>
+
+            <section className="dashboard-main">
+              <header className="dashboard-hero">
                 <div>
-                  <h2 id="auth-title">{mode === 'register' ? 'Account details' : 'Login details'}</h2>
+                  <span className="hero-eyebrow">Salon Dashboard</span>
+                  <h1 className="page-title">Welcome back, {user?.name || 'Owner'}</h1>
                   <p className="page-description">
-                    {mode === 'register'
-                      ? 'Create a profile and then visit the salon management tab.'
-                      : 'Enter your email and password to access the salon dashboard.'}
+                    Manage your salon portfolio, track locations, and grow your brand from one elegant workspace.
                   </p>
                 </div>
+                <button type="button" className="secondary" onClick={loadSalons} disabled={loadingSalons}>
+                  {loadingSalons ? 'Syncing...' : 'Refresh Data'}
+                </button>
+              </header>
 
-                <form onSubmit={handleSubmit} className="form-grid">
-                  {mode === 'register' && (
-                    <label>
-                      Name
-                      <input name="name" type="text" value={form.name} onChange={handleChange} required aria-label="Name" />
-                    </label>
-                  )}
+              <div className="stats-grid">
+                <article className="stat-card">
+                  <span className="stat-label">Total Salons</span>
+                  <strong className="stat-value">{salons.length}</strong>
+                  <span className="stat-hint">Active locations</span>
+                </article>
+                <article className="stat-card">
+                  <span className="stat-label">Account Status</span>
+                  <strong className="stat-value">Active</strong>
+                  <span className="stat-hint">Verified owner</span>
+                </article>
+                <article className="stat-card">
+                  <span className="stat-label">Cities Covered</span>
+                  <strong className="stat-value">{new Set(salons.map((s) => s.city).filter(Boolean)).size}</strong>
+                  <span className="stat-hint">Unique cities</span>
+                </article>
+              </div>
 
-                  <label>
-                    Email address
-                    <input name="email" type="email" value={form.email} onChange={handleChange} required aria-label="Email address" />
-                  </label>
-
-                  {mode === 'register' && (
-                    <label>
-                      Phone number
-                      <input name="phone" type="tel" value={form.phone} onChange={handleChange} required aria-label="Phone number" />
-                    </label>
-                  )}
-
-                  <label>
-                    Password
-                    <input name="password" type="password" value={form.password} onChange={handleChange} required aria-label="Password" />
-                  </label>
-
-                  <button type="submit" className="primary" disabled={submitting}>
-                    {submitting ? 'Submitting…' : mode === 'register' ? 'Register account' : 'Login'}
-                  </button>
-                </form>
-              </section>
-            ) : (
-              <>
-                {/* Salon Showcase Hero section */}
-                <section className="salon-hero">
-                  <div className="salon-hero-copy">
-                    <span className="hero-eyebrow">Salon showcase</span>
-                    <h2>Create a standout salon brand</h2>
-                    <p className="hero-copy">
-                      Build an elevated client experience with a premium salon dashboard, lush brand styling, and a polished image-led presentation.
-                    </p>
-                    <div className="hero-features">
-                      <div className="hero-feature">
-                        <strong>Elegant salon visuals</strong>
-                        <span>Bring salon details to life with sharp layout and luxury styling.</span>
-                      </div>
-                      <div className="hero-feature">
-                        <strong>Easy management</strong>
-                        <span>Keep seats, services, and staff organized with beautiful panels.</span>
-                      </div>
-                      <div className="hero-feature">
-                        <strong>Client-ready brand</strong>
-                        <span>Present your salon like a high-end studio with a refined hero view.</span>
-                      </div>
-                    </div>
-                  </div>
-                  <div className="salon-hero-image" aria-hidden="true">
-                    <div className="hero-image-overlay">
-                      <span className="hero-image-label">Signature salon</span>
-                      <div className="hero-image-card">
-                        <p>Feel the atmosphere of a premium beauty studio with a calm, welcoming aesthetic.</p>
-                      </div>
-                    </div>
-                  </div>
-                </section>
-
-                {/* Create/Edit Salon Form */}
-                <section className="panel" aria-labelledby="salon-create-title">
+              <div className="dashboard-grid">
+                <section className="panel">
                   <div className="section-header">
                     <div>
-                      <h2 id="salon-create-title">{editingSalonId ? 'Edit salon' : 'Create a salon'}</h2>
-                      <p className="page-description">
-                        {editingSalonId ? 'Update your salon details and photos.' : 'Add a new salon profile with business and contact details.'}
-                      </p>
+                      <h2>Add New Salon</h2>
+                      <p className="panel-subtitle">Create a polished salon profile with contact and location details.</p>
                     </div>
-                    {editingSalonId && (
-                      <button type="button" className="secondary" onClick={cancelSalonEdit}>
-                        Cancel Edit
-                      </button>
-                    )}
                   </div>
 
-                  <form onSubmit={editingSalonId ? handleSalonUpdate : handleSalonSubmit} className="form-grid">
+                  <form onSubmit={handleCreateSalon} className="form-grid">
                     <label>
-                      Salon name
-                      <input name="name" type="text" value={salonForm.name} onChange={handleSalonChange} required aria-label="Salon name" />
+                      Salon Name
+                      <input name="name" type="text" value={salonForm.name} onChange={handleSalonChange} placeholder="Lumière Hair Studio" required />
                     </label>
                     <label>
-                      Public phone
-                      <input name="phoneNumber" type="tel" value={salonForm.phoneNumber} onChange={handleSalonChange} required aria-label="Public phone" />
+                      Phone
+                      <input name="phoneNumber" type="text" value={salonForm.phoneNumber} onChange={handleSalonChange} placeholder="+91 98765 43210" required />
                     </label>
                     <label>
                       Address
-                      <input name="address" type="text" value={salonForm.address} onChange={handleSalonChange} required aria-label="Address" />
+                      <input name="address" type="text" value={salonForm.address} onChange={handleSalonChange} placeholder="12 Beauty Lane" required />
                     </label>
                     <label>
                       City
-                      <input name="city" type="text" value={salonForm.city} onChange={handleSalonChange} required aria-label="City" />
+                      <input name="city" type="text" value={salonForm.city} onChange={handleSalonChange} placeholder="Mumbai" required />
                     </label>
                     <label>
                       State
-                      <input name="state" type="text" value={salonForm.state} onChange={handleSalonChange} required aria-label="State" />
+                      <input name="state" type="text" value={salonForm.state} onChange={handleSalonChange} placeholder="Maharashtra" required />
                     </label>
                     <label>
                       Pincode
-                      <input name="pincode" type="text" value={salonForm.pincode} onChange={handleSalonChange} required aria-label="Pincode" />
+                      <input name="pincode" type="text" value={salonForm.pincode} onChange={handleSalonChange} placeholder="400001" required />
                     </label>
                     <label className="full-width">
                       Description
-                      <textarea name="description" value={salonForm.description} onChange={handleSalonChange} rows="4" aria-label="Salon description" />
+                      <textarea name="description" value={salonForm.description} onChange={handleSalonChange} rows="3" placeholder="Describe your salon services and ambiance..." />
                     </label>
-                    <label>
-                      Logo
-                      <input name="logo" type="file" accept="image/*" onChange={handleSalonChange} aria-label="Upload logo" />
-                    </label>
-                    <label>
-                      Banner
-                      <input name="banner" type="file" accept="image/*" onChange={handleSalonChange} aria-label="Upload banner" />
-                    </label>
-                    <label className="full-width">
-                      Photos
-                      <input name="photos" type="file" accept="image/*" multiple onChange={handleSalonChange} aria-label="Upload photos" />
-                    </label>
-                    <button type="submit" className="primary" disabled={submitting}>
-                      {submitting ? (editingSalonId ? 'Updating salon…' : 'Creating salon…') : (editingSalonId ? 'Update Salon' : 'Create Salon')}
+                    <button type="submit" className="primary full-width" disabled={submitting}>
+                      {submitting ? 'Creating Salon...' : 'Create Salon Profile'}
                     </button>
                   </form>
                 </section>
 
-                {/* Existing salons list */}
-                <section className="panel" aria-labelledby="salon-list-title">
+                <section className="section-card">
                   <div className="section-header">
                     <div>
-                      <h2 id="salon-list-title">Existing salons</h2>
-                      <p className="page-description">Select a salon to manage seats, services, and employees.</p>
+                      <h2>Your Salons</h2>
+                      <p className="panel-subtitle">{salons.length ? `${salons.length} salon${salons.length > 1 ? 's' : ''} in your portfolio` : 'No salons yet — add your first one'}</p>
                     </div>
-                    <button type="button" className="secondary" onClick={loadSalons} disabled={loadingSalons}>
-                      Refresh salons
-                    </button>
                   </div>
 
-                  {loadingSalons ? (
-                    <p>Loading salons…</p>
-                  ) : salons.length === 0 ? (
-                    <p>No salons found. Create one above.</p>
-                  ) : (
-                    <div className="salon-list">
-                      {salons.map((salon) => (
+                  <div className="salon-list">
+                    {loadingSalons ? (
+                      <div className="empty-state">Loading salons...</div>
+                    ) : salons.length ? (
+                      salons.map((salon) => (
                         <article key={salon.id} className="salon-card">
-                          <div>
-                            <strong>{salon.name}</strong>
-                            <p>{salon.address}, {salon.city}, {salon.state} {salon.pincode}</p>
-                            <p>{salon.phoneNumber}</p>
-                            {salon.description && <p>{salon.description}</p>}
+                          <div className="salon-card-top">
+                            <div className="salon-icon">{salon.name?.charAt(0)?.toUpperCase() || 'S'}</div>
+                            <span className="status-badge">Active</span>
                           </div>
-                          <div className="card-actions">
-                            {user && salon.ownerId && Number(user.id) === Number(salon.ownerId) ? (
-                              <>
-                                <button type="button" className="secondary" onClick={() => handleSalonSelect(salon)}>
-                                  Manage Salon
-                                </button>
-                                <button type="button" className="secondary" onClick={() => handleSalonEdit(salon)}>
-                                  Edit
-                                </button>
-                                <button type="button" className="danger" onClick={() => handleSalonDelete(salon.id)}>
-                                  Delete
-                                </button>
-                              </>
-                            ) : (
-                              <>
-                                <button type="button" className="secondary" onClick={() => handleSalonSelect(salon)}>
-                                  View Salon
-                                </button>
-                                <button type="button" className="primary" onClick={() => { handleSalonSelect(salon); setManagementTab('appointments'); }}>
-                                  Book Appointment
-                                </button>
-                              </>
-                            )}
+                          <strong>{salon.name}</strong>
+                          <p>{salon.address || 'Address not set'}</p>
+                          <div className="salon-meta">
+                            <span>{salon.city || 'City'}</span>
+                            <span>{salon.phoneNumber || 'No phone'}</span>
                           </div>
                         </article>
-                      ))}
-                    </div>
-                  )}
+                      ))
+                    ) : (
+                      <div className="empty-state">
+                        <strong>No salons yet</strong>
+                        <p>Create your first salon profile to start building your brand portfolio.</p>
+                      </div>
+                    )}
+                  </div>
                 </section>
+              </div>
 
-                {/* Salon Management Panel */}
-                {selectedSalon && (
-                  <section className="panel" aria-labelledby="manage-salon-title">
-                    <div className="section-header">
-                      <div>
-                        <h2 id="manage-salon-title">Manage {selectedSalon.name}</h2>
-                        <p className="page-description">{selectedSalon.address}, {selectedSalon.city}</p>
-                      </div>
-                    </div>
+              {status && <p className="feedback success">{status}</p>}
+              {error && <p className="feedback error">{error}</p>}
+            </section>
+          </div>
+        ) : (
+          <section className="auth-card">
+            <div className="auth-visual">
+              <span className="hero-eyebrow">Luxury Studio</span>
+              <h1 className="page-title">Salon App</h1>
+              <p className="page-description">
+                Sign in to access your professional salon dashboard — manage locations, services, and your brand identity.
+              </p>
+              <ul className="auth-features">
+                <li>Elegant salon portfolio management</li>
+                <li>Client-ready profile presentation</li>
+                <li>Secure owner workspace</li>
+              </ul>
+            </div>
 
-                    <div className="management-tabs">
-                      <button
-                        type="button"
-                        className={managementTab === 'seats' ? 'management-tab active' : 'management-tab'}
-                        onClick={() => setManagementTab('seats')}
-                      >
-                        Seats
-                      </button>
-                      <button
-                        type="button"
-                        className={managementTab === 'services' ? 'management-tab active' : 'management-tab'}
-                        onClick={() => setManagementTab('services')}
-                      >
-                        Services
-                      </button>
-                      {user && selectedSalon && Number(user.id) === Number(selectedSalon.ownerId) && (
-                        <button
-                          type="button"
-                          className={managementTab === 'employees' ? 'management-tab active' : 'management-tab'}
-                          onClick={() => setManagementTab('employees')}
-                        >
-                          Employees
-                        </button>
-                      )}
-                      <button
-                        type="button"
-                        className={managementTab === 'appointments' ? 'management-tab active' : 'management-tab'}
-                        onClick={() => setManagementTab('appointments')}
-                      >
-                        Appointments
-                      </button>
-                    </div>
+            <div className="auth-panel">
+              <div className="tab-list auth-tabs">
+                <button type="button" className={mode === 'register' ? 'tab active' : 'tab'} onClick={() => handleModeChange('register')}>
+                  Register
+                </button>
+                <button type="button" className={mode === 'login' ? 'tab active' : 'tab'} onClick={() => handleModeChange('login')}>
+                  Login
+                </button>
+              </div>
 
-                    {managementTab === 'seats' && (
-                      <div className="section-card" aria-labelledby="seat-management-title">
-                        <div className="section-header">
-                          <div>
-                            <h3 id="seat-management-title">Seats</h3>
-                          </div>
-                          <button type="button" className="secondary" onClick={() => handleSalonSelect(selectedSalon)} disabled={loadingSeats}>
-                            Reload Seats
-                          </button>
-                        </div>
+              <h2>{mode === 'register' ? 'Create your account' : 'Welcome back'}</h2>
+              <p className="panel-subtitle">{mode === 'register' ? 'Start managing your salon business today.' : 'Sign in to continue to your dashboard.'}</p>
 
-                        {user && selectedSalon && Number(user.id) === Number(selectedSalon.ownerId) && (
-                          <form onSubmit={handleSeatSubmit} className="form-grid">
-                            <label>
-                              Seat name
-                              <input name="name" type="text" value={seatForm.name} onChange={handleSeatChange} required aria-label="Seat name" />
-                            </label>
-                            <label>
-                              Description
-                              <input name="description" type="text" value={seatForm.description} onChange={handleSeatChange} aria-label="Seat description" />
-                            </label>
-                            <label className="checkbox-label full-width">
-                              <input name="isActive" type="checkbox" checked={seatForm.isActive} onChange={handleSeatChange} aria-label="Seat active status" />
-                              Active
-                            </label>
-                            <button type="submit" className="primary" disabled={submitting}>
-                              {submitting ? 'Adding seat…' : 'Add Seat'}
-                            </button>
-                          </form>
-                        )}
-
-                        {loadingSeats ? (
-                          <p>Loading seats…</p>
-                        ) : seats.length === 0 ? (
-                          <p>No seats found for this salon.</p>
-                        ) : (
-                          <div className="management-list">
-                            {seats.map((seat) => (
-                              <article key={seat.id} className="seat-card">
-                                <div>
-                                  <strong>{seat.name}</strong>
-                                  <p>{seat.description || 'No description'}</p>
-                                  <span className="status-badge">{seat.isActive ? 'Active' : 'Inactive'}</span>
-                                </div>
-                                <div className="card-actions">
-                                  {user && selectedSalon && Number(user.id) === Number(selectedSalon.ownerId) ? (
-                                    <>
-                                      <button type="button" className="secondary" onClick={() => handleSeatToggle(seat)}>
-                                        {seat.isActive ? 'Disable' : 'Enable'}
-                                      </button>
-                                      <button type="button" className="danger" onClick={() => handleSeatDelete(seat.id)}>
-                                        Delete
-                                      </button>
-                                    </>
-                                  ) : (
-                                    <button type="button" className="primary" onClick={() => { setAppointmentForm((f) => ({ ...f, seatId: seat.id })); setManagementTab('appointments'); }}>
-                                      Book
-                                    </button>
-                                  )}
-                                </div>
-                              </article>
-                            ))}
-                          </div>
-                        )}
-                      </div>
-                    )}
-
-                    {managementTab === 'services' && (
-                      <div className="section-card" aria-labelledby="service-management-title">
-                        <div className="section-header">
-                          <div>
-                            <h3 id="service-management-title">Services</h3>
-                          </div>
-                          <button type="button" className="secondary" onClick={() => handleSalonSelect(selectedSalon)} disabled={loadingServices}>
-                            Reload Services
-                          </button>
-                        </div>
-
-                        {user && selectedSalon && Number(user.id) === Number(selectedSalon.ownerId) && (
-                          <form onSubmit={editingServiceId ? handleServiceUpdate : handleServiceSubmit} className="form-grid">
-                            <div className="form-header full-width">
-                              <h4>{editingServiceId ? 'Edit Service' : 'Add New Service'}</h4>
-                              {editingServiceId && (
-                                <button type="button" className="secondary" onClick={cancelServiceEdit}>
-                                  Cancel Edit
-                                </button>
-                              )}
-                            </div>
-                            <label>
-                              Service name
-                              <input name="service_name" type="text" value={serviceForm.service_name} onChange={handleServiceChange} required aria-label="Service name" />
-                            </label>
-                            <label>
-                              Duration (minutes)
-                              <input name="duration_minutes" type="number" value={serviceForm.duration_minutes} onChange={handleServiceChange} required aria-label="Service duration" />
-                            </label>
-                            <label>
-                              Price
-                              <input name="price" type="number" step="0.01" value={serviceForm.price} onChange={handleServiceChange} required aria-label="Service price" />
-                            </label>
-                            <label>
-                              Status
-                              <select name="status" value={serviceForm.status} onChange={handleServiceChange} aria-label="Service status">
-                                <option value="active">Active</option>
-                                <option value="inactive">Inactive</option>
-                              </select>
-                            </label>
-                            <label className="full-width">
-                              Description
-                              <input name="description" type="text" value={serviceForm.description} onChange={handleServiceChange} aria-label="Service description" />
-                            </label>
-                            <button type="submit" className="primary" disabled={submitting}>
-                              {submitting ? (editingServiceId ? 'Updating service…' : 'Adding service…') : (editingServiceId ? 'Update Service' : 'Add Service')}
-                            </button>
-                          </form>
-                        )}
-
-                        {loadingServices ? (
-                          <p>Loading services…</p>
-                        ) : services.length === 0 ? (
-                          <p>No services found for this salon.</p>
-                        ) : (
-                          <div className="management-list">
-                            {services.map((service) => (
-                              <article key={service.id} className="seat-card">
-                                <div>
-                                  <strong>{service.service_name}</strong>
-                                  <p>{service.description || 'No description'}</p>
-                                  <p>Duration: {service.duration_minutes} mins</p>
-                                  <p>Price: ${service.price}</p>
-                                  <span className="status-badge">{service.status}</span>
-                                </div>
-                                <div className="card-actions">
-                                  {user && selectedSalon && Number(user.id) === Number(selectedSalon.ownerId) ? (
-                                    <>
-                                      <button type="button" className="secondary" onClick={() => handleServiceEdit(service)}>
-                                        Edit
-                                      </button>
-                                      <button type="button" className="secondary" onClick={() => handleServiceToggle(service)}>
-                                        Set {service.status === 'active' ? 'Inactive' : 'Active'}
-                                      </button>
-                                      <button type="button" className="danger" onClick={() => handleServiceDelete(service.id)}>
-                                        Delete
-                                      </button>
-                                    </>
-                                  ) : null}
-                                </div>
-                              </article>
-                            ))}
-                          </div>
-                        )}
-                      </div>
-                    )}
-
-                    {managementTab === 'employees' && user && selectedSalon && Number(user.id) === Number(selectedSalon.ownerId) && (
-                      <div className="section-card" aria-labelledby="employee-management-title">
-                        <div className="section-header">
-                          <div>
-                            <h3 id="employee-management-title">Employees</h3>
-                          </div>
-                          <button type="button" className="secondary" onClick={() => handleSalonSelect(selectedSalon)} disabled={loadingEmployees}>
-                            Reload Employees
-                          </button>
-                        </div>
-
-                        <form onSubmit={handleEmployeeSubmit} className="form-grid">
-                          <label>
-                            Name
-                            <input name="name" type="text" value={employeeForm.name} onChange={handleEmployeeChange} required aria-label="Employee name" />
-                          </label>
-                          <label>
-                            Role
-                            <input name="role" type="text" value={employeeForm.role} onChange={handleEmployeeChange} required aria-label="Employee role" />
-                          </label>
-                          <label>
-                            Phone
-                            <input name="phone" type="tel" value={employeeForm.phone} onChange={handleEmployeeChange} required aria-label="Employee phone" />
-                          </label>
-                          <label>
-                            Experience
-                            <input name="experience" type="text" value={employeeForm.experience} onChange={handleEmployeeChange} aria-label="Employee experience" />
-                          </label>
-                          <button type="submit" className="primary" disabled={submitting}>
-                            {submitting ? (editingEmployeeId ? 'Updating employee…' : 'Saving employee…') : (editingEmployeeId ? 'Update Employee' : 'Add Employee')}
-                          </button>
-                        </form>
-
-                        {loadingEmployees ? (
-                          <p>Loading employees…</p>
-                        ) : employees.length === 0 ? (
-                          <p>No employees found for this salon.</p>
-                        ) : (
-                          <div className="management-list">
-                            {employees.map((employee) => (
-                              <article key={employee.id} className="seat-card">
-                                <div>
-                                  <strong>{employee.name}</strong>
-                                  <p>{employee.role} • {employee.phone}</p>
-                                  <p>{employee.experience || 'No experience details'}</p>
-                                </div>
-                                <div className="card-actions">
-                                  <button type="button" className="secondary" onClick={() => handleEmployeeEdit(employee)}>
-                                    Edit
-                                  </button>
-                                  <button type="button" className="danger" onClick={() => handleEmployeeDelete(employee.id)}>
-                                    Delete
-                                  </button>
-                                </div>
-                              </article>
-                            ))}
-                          </div>
-                        )}
-                      </div>
-                    )}
-
-                    {managementTab === 'appointments' && (
-                      <div className="appointment-management">
-                        <div className="section-header">
-                          <h3>Book Appointment</h3>
-                        </div>
-
-                        <form onSubmit={handleAppointmentSubmit} className="service-form">
-                          <div className="form-grid">
-                            <label>
-                              Select Seat
-                              <select name="seatId" value={appointmentForm.seatId} onChange={handleAppointmentChange} required>
-                                <option value="">Choose a seat</option>
-                                {seats.map((seat) => (
-                                  <option key={seat.id} value={seat.id}>
-                                    {seat.name}
-                                  </option>
-                                ))}
-                              </select>
-                            </label>
-                            <label>
-                              Appointment Date
-                              <input name="date" type="date" value={appointmentForm.date} onChange={handleAppointmentChange} required />
-                            </label>
-                            <label>
-                              Start Time
-                              <input name="startTime" type="time" value={appointmentForm.startTime} onChange={handleAppointmentChange} required />
-                            </label>
-                            <label>
-                              Customer Name
-                              <input name="customerName" type="text" value={appointmentForm.customerName} onChange={handleAppointmentChange} required />
-                            </label>
-                            <label>
-                              Customer Phone
-                              <input name="customerPhone" type="tel" value={appointmentForm.customerPhone} onChange={handleAppointmentChange} required />
-                            </label>
-                            <label>
-                              Customer Email
-                              <input name="customerEmail" type="email" value={appointmentForm.customerEmail} onChange={handleAppointmentChange} />
-                            </label>
-                          </div>
-                          <button type="submit" className="primary" disabled={submitting}>
-                            {submitting ? 'Booking appointment…' : 'Book Appointment'}
-                          </button>
-                        </form>
-                      </div>
-                    )}
-                  </section>
+              <form onSubmit={handleAuthSubmit} className="form-grid auth-form">
+                {mode === 'register' && (
+                  <>
+                    <label>
+                      Full Name
+                      <input name="name" type="text" value={form.name} onChange={handleAuthChange} placeholder="Your name" required />
+                    </label>
+                    <label>
+                      Phone
+                      <input name="phone" type="text" value={form.phone} onChange={handleAuthChange} placeholder="Phone number" required />
+                    </label>
+                  </>
                 )}
-              </>
-            )}
+                <label className={mode === 'login' ? 'full-width' : ''}>
+                  Email
+                  <input name="email" type="email" value={form.email} onChange={handleAuthChange} placeholder="you@salon.com" required />
+                </label>
+                <label className="full-width">
+                  Password
+                  <input name="password" type="password" value={form.password} onChange={handleAuthChange} placeholder="••••••••" required />
+                </label>
+                <button type="submit" className="primary full-width" disabled={submitting}>
+                  {submitting ? 'Please wait...' : mode === 'register' ? 'Create Account' : 'Sign In'}
+                </button>
+              </form>
 
-            {status && <div className="feedback success" role="status">{status}</div>}
-            {error && <div className="feedback error" role="alert">{error}</div>}
-          </main>
-        </div>
-      </div>
+              {status && <p className="feedback success">{status}</p>}
+              {error && <p className="feedback error">{error}</p>}
+            </div>
+          </section>
+        )}
+      </main>
     </div>
   )
 }

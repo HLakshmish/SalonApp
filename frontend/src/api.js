@@ -191,3 +191,29 @@ export function getAvailability(seatId, date) {
 export function getSalonAvailability(salonId) {
   return request(`/salons/${salonId}/seats-availability`)
 }
+
+export function getMyAppointments() {
+  return request('/appointments/me')
+}
+
+export function getSalonAppointments(salonId) {
+  return request(`/appointments/salon/${salonId}`)
+}
+
+export function getOwnerSalonsAppointments() {
+  return request('/appointments/owner/salons')
+}
+
+export function updateSeat(id, payload) {
+  return request(`/seats/${id}`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload),
+  })
+}
+
+export function getAppointmentsPublic(params) {
+  const query = new URLSearchParams(params).toString()
+  return request(`/appointments/my-appointments?${query}`)
+}
+

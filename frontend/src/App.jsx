@@ -27,6 +27,8 @@ import {
   getAppointmentsPublic,
   getSalonAppointments,
 } from './api'
+import { Icon, SalonInitials } from './Icons'
+import { LanguageSwitcher, useTranslation } from './i18n/LanguageContext'
 import './App.css'
 
 const initialRegister = { name: '', email: '', phone: '', password: '' }
@@ -60,6 +62,7 @@ const initialAppointment = {
 }
 
 function App() {
+  const { t } = useTranslation()
   const [mode, setMode] = useState('register')
   const [form, setForm] = useState(initialRegister)
   const [salonForm, setSalonForm] = useState(initialSalon)
@@ -101,7 +104,7 @@ function App() {
       const result = await getMyAppointments()
       setAppointments(result || [])
     } catch (err) {
-      setError(err.message || 'Unable to fetch bookings')
+      setError(err.message || t('errFetchBookings'))
     } finally {
       setLoadingAppointments(false)
     }
@@ -110,7 +113,7 @@ function App() {
   const handleLookupSearch = async (e) => {
     e.preventDefault()
     if (!lookupEmail && !lookupPhone) {
-      setError('Please enter either an email or phone number to look up your appointments.')
+      setError(t('errLookupInput'))
       return
     }
     setSearchingAppointments(true)
@@ -123,12 +126,12 @@ function App() {
       const results = await getAppointmentsPublic(params)
       setLookupResults(results || [])
       if (!results || results.length === 0) {
-        setStatus('No appointments found for the provided details.')
+        setStatus(t('noAppointmentsFound'))
       } else {
-        setStatus(`Found ${results.length} appointment(s).`)
+        setStatus(t('appointmentsFound', { count: results.length }))
       }
     } catch (err) {
-      setError(err.message || 'Lookup failed')
+      setError(err.message || t('errLookupFailed'))
     } finally {
       setSearchingAppointments(false)
     }
@@ -164,7 +167,7 @@ function App() {
   const handleModeChange = (newMode) => {
     if (newMode === 'salon' && !user) {
       setMode('login')
-      setStatus('Please login first to access the salon dashboard.')
+      setStatus(t('loginFirst'))
       return
     }
     setMode(newMode)
@@ -240,7 +243,7 @@ function App() {
       setForm(mode === 'register' ? initialRegister : initialLogin)
       setMode('salon')
     } catch (err) {
-      setError(err.message || 'Request failed')
+      setError(err.message || t('errRequestFailed'))
     } finally {
       setSubmitting(false)
     }
@@ -252,7 +255,7 @@ function App() {
       const result = await getSalons()
       setSalons(result || [])
     } catch (err) {
-      setError(err.message || 'Unable to fetch salons')
+      setError(err.message || t('errFetchSalons'))
     } finally {
       setLoadingSalons(false)
     }
@@ -281,14 +284,14 @@ function App() {
       setSalonForm(initialSalon)
       loadSalons()
     } catch (err) {
-      setError(err.message || 'Salon creation failed')
+      setError(err.message || t('errSalonCreation'))
     } finally {
       setSubmitting(false)
     }
   }
 
   const handleSalonDelete = async (id) => {
-    if (!window.confirm('Delete this salon?')) return
+    if (!window.confirm(t('confirmDeleteSalon'))) return
     setError(null)
     setStatus(null)
     try {
@@ -302,7 +305,7 @@ function App() {
         setEmployees([])
       }
     } catch (err) {
-      setError(err.message || 'Delete failed')
+      setError(err.message || t('errDeleteFailed'))
     }
   }
 
@@ -345,12 +348,12 @@ function App() {
       salonForm.photos.forEach((photo) => formData.append('photos', photo))
 
       const result = await updateSalon(editingSalonId, formData)
-      setStatus(result.message || 'Salon updated successfully')
+      setStatus(result.message || t('salonUpdated'))
       setSalonForm(initialSalon)
       setEditingSalonId(null)
       loadSalons()
     } catch (err) {
-      setError(err.message || 'Salon update failed')
+      setError(err.message || t('errSalonUpdate'))
     } finally {
       setSubmitting(false)
     }
@@ -418,7 +421,7 @@ function App() {
         setAppointments([])
       }
     } catch (err) {
-      setError(err.message || 'Unable to load salon details')
+      setError(err.message || t('errLoadSalon'))
     } finally {
       setLoadingSeats(false)
       setLoadingServices(false)
@@ -430,7 +433,7 @@ function App() {
   const handleSeatSubmit = async (event) => {
     event.preventDefault()
     if (!selectedSalon) {
-      setError('Select a salon before adding seats')
+      setError(t('selectSalonSeats'))
       return
     }
     setStatus(null)
@@ -444,19 +447,19 @@ function App() {
         isActive: seatForm.isActive,
       }
       const result = await addSeat(selectedSalon.id, payload)
-      setStatus(result.message || 'Seat added successfully')
+      setStatus(result.message || t('seatAdded'))
       setSeatForm(initialSeat)
       const updatedSeats = await getSeatsBySalon(selectedSalon.id)
       setSeats(updatedSeats || [])
     } catch (err) {
-      setError(err.message || 'Seat creation failed')
+      setError(err.message || t('errSeatCreation'))
     } finally {
       setSubmitting(false)
     }
   }
 
   const handleSeatDelete = async (id) => {
-    if (!window.confirm('Delete this seat?')) return
+    if (!window.confirm(t('confirmDeleteSeat'))) return
     setError(null)
     setStatus(null)
     try {
@@ -464,7 +467,7 @@ function App() {
       setStatus(result.message)
       setSeats((current) => current.filter((seat) => seat.id !== id))
     } catch (err) {
-      setError(err.message || 'Seat delete failed')
+      setError(err.message || t('errSeatDelete'))
     }
   }
 
@@ -476,14 +479,14 @@ function App() {
       setStatus(result.message)
       setSeats((current) => current.map((item) => (item.id === seat.id ? { ...item, isActive: !item.isActive } : item)))
     } catch (err) {
-      setError(err.message || 'Seat update failed')
+      setError(err.message || t('errSeatUpdate'))
     }
   }
 
   const handleServiceSubmit = async (event) => {
     event.preventDefault()
     if (!selectedSalon) {
-      setError('Select a salon before adding services')
+      setError(t('selectSalonServices'))
       return
     }
     setStatus(null)
@@ -499,19 +502,19 @@ function App() {
         status: serviceForm.status,
       }
       const result = await addService(selectedSalon.id, payload)
-      setStatus(result.message || 'Service added successfully')
+      setStatus(result.message || t('serviceAdded'))
       setServiceForm(initialService)
       const updatedServices = await getServicesBySalon(selectedSalon.id)
       setServices(updatedServices || [])
     } catch (err) {
-      setError(err.message || 'Service creation failed')
+      setError(err.message || t('errServiceCreation'))
     } finally {
       setSubmitting(false)
     }
   }
 
   const handleServiceDelete = async (id) => {
-    if (!window.confirm('Delete this service?')) return
+    if (!window.confirm(t('confirmDeleteService'))) return
     setError(null)
     setStatus(null)
     try {
@@ -519,7 +522,7 @@ function App() {
       setStatus(result.message)
       setServices((current) => current.filter((service) => service.id !== id))
     } catch (err) {
-      setError(err.message || 'Service delete failed')
+      setError(err.message || t('errServiceDelete'))
     }
   }
 
@@ -532,7 +535,7 @@ function App() {
       setStatus(result.message)
       setServices((current) => current.map((item) => (item.id === service.id ? { ...item, status: nextStatus } : item)))
     } catch (err) {
-      setError(err.message || 'Service status update failed')
+      setError(err.message || t('errServiceStatus'))
     }
   }
 
@@ -565,13 +568,13 @@ function App() {
         status: serviceForm.status,
       }
       const result = await editService(editingServiceId, payload)
-      setStatus(result.message || 'Service updated successfully')
+      setStatus(result.message || t('serviceUpdated'))
       setServiceForm(initialService)
       setEditingServiceId(null)
       const updatedServices = await getServicesBySalon(selectedSalon.id)
       setServices(updatedServices || [])
     } catch (err) {
-      setError(err.message || 'Service update failed')
+      setError(err.message || t('errServiceUpdate'))
     } finally {
       setSubmitting(false)
     }
@@ -587,7 +590,7 @@ function App() {
   const handleEmployeeSubmit = async (event) => {
     event.preventDefault()
     if (!selectedSalon) {
-      setError('Select a salon before adding employees')
+      setError(t('selectSalonEmployees'))
       return
     }
     setStatus(null)
@@ -605,20 +608,20 @@ function App() {
         ? await updateEmployee(editingEmployeeId, payload)
         : await addEmployee(selectedSalon.id, payload)
 
-      setStatus(result.message || 'Employee saved successfully')
+      setStatus(result.message || t('employeeSaved'))
       setEmployeeForm(initialEmployee)
       setEditingEmployeeId(null)
       const updatedEmployees = await getEmployeesBySalon(selectedSalon.id)
       setEmployees(updatedEmployees || [])
     } catch (err) {
-      setError(err.message || 'Employee save failed')
+      setError(err.message || t('errEmployeeSave'))
     } finally {
       setSubmitting(false)
     }
   }
 
   const handleEmployeeDelete = async (id) => {
-    if (!window.confirm('Delete this employee?')) return
+    if (!window.confirm(t('confirmDeleteEmployee'))) return
     setError(null)
     setStatus(null)
     try {
@@ -626,7 +629,7 @@ function App() {
       setStatus(result.message)
       setEmployees((current) => current.filter((employee) => employee.id !== id))
     } catch (err) {
-      setError(err.message || 'Employee delete failed')
+      setError(err.message || t('errEmployeeDelete'))
     }
   }
 
@@ -659,11 +662,11 @@ function App() {
   const handleAppointmentSubmit = async (event) => {
     event.preventDefault()
     if (!selectedSalon) {
-      setError('Select a salon before booking appointment')
+      setError(t('selectSalonBooking'))
       return
     }
     if (appointmentForm.serviceIds.length === 0) {
-      setError('Please select at least one service to book')
+      setError(t('selectOneService'))
       return
     }
     setStatus(null)
@@ -685,12 +688,12 @@ function App() {
         customerAddress: appointmentForm.customerAddress,
       }
       const result = await bookAppointment(payload)
-      setStatus(result.message || 'Appointment booked successfully!')
+      setStatus(result.message || t('appointmentBooked'))
       setAppointmentForm(initialAppointment)
       setSeatAvailability({})
       loadPersonalAppointments()
     } catch (err) {
-      setError(err.message || 'Appointment booking failed')
+      setError(err.message || t('errAppointmentBooking'))
     } finally {
       setSubmitting(false)
     }
@@ -700,36 +703,77 @@ function App() {
     <div className="app-shell">
       <div className="app-container">
         <div className="page-card">
-          <header className="page-header">
-            <div>
-              <h1 className="page-title">
-                {activeView === 'explore' 
-                  ? 'Salon Explorer' 
-                  : activeView === 'lookup' 
-                    ? 'My Bookings' 
-                    : user 
-                      ? 'Owner Dashboard' 
-                      : 'Owner Portal'}
-              </h1>
-              <p className="page-description">
-                {activeView === 'explore'
-                  ? 'Browse salons, view services and seats, and book your next appointment directly.'
-                  : activeView === 'lookup'
-                    ? 'Retrieve your booked appointments easily using your registered email address or phone number.'
-                    : user
-                      ? `Welcome back, ${user.name}. Manage your salons, seats, services, employees, and view user appointments.`
-                      : 'Sign in or register a salon owner account to start listing and managing your salon.'}
-              </p>
+          <header className="app-topbar">
+            <div className="topbar-brand">
+              <div className="brand-mark">
+                <Icon name="scissors" />
+              </div>
+              <div className="brand-text">
+                <span className="brand-name">Lumière</span>
+                <span className="brand-tagline">{t('brandTagline')}</span>
+              </div>
             </div>
-            {user && (
-              <div style={{ position: 'absolute', top: '3rem', right: '2.5rem', display: 'flex', alignItems: 'center', gap: '1rem', zIndex: 10 }}>
-                <span style={{ fontSize: '0.95rem', fontWeight: 600 }}>
-                  Logged in as owner: <strong style={{ color: 'var(--primary)' }}>{user.name}</strong>
-                </span>
+
+            <nav className="topbar-nav" aria-label="Main navigation">
+              <button
+                type="button"
+                className={activeView === 'explore' ? 'tab active' : 'tab'}
+                onClick={() => {
+                  setActiveView('explore')
+                  setSelectedSalon(null)
+                  setError(null)
+                  setStatus(null)
+                }}
+              >
+                <Icon name="compass" />
+                <span className="tab-label">{t('navExplore')}</span>
+              </button>
+              <button
+                type="button"
+                className={activeView === 'lookup' ? 'tab active' : 'tab'}
+                onClick={() => {
+                  setActiveView('lookup')
+                  setSelectedSalon(null)
+                  setError(null)
+                  setStatus(null)
+                  setLookupResults([])
+                }}
+              >
+                <Icon name="calendar" />
+                <span className="tab-label">{t('navBookings')}</span>
+              </button>
+              <button
+                type="button"
+                className={activeView === 'owner-portal' ? 'tab active' : 'tab'}
+                onClick={() => {
+                  setActiveView('owner-portal')
+                  setSelectedSalon(null)
+                  setError(null)
+                  setStatus(null)
+                  if (!user) {
+                    setMode('login')
+                    setForm(initialLogin)
+                  } else {
+                    setMode('salon')
+                  }
+                }}
+              >
+                <Icon name="layout" />
+                <span className="tab-label">{user ? t('navDashboard') : t('navOwnerPortal')}</span>
+              </button>
+            </nav>
+
+            <div className="topbar-end">
+              <LanguageSwitcher />
+              {user && (
+                <div className="topbar-actions">
+                <div className="user-badge">
+                  <div className="user-avatar">{user.name?.charAt(0)?.toUpperCase() || 'O'}</div>
+                  <span><strong>{user.name}</strong></span>
+                </div>
                 <button
                   type="button"
-                  className="secondary"
-                  style={{ minHeight: 'auto', padding: '0.5rem 1.25rem', borderRadius: '12px' }}
+                  className="secondary btn-compact"
                   onClick={() => {
                     localStorage.removeItem('salonAppToken')
                     localStorage.removeItem('salonAppUser')
@@ -744,60 +788,37 @@ function App() {
                     setServices([])
                     setEmployees([])
                     setAppointments([])
-                    setStatus('Logged out successfully')
+                    setStatus(t('loggedOut'))
                     setError(null)
                   }}
                 >
-                  Logout
+                  <Icon name="logout" />
+                  {t('logout')}
                 </button>
-              </div>
-            )}
+                </div>
+              )}
+            </div>
           </header>
 
-          <div className="tab-list">
-            <button
-              type="button"
-              className={activeView === 'explore' ? 'tab active' : 'tab'}
-              onClick={() => {
-                setActiveView('explore')
-                setSelectedSalon(null)
-                setError(null)
-                setStatus(null)
-              }}
-            >
-              Explore Salons
-            </button>
-            <button
-              type="button"
-              className={activeView === 'lookup' ? 'tab active' : 'tab'}
-              onClick={() => {
-                setActiveView('lookup')
-                setSelectedSalon(null)
-                setError(null)
-                setStatus(null)
-                setLookupResults([])
-              }}
-            >
-              My Appointments
-            </button>
-            <button
-              type="button"
-              className={activeView === 'owner-portal' ? 'tab active' : 'tab'}
-              onClick={() => {
-                setActiveView('owner-portal')
-                setSelectedSalon(null)
-                setError(null)
-                setStatus(null)
-                if (!user) {
-                  setMode('login')
-                  setForm(initialLogin)
-                } else {
-                  setMode('salon')
-                }
-              }}
-            >
-              {user ? 'Owner Dashboard' : 'Owner Portal'}
-            </button>
+          <div className="page-hero">
+            <h1 className="page-title">
+              {activeView === 'explore'
+                ? t('titleExplore')
+                : activeView === 'lookup'
+                  ? t('titleBookings')
+                  : user
+                    ? t('titleOwnerDashboard')
+                    : t('titleOwnerPortal')}
+            </h1>
+            <p className="page-description">
+              {activeView === 'explore'
+                ? t('descExplore')
+                : activeView === 'lookup'
+                  ? t('descBookings')
+                  : user
+                    ? t('descOwnerDashboard', { name: user.name })
+                    : t('descOwnerPortal')}
+            </p>
           </div>
 
           <main className="page-content">
@@ -808,27 +829,27 @@ function App() {
                     {/* Salon Showcase Hero section */}
                     <section className="salon-hero">
                       <div className="salon-hero-copy">
-                        <span className="hero-eyebrow">Signature Salons</span>
-                        <h2>Relax, Refresh, Rejuvenate</h2>
+                        <span className="hero-eyebrow">{t('heroEyebrow')}</span>
+                        <h2>{t('heroTitle')}</h2>
                         <p className="hero-copy">
-                          Discover top-tier salon and styling services in your area. Browse available seats, select services, and secure your booking in minutes.
+                          {t('heroCopy')}
                         </p>
                         <div className="hero-features">
                           <div className="hero-feature">
-                            <strong>Seamless Bookings</strong>
-                            <span>Find active seats and choose service combinations effortlessly.</span>
+                            <strong>{t('heroFeature1Title')}</strong>
+                            <span>{t('heroFeature1Desc')}</span>
                           </div>
                           <div className="hero-feature">
-                            <strong>Qualified Stylists</strong>
-                            <span>Experience high-end beauty services tailored to your aesthetic.</span>
+                            <strong>{t('heroFeature2Title')}</strong>
+                            <span>{t('heroFeature2Desc')}</span>
                           </div>
                         </div>
                       </div>
                       <div className="salon-hero-image" aria-hidden="true">
                         <div className="hero-image-overlay">
-                          <span className="hero-image-label">Luxury Studios</span>
+                          <span className="hero-image-label">{t('heroImageLabel')}</span>
                           <div className="hero-image-card">
-                            <p>Indulge in a premium beauty treatment that elevates your personal style.</p>
+                            <p>{t('heroImageCard')}</p>
                           </div>
                         </div>
                       </div>
@@ -838,50 +859,57 @@ function App() {
                     <section className="panel" aria-labelledby="salon-list-title">
                       <div className="section-header">
                         <div>
-                          <h2 id="salon-list-title">Explore Salons</h2>
-                          <p className="page-description">Choose a salon to view seats, services, and book your next appointment.</p>
+                          <h2 id="salon-list-title">{t('exploreSalons')}</h2>
+                          <p className="page-description">{t('exploreSalonsDesc')}</p>
                         </div>
                         <button type="button" className="secondary" onClick={loadSalons} disabled={loadingSalons}>
-                          Refresh salons
+                          {t('refreshSalons')}
                         </button>
                       </div>
 
                       {loadingSalons ? (
-                        <p>Loading salons…</p>
+                        <p>{t('loadingSalons')}</p>
                       ) : salons.length === 0 ? (
-                        <p>No salons available at this moment.</p>
+                        <p>{t('noSalons')}</p>
                       ) : (
                         <div className="salon-list">
                           {salons.map((salon) => {
                             const isOwner = user && salon.ownerId && Number(user.id) === Number(salon.ownerId)
                             return (
                               <article key={salon.id} className="salon-card">
-                                <div>
-                                  <strong>{salon.name}</strong>
-                                  <p>{salon.address}, {salon.city}, {salon.state} {salon.pincode}</p>
-                                  <p>{salon.phoneNumber}</p>
-                                  {salon.description && <p>{salon.description}</p>}
+                                <div className="salon-card-inner">
+                                  <div className="salon-card-header">
+                                    <SalonInitials name={salon.name} />
+                                    <div className="salon-card-body">
+                                      <strong>{salon.name}</strong>
+                                      <div className="salon-card-meta">
+                                        <span className="salon-meta-item"><Icon name="map-pin" /> {salon.city}, {salon.state}</span>
+                                        <span className="salon-meta-item"><Icon name="phone" /> {salon.phoneNumber}</span>
+                                      </div>
+                                      {salon.description && <p className="salon-card-desc">{salon.description}</p>}
+                                    </div>
+                                  </div>
                                 </div>
                                 <div className="card-actions">
                                   {isOwner ? (
                                     <>
                                       <button type="button" className="primary" onClick={() => handleSalonSelect(salon)}>
-                                        Manage Salon
+                                        {t('manageSalon')}
                                       </button>
                                       <button type="button" className="secondary" onClick={() => handleSalonEdit(salon)}>
-                                        Edit Details
+                                        {t('editDetails')}
                                       </button>
                                       <button type="button" className="danger" onClick={() => handleSalonDelete(salon.id)}>
-                                        Delete
+                                        {t('delete')}
                                       </button>
                                     </>
                                   ) : (
                                     <>
                                       <button type="button" className="secondary" onClick={() => handleSalonSelect(salon)}>
-                                        View Salon
+                                        {t('viewSalon')}
                                       </button>
                                       <button type="button" className="primary" onClick={() => { handleSalonSelect(salon); setManagementTab('appointments'); }}>
-                                        Book Appointment
+                                        {t('bookAppointment')}
                                       </button>
                                     </>
                                   )}
@@ -898,11 +926,11 @@ function App() {
                     {/* Back Button */}
                     <button
                       type="button"
-                      className="secondary"
+                      className="secondary btn-back"
                       onClick={() => setSelectedSalon(null)}
-                      style={{ width: 'fit-content', display: 'flex', alignItems: 'center', gap: '0.5rem', minHeight: '40px', padding: '0.25rem 1rem', borderRadius: '12px' }}
                     >
-                      ← Back to Salons
+                      <Icon name="arrow-left" />
+                      {t('backToSalons')}
                     </button>
 
                     {/* Salon Management / Details Panel */}
@@ -920,14 +948,14 @@ function App() {
                           className={managementTab === 'seats' ? 'management-tab active' : 'management-tab'}
                           onClick={() => setManagementTab('seats')}
                         >
-                          Seats
+                          {t('seats')}
                         </button>
                         <button
                           type="button"
                           className={managementTab === 'services' ? 'management-tab active' : 'management-tab'}
                           onClick={() => setManagementTab('services')}
                         >
-                          Services
+                          {t('services')}
                         </button>
                         {user && Number(user.id) === Number(selectedSalon.ownerId) && (
                           <button
@@ -935,7 +963,7 @@ function App() {
                             className={managementTab === 'employees' ? 'management-tab active' : 'management-tab'}
                             onClick={() => setManagementTab('employees')}
                           >
-                            Employees
+                            {t('employees')}
                           </button>
                         )}
                         <button
@@ -943,7 +971,7 @@ function App() {
                           className={managementTab === 'appointments' ? 'management-tab active' : 'management-tab'}
                           onClick={() => setManagementTab('appointments')}
                         >
-                          {user && Number(user.id) === Number(selectedSalon.ownerId) ? 'Booked Appointments' : 'Book Appointment'}
+                          {user && Number(user.id) === Number(selectedSalon.ownerId) ? t('bookedAppointments') : t('bookAppointment')}
                         </button>
                       </div>
 
@@ -951,37 +979,37 @@ function App() {
                         <div className="section-card" aria-labelledby="seat-management-title">
                           <div className="section-header">
                             <div>
-                              <h3 id="seat-management-title">Seats</h3>
+                              <h3 id="seat-management-title">{t('seats')}</h3>
                             </div>
                             <button type="button" className="secondary" onClick={() => handleSalonSelect(selectedSalon)} disabled={loadingSeats}>
-                              Reload Seats
+                              {t('reloadSeats')}
                             </button>
                           </div>
 
                           {user && Number(user.id) === Number(selectedSalon.ownerId) && (
                             <form onSubmit={handleSeatSubmit} className="form-grid">
                               <label>
-                                Seat name
-                                <input name="name" type="text" value={seatForm.name} onChange={handleSeatChange} required aria-label="Seat name" />
+                                {t('seatName')}
+                                <input name="name" type="text" value={seatForm.name} onChange={handleSeatChange} required aria-label={t('seatName')} />
                               </label>
                               <label>
-                                Description
-                                <input name="description" type="text" value={seatForm.description} onChange={handleSeatChange} aria-label="Seat description" />
+                                {t('description')}
+                                <input name="description" type="text" value={seatForm.description} onChange={handleSeatChange} aria-label={t('description')} />
                               </label>
                               <label className="checkbox-label full-width">
-                                <input name="isActive" type="checkbox" checked={seatForm.isActive} onChange={handleSeatChange} aria-label="Seat active status" />
-                                Active
+                                <input name="isActive" type="checkbox" checked={seatForm.isActive} onChange={handleSeatChange} aria-label={t('active')} />
+                                {t('active')}
                               </label>
                               <button type="submit" className="primary" disabled={submitting}>
-                                {submitting ? 'Adding seat…' : 'Add Seat'}
+                                {submitting ? t('addingSeat') : t('addSeat')}
                               </button>
                             </form>
                           )}
 
                           {loadingSeats ? (
-                            <p>Loading seats…</p>
+                            <p>{t('loadingSeats')}</p>
                           ) : seats.length === 0 ? (
-                            <p>No seats found for this salon.</p>
+                            <p>{t('noSeats')}</p>
                           ) : (
                             <div className="management-list">
                               {seats.map((seat) => {
@@ -990,17 +1018,17 @@ function App() {
                                   <article key={seat.id} className="seat-card">
                                     <div>
                                       <strong>{seat.name}</strong>
-                                      <p>{seat.description || 'No description'}</p>
-                                      <span className="status-badge">{seat.isActive ? 'Active' : 'Inactive'}</span>
+                                      <p>{seat.description || t('noDescription')}</p>
+                                      <span className="status-badge">{seat.isActive ? t('active') : t('inactive')}</span>
                                     </div>
                                     <div className="card-actions">
                                       {isOwner ? (
                                         <>
                                           <button type="button" className="secondary" onClick={() => handleSeatToggle(seat)}>
-                                            {seat.isActive ? 'Disable' : 'Enable'}
+                                            {seat.isActive ? t('disable') : t('enable')}
                                           </button>
                                           <button type="button" className="danger" onClick={() => handleSeatDelete(seat.id)}>
-                                            Delete
+                                            {t('delete')}
                                           </button>
                                         </>
                                       ) : (
@@ -1013,7 +1041,7 @@ function App() {
                                             setManagementTab('appointments')
                                           }}
                                         >
-                                          {seat.isActive ? 'Book Seat' : 'Unavailable'}
+                                          {seat.isActive ? t('bookSeat') : t('unavailable')}
                                         </button>
                                       )}
                                     </div>
@@ -1029,56 +1057,56 @@ function App() {
                         <div className="section-card" aria-labelledby="service-management-title">
                           <div className="section-header">
                             <div>
-                              <h3 id="service-management-title">Services</h3>
+                              <h3 id="service-management-title">{t('services')}</h3>
                             </div>
                             <button type="button" className="secondary" onClick={() => handleSalonSelect(selectedSalon)} disabled={loadingServices}>
-                              Reload Services
+                              {t('reloadServices')}
                             </button>
                           </div>
 
                           {user && Number(user.id) === Number(selectedSalon.ownerId) && (
                             <form onSubmit={editingServiceId ? handleServiceUpdate : handleServiceSubmit} className="form-grid">
-                              <div className="form-header full-width" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                <h4>{editingServiceId ? 'Edit Service' : 'Add New Service'}</h4>
+                              <div className="form-header full-width">
+                                <h4>{editingServiceId ? t('editService') : t('addNewService')}</h4>
                                 {editingServiceId && (
                                   <button type="button" className="secondary" onClick={cancelServiceEdit}>
-                                    Cancel Edit
+                                    {t('cancelEdit')}
                                   </button>
                                 )}
                               </div>
                               <label>
-                                Service name
-                                <input name="service_name" type="text" value={serviceForm.service_name} onChange={handleServiceChange} required aria-label="Service name" />
+                                {t('serviceName')}
+                                <input name="service_name" type="text" value={serviceForm.service_name} onChange={handleServiceChange} required aria-label={t('serviceName')} />
                               </label>
                               <label>
-                                Duration (minutes)
-                                <input name="duration_minutes" type="number" value={serviceForm.duration_minutes} onChange={handleServiceChange} required aria-label="Service duration" />
+                                {t('durationMinutes')}
+                                <input name="duration_minutes" type="number" value={serviceForm.duration_minutes} onChange={handleServiceChange} required aria-label={t('durationMinutes')} />
                               </label>
                               <label>
-                                Price
-                                <input name="price" type="number" step="0.01" value={serviceForm.price} onChange={handleServiceChange} required aria-label="Service price" />
+                                {t('price')}
+                                <input name="price" type="number" step="0.01" value={serviceForm.price} onChange={handleServiceChange} required aria-label={t('price')} />
                               </label>
                               <label>
-                                Status
-                                <select name="status" value={serviceForm.status} onChange={handleServiceChange} aria-label="Service status">
-                                  <option value="active">Active</option>
-                                  <option value="inactive">Inactive</option>
+                                {t('status')}
+                                <select name="status" value={serviceForm.status} onChange={handleServiceChange} aria-label={t('status')}>
+                                  <option value="active">{t('active')}</option>
+                                  <option value="inactive">{t('inactive')}</option>
                                 </select>
                               </label>
                               <label className="full-width">
-                                Description
-                                <input name="description" type="text" value={serviceForm.description} onChange={handleServiceChange} aria-label="Service description" />
+                                {t('description')}
+                                <input name="description" type="text" value={serviceForm.description} onChange={handleServiceChange} aria-label={t('description')} />
                               </label>
                               <button type="submit" className="primary" disabled={submitting}>
-                                {submitting ? (editingServiceId ? 'Updating service…' : 'Adding service…') : (editingServiceId ? 'Update Service' : 'Add Service')}
+                                {submitting ? (editingServiceId ? t('updatingService') : t('addingService')) : (editingServiceId ? t('updateService') : t('addService'))}
                               </button>
                             </form>
                           )}
 
                           {loadingServices ? (
-                            <p>Loading services…</p>
+                            <p>{t('loadingServices')}</p>
                           ) : services.length === 0 ? (
-                            <p>No services found for this salon.</p>
+                            <p>{t('noServices')}</p>
                           ) : (
                             <div className="management-list">
                               {services.map((service) => {
@@ -1087,24 +1115,24 @@ function App() {
                                   <article key={service.id} className="seat-card">
                                     <div>
                                       <strong>{service.service_name}</strong>
-                                      <p>{service.description || 'No description'}</p>
-                                      <p>Duration: {service.duration_minutes} mins</p>
-                                      <p>Price: ${service.price}</p>
-                                      <span className="status-badge" style={{ background: service.status === 'active' ? 'rgba(22, 163, 74, 0.12)' : 'rgba(107, 114, 128, 0.12)', color: service.status === 'active' ? '#166534' : '#4b5563' }}>
-                                        {service.status}
+                                      <p>{service.description || t('noDescription')}</p>
+                                      <p>{t('duration')}: {service.duration_minutes} {t('mins')}</p>
+                                      <p>{t('price')}: ${service.price}</p>
+                                      <span className={`status-badge ${service.status === 'active' ? 'active' : 'inactive'}`}>
+                                        {service.status === 'active' ? t('active') : t('inactive')}
                                       </span>
                                     </div>
                                     <div className="card-actions">
                                       {isOwner && (
                                         <>
                                           <button type="button" className="secondary" onClick={() => handleServiceEdit(service)}>
-                                            Edit
+                                            {t('edit')}
                                           </button>
                                           <button type="button" className="secondary" onClick={() => handleServiceToggle(service)}>
-                                            Set {service.status === 'active' ? 'Inactive' : 'Active'}
+                                            {service.status === 'active' ? t('setInactive') : t('setActive')}
                                           </button>
                                           <button type="button" className="danger" onClick={() => handleServiceDelete(service.id)}>
-                                            Delete
+                                            {t('delete')}
                                           </button>
                                         </>
                                       )}
@@ -1121,39 +1149,39 @@ function App() {
                         <div className="section-card" aria-labelledby="employee-management-title">
                           <div className="section-header">
                             <div>
-                              <h3 id="employee-management-title">Employees</h3>
+                              <h3 id="employee-management-title">{t('employees')}</h3>
                             </div>
                             <button type="button" className="secondary" onClick={() => handleSalonSelect(selectedSalon)} disabled={loadingEmployees}>
-                              Reload Employees
+                              {t('reloadEmployees')}
                             </button>
                           </div>
 
                           <form onSubmit={handleEmployeeSubmit} className="form-grid">
                             <label>
-                              Name
-                              <input name="name" type="text" value={employeeForm.name} onChange={handleEmployeeChange} required aria-label="Employee name" />
+                              {t('name')}
+                              <input name="name" type="text" value={employeeForm.name} onChange={handleEmployeeChange} required aria-label={t('name')} />
                             </label>
                             <label>
-                              Role
-                              <input name="role" type="text" value={employeeForm.role} onChange={handleEmployeeChange} required aria-label="Employee role" />
+                              {t('role')}
+                              <input name="role" type="text" value={employeeForm.role} onChange={handleEmployeeChange} required aria-label={t('role')} />
                             </label>
                             <label>
-                              Phone
-                              <input name="phone" type="tel" value={employeeForm.phone} onChange={handleEmployeeChange} required aria-label="Employee phone" />
+                              {t('phone')}
+                              <input name="phone" type="tel" value={employeeForm.phone} onChange={handleEmployeeChange} required aria-label={t('phone')} />
                             </label>
                             <label>
-                              Experience
-                              <input name="experience" type="text" value={employeeForm.experience} onChange={handleEmployeeChange} aria-label="Employee experience" />
+                              {t('experience')}
+                              <input name="experience" type="text" value={employeeForm.experience} onChange={handleEmployeeChange} aria-label={t('experience')} />
                             </label>
                             <button type="submit" className="primary" disabled={submitting}>
-                              {submitting ? (editingEmployeeId ? 'Updating employee…' : 'Saving employee…') : (editingEmployeeId ? 'Update Employee' : 'Add Employee')}
+                              {submitting ? (editingEmployeeId ? t('updatingEmployee') : t('savingEmployee')) : (editingEmployeeId ? t('updateEmployee') : t('addEmployee'))}
                             </button>
                           </form>
 
                           {loadingEmployees ? (
-                            <p>Loading employees…</p>
+                            <p>{t('loadingEmployees')}</p>
                           ) : employees.length === 0 ? (
-                            <p>No employees found for this salon.</p>
+                            <p>{t('noEmployees')}</p>
                           ) : (
                             <div className="management-list">
                               {employees.map((employee) => (
@@ -1161,14 +1189,14 @@ function App() {
                                   <div>
                                     <strong>{employee.name}</strong>
                                     <p>{employee.role} • {employee.phone}</p>
-                                    <p>{employee.experience || 'No experience details'}</p>
+                                    <p>{employee.experience || t('noExperience')}</p>
                                   </div>
                                   <div className="card-actions">
                                     <button type="button" className="secondary" onClick={() => handleEmployeeEdit(employee)}>
-                                      Edit
+                                      {t('edit')}
                                     </button>
                                     <button type="button" className="danger" onClick={() => handleEmployeeDelete(employee.id)}>
-                                      Delete
+                                      {t('delete')}
                                     </button>
                                   </div>
                                 </article>
@@ -1185,8 +1213,8 @@ function App() {
                             <div className="section-card" aria-labelledby="salon-appointments-title">
                               <div className="section-header">
                                 <div>
-                                  <h3 id="salon-appointments-title">Booked Appointments</h3>
-                                  <p className="page-description">Appointments booked by customers for your salon.</p>
+                                  <h3 id="salon-appointments-title">{t('bookedAppointments')}</h3>
+                                  <p className="page-description">{t('bookedAppointmentsDesc')}</p>
                                 </div>
                                 <button
                                   type="button"
@@ -1197,37 +1225,37 @@ function App() {
                                       const appts = await getSalonAppointments(selectedSalon.id)
                                       setAppointments(appts || [])
                                     } catch (e) {
-                                      setError(e.message || 'Failed to reload appointments')
+                                      setError(e.message || t('errReloadAppointments'))
                                     } finally {
                                       setLoadingAppointments(false)
                                     }
                                   }}
                                   disabled={loadingAppointments}
                                 >
-                                  Refresh Bookings
+                                  {t('refreshBookings')}
                                 </button>
                               </div>
 
                               {loadingAppointments ? (
-                                <p>Loading appointments…</p>
+                                <p>{t('loadingAppointments')}</p>
                               ) : appointments.length === 0 ? (
-                                <p>No appointments booked yet for this salon.</p>
+                                <p>{t('noAppointmentsSalon')}</p>
                               ) : (
                                 <div className="management-list">
                                   {appointments.map((appt) => (
                                     <article key={appt.id} className="seat-card">
-                                      <div style={{ display: 'grid', gap: '0.5rem' }}>
-                                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                      <div className="appointment-detail-grid">
+                                        <div className="appointment-detail-header">
                                           <strong>{appt.customerName} ({appt.customerGender})</strong>
-                                          <span className="status-badge" style={{ textTransform: 'capitalize' }}>{appt.status || 'scheduled'}</span>
+                                          <span className="status-badge">{appt.status || t('scheduled')}</span>
                                         </div>
-                                        <p><strong>Phone:</strong> {appt.customerPhone} | <strong>Email:</strong> {appt.customerEmail || 'N/A'}</p>
-                                        <p><strong>City:</strong> {appt.customerCity} | <strong>Address:</strong> {appt.customerAddress}</p>
-                                        <p><strong>Seat:</strong> {appt.seat?.name || 'Unknown Seat'}</p>
-                                        <p><strong>Time:</strong> {new Date(appt.startTime).toLocaleString()} - {new Date(appt.endTime).toLocaleTimeString()}</p>
+                                        <p><strong>{t('phoneLabel')}:</strong> {appt.customerPhone} | <strong>{t('emailLabel')}:</strong> {appt.customerEmail || t('na')}</p>
+                                        <p><strong>{t('cityLabel')}:</strong> {appt.customerCity} | <strong>{t('addressLabel')}:</strong> {appt.customerAddress}</p>
+                                        <p><strong>{t('seatLabel')}:</strong> {appt.seat?.name || t('unknownSeat')}</p>
+                                        <p><strong>{t('timeLabel')}:</strong> {new Date(appt.startTime).toLocaleString()} - {new Date(appt.endTime).toLocaleTimeString()}</p>
                                         <div>
-                                          <strong>Services:</strong>
-                                          <ul style={{ margin: '0.25rem 0 0', paddingLeft: '1.2rem', color: 'var(--text-muted)' }}>
+                                          <strong>{t('servicesLabel')}:</strong>
+                                          <ul className="services-list">
                                             {appt.services?.map((srv, idx) => (
                                               <li key={idx}>{srv.service_name} (${srv.price} • {srv.duration_minutes} mins)</li>
                                             ))}
@@ -1243,15 +1271,15 @@ function App() {
                             /* Customer booking form */
                             <div className="appointment-management section-card">
                               <div className="section-header">
-                                <h3>Book Appointment</h3>
+                                <h3>{t('bookAppointment')}</h3>
                               </div>
 
                               <form onSubmit={handleAppointmentSubmit} className="service-form">
                                 <div className="form-grid">
                                   <label>
-                                    Select Seat *
+                                    {t('selectSeat')}
                                     <select name="seatId" value={appointmentForm.seatId} onChange={handleAppointmentChange} required>
-                                      <option value="">Choose a seat</option>
+                                      <option value="">{t('chooseSeat')}</option>
                                       {seats.filter(s => s.isActive).map((seat) => (
                                         <option key={seat.id} value={seat.id}>
                                           {seat.name}
@@ -1261,54 +1289,54 @@ function App() {
                                   </label>
 
                                   <label>
-                                    Appointment Date *
+                                    {t('appointmentDate')}
                                     <input name="date" type="date" value={appointmentForm.date} onChange={handleAppointmentChange} required />
                                   </label>
 
                                   <label>
-                                    Start Time *
+                                    {t('startTime')}
                                     <input name="startTime" type="time" value={appointmentForm.startTime} onChange={handleAppointmentChange} required />
                                   </label>
 
                                   <label>
-                                    Customer Name *
+                                    {t('customerName')}
                                     <input name="customerName" type="text" value={appointmentForm.customerName} onChange={handleAppointmentChange} required />
                                   </label>
 
                                   <label>
-                                    Customer Phone *
+                                    {t('customerPhone')}
                                     <input name="customerPhone" type="tel" value={appointmentForm.customerPhone} onChange={handleAppointmentChange} required />
                                   </label>
 
                                   <label>
-                                    Customer Email *
+                                    {t('customerEmail')}
                                     <input name="customerEmail" type="email" value={appointmentForm.customerEmail} onChange={handleAppointmentChange} required />
                                   </label>
 
                                   <label>
-                                    Customer Gender *
+                                    {t('customerGender')}
                                     <select name="customerGender" value={appointmentForm.customerGender} onChange={handleAppointmentChange} required>
-                                      <option value="Male">Male</option>
-                                      <option value="Female">Female</option>
-                                      <option value="Other">Other</option>
+                                      <option value="Male">{t('male')}</option>
+                                      <option value="Female">{t('female')}</option>
+                                      <option value="Other">{t('other')}</option>
                                     </select>
                                   </label>
 
                                   <label>
-                                    Customer City *
+                                    {t('customerCity')}
                                     <input name="customerCity" type="text" value={appointmentForm.customerCity} onChange={handleAppointmentChange} required />
                                   </label>
 
                                   <label className="full-width">
-                                    Customer Address *
+                                    {t('customerAddress')}
                                     <input name="customerAddress" type="text" value={appointmentForm.customerAddress} onChange={handleAppointmentChange} required />
                                   </label>
 
                                   <div className="full-width">
-                                    <label>Select Services * (choose at least one)</label>
-                                    <div className="services-checkbox-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: '0.75rem', marginTop: '0.5rem' }}>
+                                    <label>{t('selectServices')}</label>
+                                    <div className="services-checkbox-grid">
                                       {services.filter(s => s.status === 'active').map((service) => (
-                                        <label key={service.id} className="checkbox-label" style={{ fontWeight: 'normal', cursor: 'pointer' }}>
+                                        <label key={service.id} className="checkbox-label">
                                           <input
                                             type="checkbox"
                                             value={service.id}
@@ -1321,8 +1349,8 @@ function App() {
                                     </div>
                                   </div>
                                 </div>
-                                <button type="submit" className="primary" disabled={submitting} style={{ marginTop: '1.5rem' }}>
-                                  {submitting ? 'Booking appointment…' : 'Book Appointment'}
+                                <button type="submit" className="primary full-width" disabled={submitting}>
+                                  {submitting ? t('bookingAppointment') : t('bookAppointment')}
                                 </button>
                               </form>
                             </div>
@@ -1338,65 +1366,65 @@ function App() {
             {activeView === 'lookup' && (
               <section className="panel" aria-labelledby="lookup-title">
                 <div>
-                  <h2 id="lookup-title">Look Up Your Appointments</h2>
+                  <h2 id="lookup-title">{t('lookupTitle')}</h2>
                   <p className="page-description">
-                    Enter your email address or phone number to retrieve the details of all your booked salon appointments.
+                    {t('lookupDesc')}
                   </p>
                 </div>
 
                 <form onSubmit={handleLookupSearch} className="form-grid">
                   <label>
-                    Email address
+                    {t('emailAddress')}
                     <input
                       name="lookupEmail"
                       type="email"
-                      placeholder="e.g. customer@example.com"
+                      placeholder={t('emailPlaceholder')}
                       value={lookupEmail}
                       onChange={(e) => setLookupEmail(e.target.value)}
-                      aria-label="Search by Email address"
+                      aria-label={t('emailAddress')}
                     />
                   </label>
 
                   <label>
-                    Phone number
+                    {t('phoneNumber')}
                     <input
                       name="lookupPhone"
                       type="tel"
-                      placeholder="e.g. +1234567890"
+                      placeholder={t('phonePlaceholder')}
                       value={lookupPhone}
                       onChange={(e) => setLookupPhone(e.target.value)}
-                      aria-label="Search by Phone number"
+                      aria-label={t('phoneNumber')}
                     />
                   </label>
 
-                  <button type="submit" className="primary full-width" disabled={searchingAppointments} style={{ gridColumn: '1 / -1' }}>
-                    {searchingAppointments ? 'Searching…' : 'Find Appointments'}
+                  <button type="submit" className="primary full-width" disabled={searchingAppointments}>
+                    {searchingAppointments ? t('searching') : t('findAppointments')}
                   </button>
                 </form>
 
                 {lookupResults.length > 0 && (
-                  <div className="lookup-results" style={{ marginTop: '1.5rem', display: 'grid', gap: '1.25rem' }}>
-                    <h3>Booking Results</h3>
+                  <div className="lookup-results">
+                    <h3>{t('bookingResults')}</h3>
                     {lookupResults.map((appt) => (
-                      <article key={appt.id} className="salon-card" style={{ background: 'linear-gradient(180deg, #ffffff 0%, #f9f5ff 100%)' }}>
-                        <div style={{ display: 'grid', gap: '0.5rem' }}>
-                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                            <strong>{appt.salon?.name || 'Salon'}</strong>
-                            <span className="status-badge" style={{ textTransform: 'capitalize' }}>{appt.status || 'scheduled'}</span>
+                      <article key={appt.id} className="salon-card lookup-card">
+                        <div className="salon-card-inner appointment-detail-grid">
+                          <div className="appointment-detail-header">
+                            <strong>{appt.salon?.name || t('salon')}</strong>
+                            <span className="status-badge">{appt.status || t('scheduled')}</span>
                           </div>
-                          <p><strong>Address:</strong> {appt.salon?.address}, {appt.salon?.city}</p>
-                          <p><strong>Seat:</strong> {appt.seat?.name || 'Unknown Seat'}</p>
-                          <p><strong>Date & Time:</strong> {new Date(appt.startTime).toLocaleString()} - {new Date(appt.endTime).toLocaleTimeString()}</p>
+                          <p><strong>{t('addressLabel')}:</strong> {appt.salon?.address}, {appt.salon?.city}</p>
+                          <p><strong>{t('seatLabel')}:</strong> {appt.seat?.name || t('unknownSeat')}</p>
+                          <p><strong>{t('dateTime')}:</strong> {new Date(appt.startTime).toLocaleString()} - {new Date(appt.endTime).toLocaleTimeString()}</p>
                           <div>
-                            <strong>Booked Services:</strong>
-                            <ul style={{ margin: '0.25rem 0 0', paddingLeft: '1.2rem', color: 'var(--text-muted)' }}>
+                            <strong>{t('bookedServices')}:</strong>
+                            <ul className="services-list">
                               {appt.services?.map((srv, idx) => (
                                 <li key={idx}>{srv.service_name} (${srv.price} • {srv.duration_minutes} mins)</li>
                               ))}
                             </ul>
                           </div>
-                          <div style={{ borderTop: '1px dashed var(--border)', paddingTop: '0.5rem', marginTop: '0.5rem', fontSize: '0.9rem', color: 'var(--text-muted)' }}>
-                            <strong>For:</strong> {appt.customerName} ({appt.customerPhone})
+                          <div className="customer-footer">
+                            <strong>{t('forLabel')}:</strong> {appt.customerName} ({appt.customerPhone})
                           </div>
                         </div>
                       </article>
@@ -1408,62 +1436,61 @@ function App() {
 
             {activeView === 'owner-portal' && !user && (
               <section className="panel" aria-labelledby="auth-title">
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem', borderBottom: '1px solid var(--border)', paddingBottom: '1rem' }}>
+                <div className="auth-header">
                   <div>
-                    <h2 id="auth-title">{mode === 'register' ? 'Register Salon Owner Account' : 'Salon Owner Login'}</h2>
+                    <span className="panel-label">{t('ownerAccess')}</span>
+                    <h2 id="auth-title">{mode === 'register' ? t('registerOwner') : t('ownerLogin')}</h2>
                     <p className="page-description">
                       {mode === 'register'
-                        ? 'Register a new owner account to start listing and managing salons.'
-                        : 'Sign in to access your owner dashboard.'}
+                        ? t('registerOwnerDesc')
+                        : t('ownerLoginDesc')}
                     </p>
                   </div>
-                  <div style={{ display: 'flex', gap: '0.5rem' }}>
+                  <div className="auth-toggle">
                     <button
                       type="button"
-                      className={mode === 'login' ? 'primary' : 'secondary'}
-                      style={{ minHeight: 'auto', padding: '0.5rem 1rem', borderRadius: '12px' }}
+                      className={mode === 'login' ? 'primary btn-compact' : 'secondary btn-compact'}
                       onClick={() => handleModeChange('login')}
                     >
-                      Login
+                      {t('login')}
                     </button>
                     <button
                       type="button"
-                      className={mode === 'register' ? 'primary' : 'secondary'}
-                      style={{ minHeight: 'auto', padding: '0.5rem 1rem', borderRadius: '12px' }}
+                      className={mode === 'register' ? 'primary btn-compact' : 'secondary btn-compact'}
                       onClick={() => handleModeChange('register')}
                     >
-                      Register
+                      {t('register')}
                     </button>
                   </div>
                 </div>
 
-                <form onSubmit={handleSubmit} className="form-grid" style={{ marginTop: '1rem' }}>
+                <form onSubmit={handleSubmit} className="form-grid">
                   {mode === 'register' && (
                     <label>
-                      Name
-                      <input name="name" type="text" value={form.name} onChange={handleChange} required aria-label="Name" />
+                      {t('name')}
+                      <input name="name" type="text" value={form.name} onChange={handleChange} required aria-label={t('name')} />
                     </label>
                   )}
 
                   <label>
-                    Email address
-                    <input name="email" type="email" value={form.email} onChange={handleChange} required aria-label="Email address" />
+                    {t('emailAddress')}
+                    <input name="email" type="email" value={form.email} onChange={handleChange} required aria-label={t('emailAddress')} />
                   </label>
 
                   {mode === 'register' && (
                     <label>
-                      Phone number
-                      <input name="phone" type="tel" value={form.phone} onChange={handleChange} required aria-label="Phone number" />
+                      {t('phoneNumber')}
+                      <input name="phone" type="tel" value={form.phone} onChange={handleChange} required aria-label={t('phoneNumber')} />
                     </label>
                   )}
 
                   <label>
-                    Password
-                    <input name="password" type="password" value={form.password} onChange={handleChange} required aria-label="Password" />
+                    {t('password')}
+                    <input name="password" type="password" value={form.password} onChange={handleChange} required aria-label={t('password')} />
                   </label>
 
-                  <button type="submit" className="primary full-width" disabled={submitting} style={{ gridColumn: '1 / -1' }}>
-                    {submitting ? 'Submitting…' : mode === 'register' ? 'Register account' : 'Login'}
+                  <button type="submit" className="primary full-width" disabled={submitting}>
+                    {submitting ? t('submitting') : mode === 'register' ? t('registerAccount') : t('login')}
                   </button>
                 </form>
               </section>
@@ -1471,96 +1498,175 @@ function App() {
 
             {activeView === 'owner-portal' && user && (
               <>
-                {/* Create/Edit Salon Form */}
+                <section className="dashboard-welcome" aria-label="Dashboard welcome">
+                  <div className="dashboard-welcome-copy">
+                    <span className="dashboard-welcome-eyebrow">{t('managementSuite')}</span>
+                    <h2>{t('goodDay', { name: user.name.split(' ')[0] })}</h2>
+                    <p>{t('dashboardWelcome')}</p>
+                  </div>
+                  <div className="dashboard-welcome-actions">
+                    <button type="button" className="primary btn-compact" onClick={() => document.getElementById('salon-create-title')?.scrollIntoView({ behavior: 'smooth' })}>
+                      <Icon name="plus" />
+                      {t('newSalon')}
+                    </button>
+                    <button type="button" className="secondary btn-compact" onClick={loadSalons} disabled={loadingSalons}>
+                      <Icon name="refresh" />
+                      {t('refresh')}
+                    </button>
+                  </div>
+                </section>
+
+                <div className="stats-grid">
+                  <div className="stat-card">
+                    <div className="stat-card-top">
+                      <div className="stat-icon"><Icon name="store" /></div>
+                      <span className="stat-trend">{t('portfolio')}</span>
+                    </div>
+                    <div className="stat-body">
+                      <h4>{t('salonsListed')}</h4>
+                      <div className="stat-value">
+                        {salons.filter((s) => s.ownerId && Number(s.ownerId) === Number(user.id)).length}
+                      </div>
+                    </div>
+                  </div>
+                  <div className="stat-card">
+                    <div className="stat-card-top">
+                      <div className="stat-icon"><Icon name="chair" /></div>
+                      <span className="stat-trend">{t('selected')}</span>
+                    </div>
+                    <div className="stat-body">
+                      <h4>{t('activeSalon')}</h4>
+                      <div className={`stat-value text ${selectedSalon ? '' : 'muted'}`}>
+                        {selectedSalon ? selectedSalon.name : t('noneSelected')}
+                      </div>
+                    </div>
+                  </div>
+                  <div className="stat-card">
+                    <div className="stat-card-top">
+                      <div className="stat-icon"><Icon name="calendar" /></div>
+                      <span className="stat-trend">{t('clients')}</span>
+                    </div>
+                    <div className="stat-body">
+                      <h4>{t('bookings')}</h4>
+                      <div className="stat-value">
+                        {selectedSalon ? appointments.length : 0}
+                      </div>
+                    </div>
+                  </div>
+                  <div className="stat-card">
+                    <div className="stat-card-top">
+                      <div className="stat-icon"><Icon name="sparkle" /></div>
+                      <span className="stat-trend">{t('menu')}</span>
+                    </div>
+                    <div className="stat-body">
+                      <h4>{t('services')}</h4>
+                      <div className="stat-value">
+                        {selectedSalon ? services.length : '—'}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
                 <section className="panel" aria-labelledby="salon-create-title">
                   <div className="section-header">
                     <div>
-                      <h2 id="salon-create-title">{editingSalonId ? 'Edit salon' : 'Create a salon'}</h2>
+                      <span className="panel-label">{editingSalonId ? t('updateProfile') : t('newListing')}</span>
+                      <h2 id="salon-create-title">{editingSalonId ? t('editSalon') : t('createSalon')}</h2>
                       <p className="page-description">
-                        {editingSalonId ? 'Update your salon details and photos.' : 'Add a new salon profile with business and contact details.'}
+                        {editingSalonId ? t('editSalonDesc') : t('createSalonDesc')}
                       </p>
                     </div>
                     {editingSalonId && (
                       <button type="button" className="secondary" onClick={cancelSalonEdit}>
-                        Cancel Edit
+                        {t('cancelEdit')}
                       </button>
                     )}
                   </div>
 
                   <form onSubmit={editingSalonId ? handleSalonUpdate : handleSalonSubmit} className="form-grid">
                     <label>
-                      Salon name
-                      <input name="name" type="text" value={salonForm.name} onChange={handleSalonChange} required aria-label="Salon name" />
+                      {t('salonName')}
+                      <input name="name" type="text" value={salonForm.name} onChange={handleSalonChange} required aria-label={t('salonName')} />
                     </label>
                     <label>
-                      Public phone
-                      <input name="phoneNumber" type="tel" value={salonForm.phoneNumber} onChange={handleSalonChange} required aria-label="Public phone" />
+                      {t('publicPhone')}
+                      <input name="phoneNumber" type="tel" value={salonForm.phoneNumber} onChange={handleSalonChange} required aria-label={t('publicPhone')} />
                     </label>
                     <label>
-                      Address
-                      <input name="address" type="text" value={salonForm.address} onChange={handleSalonChange} required aria-label="Address" />
+                      {t('address')}
+                      <input name="address" type="text" value={salonForm.address} onChange={handleSalonChange} required aria-label={t('address')} />
                     </label>
                     <label>
-                      City
-                      <input name="city" type="text" value={salonForm.city} onChange={handleSalonChange} required aria-label="City" />
+                      {t('city')}
+                      <input name="city" type="text" value={salonForm.city} onChange={handleSalonChange} required aria-label={t('city')} />
                     </label>
                     <label>
-                      State
-                      <input name="state" type="text" value={salonForm.state} onChange={handleSalonChange} required aria-label="State" />
+                      {t('state')}
+                      <input name="state" type="text" value={salonForm.state} onChange={handleSalonChange} required aria-label={t('state')} />
                     </label>
                     <label>
-                      Pincode
-                      <input name="pincode" type="text" value={salonForm.pincode} onChange={handleSalonChange} required aria-label="Pincode" />
+                      {t('pincode')}
+                      <input name="pincode" type="text" value={salonForm.pincode} onChange={handleSalonChange} required aria-label={t('pincode')} />
                     </label>
                     <label className="full-width">
-                      Description
-                      <textarea name="description" value={salonForm.description} onChange={handleSalonChange} rows="4" aria-label="Salon description" />
+                      {t('description')}
+                      <textarea name="description" value={salonForm.description} onChange={handleSalonChange} rows="4" aria-label={t('description')} />
                     </label>
                     <label>
-                      Logo
-                      <input name="logo" type="file" accept="image/*" onChange={handleSalonChange} aria-label="Upload logo" />
+                      {t('logo')}
+                      <input name="logo" type="file" accept="image/*" onChange={handleSalonChange} aria-label={t('logo')} />
                     </label>
                     <label>
-                      Banner
-                      <input name="banner" type="file" accept="image/*" onChange={handleSalonChange} aria-label="Upload banner" />
+                      {t('banner')}
+                      <input name="banner" type="file" accept="image/*" onChange={handleSalonChange} aria-label={t('banner')} />
                     </label>
                     <label className="full-width">
-                      Photos
-                      <input name="photos" type="file" accept="image/*" multiple onChange={handleSalonChange} aria-label="Upload photos" />
+                      {t('photos')}
+                      <input name="photos" type="file" accept="image/*" multiple onChange={handleSalonChange} aria-label={t('photos')} />
                     </label>
                     <button type="submit" className="primary" disabled={submitting}>
-                      {submitting ? (editingSalonId ? 'Updating salon…' : 'Creating salon…') : (editingSalonId ? 'Update Salon' : 'Create Salon')}
+                      {submitting ? (editingSalonId ? t('updatingSalon') : t('creatingSalon')) : (editingSalonId ? t('updateSalon') : t('createSalon'))}
                     </button>
                   </form>
                 </section>
 
-                {/* Owner's Salons list */}
                 <section className="panel" aria-labelledby="owner-salons-title">
                   <div className="section-header">
                     <div>
-                      <h2 id="owner-salons-title">My Salons</h2>
-                      <p className="page-description">Salons created by you. Select one to manage seats, services, employees, and view appointments.</p>
+                      <span className="panel-label">{t('yourPortfolio')}</span>
+                      <h2 id="owner-salons-title">{t('mySalons')}</h2>
+                      <p className="page-description">{t('mySalonsDesc')}</p>
                     </div>
-                    <button type="button" className="secondary" onClick={loadSalons} disabled={loadingSalons}>
-                      Refresh
+                    <button type="button" className="secondary btn-compact" onClick={loadSalons} disabled={loadingSalons}>
+                      {t('refresh')}
                     </button>
                   </div>
 
                   {loadingSalons ? (
-                    <p>Loading salons…</p>
+                    <p className="loading-text">{t('loadingSalons')}</p>
                   ) : salons.filter((s) => s.ownerId && Number(s.ownerId) === Number(user.id)).length === 0 ? (
-                    <p>You haven't listed any salons yet. Create one above.</p>
+                    <div className="empty-state">
+                      <div className="empty-state-icon"><Icon name="store" /></div>
+                      <p style={{ whiteSpace: 'pre-line' }}>{t('emptySalons')}</p>
+                    </div>
                   ) : (
                     <div className="salon-list">
                       {salons
                         .filter((salon) => salon.ownerId && Number(salon.ownerId) === Number(user.id))
                         .map((salon) => (
                           <article key={salon.id} className="salon-card">
-                            <div>
-                              <strong>{salon.name}</strong>
-                              <p>{salon.address}, {salon.city}, {salon.state} {salon.pincode}</p>
-                              <p>{salon.phoneNumber}</p>
-                              {salon.description && <p>{salon.description}</p>}
+                            <div className="salon-card-inner">
+                              <div className="salon-card-header">
+                                <SalonInitials name={salon.name} />
+                                <div className="salon-card-body">
+                                  <strong>{salon.name}</strong>
+                                  <div className="salon-card-meta">
+                                    <span className="salon-meta-item"><Icon name="map-pin" /> {salon.address}, {salon.city}</span>
+                                    <span className="salon-meta-item"><Icon name="phone" /> {salon.phoneNumber}</span>
+                                  </div>
+                                  {salon.description && <p className="salon-card-desc">{salon.description}</p>}
+                                </div>
+                              </div>
                             </div>
                             <div className="card-actions">
                               <button
@@ -1571,13 +1677,13 @@ function App() {
                                   setActiveView('explore')
                                 }}
                               >
-                                Manage Salon
+                                {t('manageSalon')}
                               </button>
                               <button type="button" className="secondary" onClick={() => handleSalonEdit(salon)}>
-                                Edit details
+                                {t('editDetails')}
                               </button>
                               <button type="button" className="danger" onClick={() => handleSalonDelete(salon.id)}>
-                                Delete
+                                {t('delete')}
                               </button>
                             </div>
                           </article>

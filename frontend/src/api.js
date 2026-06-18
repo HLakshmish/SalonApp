@@ -192,3 +192,17 @@ export function getAvailability(seatId, date) {
 export function getSalonAvailability(salonId) {
   return request(`/salons/${salonId}/seats-availability`)
 }
+
+export function getMyAppointments() {
+  return request('/appointments/me')
+}
+
+export function getAppointmentsPublic(params) {
+  const query = new URLSearchParams(params).toString()
+  return request(`/appointments/my-appointments?${query}`)
+}
+
+export function getSalonAppointments(salonId) {
+  return request(`/appointments/salon/${salonId}`)
+}
+

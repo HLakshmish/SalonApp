@@ -193,7 +193,7 @@ function App() {
     setLoadingSalons(true)
     try {
       const result = await getSalons()
-      setSalons(result)
+      setSalons(result || [])
     } catch (err) {
       setError(err.message || 'Unable to fetch salons')
     } finally {
@@ -206,7 +206,6 @@ function App() {
     setStatus(null)
     setError(null)
     setSubmitting(true)
-
     try {
       const formData = new FormData()
       formData.append('name', salonForm.name)
@@ -289,7 +288,7 @@ function App() {
       salonForm.photos.forEach((photo) => formData.append('photos', photo))
 
       const result = await updateSalon(editingSalonId, formData)
-      setStatus(result.message)
+      setStatus(result.message || 'Salon updated successfully')
       setSalonForm(initialSalon)
       setEditingSalonId(null)
       loadSalons()
@@ -320,19 +319,13 @@ function App() {
       setLoadingSeats(true)
       setLoadingServices(true)
       setLoadingEmployees(true)
-      const seatPromise = getSeatsBySalon(salon.id)
-      const servicePromise = getServicesBySalon(salon.id)
-      let employeePromise = Promise.resolve([])
-      if (user && salon.ownerId && Number(user.id) === Number(salon.ownerId)) {
-        employeePromise = getEmployeesBySalon(salon.id)
-      }
       const [seatResult, serviceResult, employeeResult] = await Promise.all([
-        seatPromise,
-        servicePromise,
-        employeePromise,
+        getSeatsBySalon(salon.id),
+        getServicesBySalon(salon.id),
+        getEmployeesBySalon(salon.id),
       ])
-      setSeats(seatResult)
-      setServices(serviceResult)
+      setSeats(seatResult || [])
+      setServices(serviceResult || [])
       setEmployees(employeeResult || [])
     } catch (err) {
       setError(err.message || 'Unable to load salon details')
@@ -360,10 +353,10 @@ function App() {
         isActive: seatForm.isActive,
       }
       const result = await addSeat(selectedSalon.id, payload)
-      setStatus(result.message)
+      setStatus(result.message || 'Seat added successfully')
       setSeatForm(initialSeat)
       const updatedSeats = await getSeatsBySalon(selectedSalon.id)
-      setSeats(updatedSeats)
+      setSeats(updatedSeats || [])
     } catch (err) {
       setError(err.message || 'Seat creation failed')
     } finally {
@@ -415,10 +408,10 @@ function App() {
         status: serviceForm.status,
       }
       const result = await addService(selectedSalon.id, payload)
-      setStatus(result.message)
+      setStatus(result.message || 'Service added successfully')
       setServiceForm(initialService)
       const updatedServices = await getServicesBySalon(selectedSalon.id)
-      setServices(updatedServices)
+      setServices(updatedServices || [])
     } catch (err) {
       setError(err.message || 'Service creation failed')
     } finally {
@@ -448,7 +441,7 @@ function App() {
       setStatus(result.message)
       setServices((current) => current.map((item) => (item.id === service.id ? { ...item, status: nextStatus } : item)))
     } catch (err) {
-      setError(err.message || 'Service toggle failed')
+      setError(err.message || 'Service status update failed')
     }
   }
 
@@ -481,11 +474,11 @@ function App() {
         status: serviceForm.status,
       }
       const result = await editService(editingServiceId, payload)
-      setStatus(result.message)
+      setStatus(result.message || 'Service updated successfully')
       setServiceForm(initialService)
       setEditingServiceId(null)
       const updatedServices = await getServicesBySalon(selectedSalon.id)
-      setServices(updatedServices)
+      setServices(updatedServices || [])
     } catch (err) {
       setError(err.message || 'Service update failed')
     } finally {
@@ -521,11 +514,11 @@ function App() {
         ? await updateEmployee(editingEmployeeId, payload)
         : await addEmployee(selectedSalon.id, payload)
 
-      setStatus(result.message)
+      setStatus(result.message || 'Employee saved successfully')
       setEmployeeForm(initialEmployee)
       setEditingEmployeeId(null)
       const updatedEmployees = await getEmployeesBySalon(selectedSalon.id)
-      setEmployees(updatedEmployees)
+      setEmployees(updatedEmployees || [])
     } catch (err) {
       setError(err.message || 'Employee save failed')
     } finally {
@@ -583,7 +576,7 @@ function App() {
         customerEmail: appointmentForm.customerEmail,
       }
       const result = await bookAppointment(payload)
-      setStatus(result.message)
+      setStatus(result.message || 'Appointment booked successfully!')
       setAppointmentForm(initialAppointment)
       setSeatAvailability({})
     } catch (err) {
@@ -606,8 +599,8 @@ function App() {
                 {mode === 'register'
                   ? 'Start managing salons, seats, services, and employees with a clean dashboard experience.'
                   : mode === 'login'
-                  ? 'Sign in with your email and password to continue managing your salon.'
-                  : 'Create salons and manage seats, services, and employees from a central place.'}
+                    ? 'Sign in with your email and password to continue managing your salon.'
+                    : 'Create salons and manage seats, services, and employees from a central place.'}
               </p>
               {mode === 'salon' && (
                 <div className="hero-notice">
@@ -798,374 +791,374 @@ function App() {
                   </form>
                 </section>
 
-                {/* Existing salons list */}
-                <section className="panel" aria-labelledby="salon-list-title">
-                  <div className="section-header">
-                    <div>
-                      <h2 id="salon-list-title">Existing salons</h2>
-                      <p className="page-description">Select a salon to manage seats, services, and employees.</p>
-                    </div>
-                    <button type="button" className="secondary" onClick={loadSalons} disabled={loadingSalons}>
-                      Refresh salons
-                    </button>
-                  </div>
-
-                  {loadingSalons ? (
-                    <p>Loading salons…</p>
-                  ) : salons.length === 0 ? (
-                    <p>No salons found. Create one above.</p>
-                  ) : (
-                    <div className="salon-list">
-                      {salons.map((salon) => (
-                        <article key={salon.id} className="salon-card">
-                          <div>
-                            <strong>{salon.name}</strong>
-                            <p>{salon.address}, {salon.city}, {salon.state} {salon.pincode}</p>
-                            <p>{salon.phoneNumber}</p>
-                            {salon.description && <p>{salon.description}</p>}
-                          </div>
-                          <div className="card-actions">
-                            {user && salon.ownerId && Number(user.id) === Number(salon.ownerId) ? (
-                              <>
-                                <button type="button" className="secondary" onClick={() => handleSalonSelect(salon)}>
-                                  Manage Salon
-                                </button>
-                                <button type="button" className="secondary" onClick={() => handleSalonEdit(salon)}>
-                                  Edit
-                                </button>
-                                <button type="button" className="danger" onClick={() => handleSalonDelete(salon.id)}>
-                                  Delete
-                                </button>
-                              </>
-                            ) : (
-                              <>
-                                <button type="button" className="secondary" onClick={() => handleSalonSelect(salon)}>
-                                  View Salon
-                                </button>
-                                <button type="button" className="primary" onClick={() => { handleSalonSelect(salon); setManagementTab('appointments'); }}>
-                                  Book Appointment
-                                </button>
-                              </>
-                            )}
-                          </div>
-                        </article>
-                      ))}
-                    </div>
-                  )}
-                </section>
-
-                {/* Salon Management Panel */}
-                {selectedSalon && (
-                  <section className="panel" aria-labelledby="manage-salon-title">
+                  {/* Existing salons list */}
+                  <section className="panel" aria-labelledby="salon-list-title">
                     <div className="section-header">
                       <div>
-                        <h2 id="manage-salon-title">Manage {selectedSalon.name}</h2>
-                        <p className="page-description">{selectedSalon.address}, {selectedSalon.city}</p>
+                        <h2 id="salon-list-title">Existing salons</h2>
+                        <p className="page-description">Select a salon to manage seats, services, and employees.</p>
                       </div>
-                    </div>
-
-                    <div className="management-tabs">
-                      <button
-                        type="button"
-                        className={managementTab === 'seats' ? 'management-tab active' : 'management-tab'}
-                        onClick={() => setManagementTab('seats')}
-                      >
-                        Seats
-                      </button>
-                      <button
-                        type="button"
-                        className={managementTab === 'services' ? 'management-tab active' : 'management-tab'}
-                        onClick={() => setManagementTab('services')}
-                      >
-                        Services
-                      </button>
-                      {user && selectedSalon && Number(user.id) === Number(selectedSalon.ownerId) && (
-                        <button
-                          type="button"
-                          className={managementTab === 'employees' ? 'management-tab active' : 'management-tab'}
-                          onClick={() => setManagementTab('employees')}
-                        >
-                          Employees
-                        </button>
-                      )}
-                      <button
-                        type="button"
-                        className={managementTab === 'appointments' ? 'management-tab active' : 'management-tab'}
-                        onClick={() => setManagementTab('appointments')}
-                      >
-                        Appointments
+                      <button type="button" className="secondary" onClick={loadSalons} disabled={loadingSalons}>
+                        Refresh salons
                       </button>
                     </div>
 
-                    {managementTab === 'seats' && (
-                      <div className="section-card" aria-labelledby="seat-management-title">
-                        <div className="section-header">
-                          <div>
-                            <h3 id="seat-management-title">Seats</h3>
-                          </div>
-                          <button type="button" className="secondary" onClick={() => handleSalonSelect(selectedSalon)} disabled={loadingSeats}>
-                            Reload Seats
-                          </button>
-                        </div>
-
-                        {user && selectedSalon && Number(user.id) === Number(selectedSalon.ownerId) && (
-                          <form onSubmit={handleSeatSubmit} className="form-grid">
-                            <label>
-                              Seat name
-                              <input name="name" type="text" value={seatForm.name} onChange={handleSeatChange} required aria-label="Seat name" />
-                            </label>
-                            <label>
-                              Description
-                              <input name="description" type="text" value={seatForm.description} onChange={handleSeatChange} aria-label="Seat description" />
-                            </label>
-                            <label className="checkbox-label full-width">
-                              <input name="isActive" type="checkbox" checked={seatForm.isActive} onChange={handleSeatChange} aria-label="Seat active status" />
-                              Active
-                            </label>
-                            <button type="submit" className="primary" disabled={submitting}>
-                              {submitting ? 'Adding seat…' : 'Add Seat'}
-                            </button>
-                          </form>
-                        )}
-
-                        {loadingSeats ? (
-                          <p>Loading seats…</p>
-                        ) : seats.length === 0 ? (
-                          <p>No seats found for this salon.</p>
-                        ) : (
-                          <div className="management-list">
-                            {seats.map((seat) => (
-                              <article key={seat.id} className="seat-card">
-                                <div>
-                                  <strong>{seat.name}</strong>
-                                  <p>{seat.description || 'No description'}</p>
-                                  <span className="status-badge">{seat.isActive ? 'Active' : 'Inactive'}</span>
-                                </div>
-                                <div className="card-actions">
-                                  {user && selectedSalon && Number(user.id) === Number(selectedSalon.ownerId) ? (
-                                    <>
-                                      <button type="button" className="secondary" onClick={() => handleSeatToggle(seat)}>
-                                        {seat.isActive ? 'Disable' : 'Enable'}
-                                      </button>
-                                      <button type="button" className="danger" onClick={() => handleSeatDelete(seat.id)}>
-                                        Delete
-                                      </button>
-                                    </>
-                                  ) : (
-                                    <button type="button" className="primary" onClick={() => { setAppointmentForm((f) => ({ ...f, seatId: seat.id })); setManagementTab('appointments'); }}>
-                                      Book
-                                    </button>
-                                  )}
-                                </div>
-                              </article>
-                            ))}
-                          </div>
-                        )}
-                      </div>
-                    )}
-
-                    {managementTab === 'services' && (
-                      <div className="section-card" aria-labelledby="service-management-title">
-                        <div className="section-header">
-                          <div>
-                            <h3 id="service-management-title">Services</h3>
-                          </div>
-                          <button type="button" className="secondary" onClick={() => handleSalonSelect(selectedSalon)} disabled={loadingServices}>
-                            Reload Services
-                          </button>
-                        </div>
-
-                        {user && selectedSalon && Number(user.id) === Number(selectedSalon.ownerId) && (
-                          <form onSubmit={editingServiceId ? handleServiceUpdate : handleServiceSubmit} className="form-grid">
-                            <div className="form-header full-width">
-                              <h4>{editingServiceId ? 'Edit Service' : 'Add New Service'}</h4>
-                              {editingServiceId && (
-                                <button type="button" className="secondary" onClick={cancelServiceEdit}>
-                                  Cancel Edit
-                                </button>
-                              )}
+                    {loadingSalons ? (
+                      <p>Loading salons…</p>
+                    ) : salons.length === 0 ? (
+                      <p>No salons found. Create one above.</p>
+                    ) : (
+                      <div className="salon-list">
+                        {salons.map((salon) => (
+                          <article key={salon.id} className="salon-card">
+                            <div>
+                              <strong>{salon.name}</strong>
+                              <p>{salon.address}, {salon.city}, {salon.state} {salon.pincode}</p>
+                              <p>{salon.phoneNumber}</p>
+                              {salon.description && <p>{salon.description}</p>}
                             </div>
-                            <label>
-                              Service name
-                              <input name="service_name" type="text" value={serviceForm.service_name} onChange={handleServiceChange} required aria-label="Service name" />
-                            </label>
-                            <label>
-                              Duration (minutes)
-                              <input name="duration_minutes" type="number" value={serviceForm.duration_minutes} onChange={handleServiceChange} required aria-label="Service duration" />
-                            </label>
-                            <label>
-                              Price
-                              <input name="price" type="number" step="0.01" value={serviceForm.price} onChange={handleServiceChange} required aria-label="Service price" />
-                            </label>
-                            <label>
-                              Status
-                              <select name="status" value={serviceForm.status} onChange={handleServiceChange} aria-label="Service status">
-                                <option value="active">Active</option>
-                                <option value="inactive">Inactive</option>
-                              </select>
-                            </label>
-                            <label className="full-width">
-                              Description
-                              <input name="description" type="text" value={serviceForm.description} onChange={handleServiceChange} aria-label="Service description" />
-                            </label>
-                            <button type="submit" className="primary" disabled={submitting}>
-                              {submitting ? (editingServiceId ? 'Updating service…' : 'Adding service…') : (editingServiceId ? 'Update Service' : 'Add Service')}
-                            </button>
-                          </form>
-                        )}
-
-                        {loadingServices ? (
-                          <p>Loading services…</p>
-                        ) : services.length === 0 ? (
-                          <p>No services found for this salon.</p>
-                        ) : (
-                          <div className="management-list">
-                            {services.map((service) => (
-                              <article key={service.id} className="seat-card">
-                                <div>
-                                  <strong>{service.service_name}</strong>
-                                  <p>{service.description || 'No description'}</p>
-                                  <p>Duration: {service.duration_minutes} mins</p>
-                                  <p>Price: ${service.price}</p>
-                                  <span className="status-badge">{service.status}</span>
-                                </div>
-                                <div className="card-actions">
-                                  {user && selectedSalon && Number(user.id) === Number(selectedSalon.ownerId) ? (
-                                    <>
-                                      <button type="button" className="secondary" onClick={() => handleServiceEdit(service)}>
-                                        Edit
-                                      </button>
-                                      <button type="button" className="secondary" onClick={() => handleServiceToggle(service)}>
-                                        Set {service.status === 'active' ? 'Inactive' : 'Active'}
-                                      </button>
-                                      <button type="button" className="danger" onClick={() => handleServiceDelete(service.id)}>
-                                        Delete
-                                      </button>
-                                    </>
-                                  ) : null}
-                                </div>
-                              </article>
-                            ))}
-                          </div>
-                        )}
-                      </div>
-                    )}
-
-                    {managementTab === 'employees' && user && selectedSalon && Number(user.id) === Number(selectedSalon.ownerId) && (
-                      <div className="section-card" aria-labelledby="employee-management-title">
-                        <div className="section-header">
-                          <div>
-                            <h3 id="employee-management-title">Employees</h3>
-                          </div>
-                          <button type="button" className="secondary" onClick={() => handleSalonSelect(selectedSalon)} disabled={loadingEmployees}>
-                            Reload Employees
-                          </button>
-                        </div>
-
-                        <form onSubmit={handleEmployeeSubmit} className="form-grid">
-                          <label>
-                            Name
-                            <input name="name" type="text" value={employeeForm.name} onChange={handleEmployeeChange} required aria-label="Employee name" />
-                          </label>
-                          <label>
-                            Role
-                            <input name="role" type="text" value={employeeForm.role} onChange={handleEmployeeChange} required aria-label="Employee role" />
-                          </label>
-                          <label>
-                            Phone
-                            <input name="phone" type="tel" value={employeeForm.phone} onChange={handleEmployeeChange} required aria-label="Employee phone" />
-                          </label>
-                          <label>
-                            Experience
-                            <input name="experience" type="text" value={employeeForm.experience} onChange={handleEmployeeChange} aria-label="Employee experience" />
-                          </label>
-                          <button type="submit" className="primary" disabled={submitting}>
-                            {submitting ? (editingEmployeeId ? 'Updating employee…' : 'Saving employee…') : (editingEmployeeId ? 'Update Employee' : 'Add Employee')}
-                          </button>
-                        </form>
-
-                        {loadingEmployees ? (
-                          <p>Loading employees…</p>
-                        ) : employees.length === 0 ? (
-                          <p>No employees found for this salon.</p>
-                        ) : (
-                          <div className="management-list">
-                            {employees.map((employee) => (
-                              <article key={employee.id} className="seat-card">
-                                <div>
-                                  <strong>{employee.name}</strong>
-                                  <p>{employee.role} • {employee.phone}</p>
-                                  <p>{employee.experience || 'No experience details'}</p>
-                                </div>
-                                <div className="card-actions">
-                                  <button type="button" className="secondary" onClick={() => handleEmployeeEdit(employee)}>
+                            <div className="card-actions">
+                              {user && salon.ownerId && Number(user.id) === Number(salon.ownerId) ? (
+                                <>
+                                  <button type="button" className="secondary" onClick={() => handleSalonSelect(salon)}>
+                                    Manage Salon
+                                  </button>
+                                  <button type="button" className="secondary" onClick={() => handleSalonEdit(salon)}>
                                     Edit
                                   </button>
-                                  <button type="button" className="danger" onClick={() => handleEmployeeDelete(employee.id)}>
+                                  <button type="button" className="danger" onClick={() => handleSalonDelete(salon.id)}>
                                     Delete
                                   </button>
-                                </div>
-                              </article>
-                            ))}
-                          </div>
-                        )}
-                      </div>
-                    )}
-
-                    {managementTab === 'appointments' && (
-                      <div className="appointment-management">
-                        <div className="section-header">
-                          <h3>Book Appointment</h3>
-                        </div>
-
-                        <form onSubmit={handleAppointmentSubmit} className="service-form">
-                          <div className="form-grid">
-                            <label>
-                              Select Seat
-                              <select name="seatId" value={appointmentForm.seatId} onChange={handleAppointmentChange} required>
-                                <option value="">Choose a seat</option>
-                                {seats.map((seat) => (
-                                  <option key={seat.id} value={seat.id}>
-                                    {seat.name}
-                                  </option>
-                                ))}
-                              </select>
-                            </label>
-                            <label>
-                              Appointment Date
-                              <input name="date" type="date" value={appointmentForm.date} onChange={handleAppointmentChange} required />
-                            </label>
-                            <label>
-                              Start Time
-                              <input name="startTime" type="time" value={appointmentForm.startTime} onChange={handleAppointmentChange} required />
-                            </label>
-                            <label>
-                              Customer Name
-                              <input name="customerName" type="text" value={appointmentForm.customerName} onChange={handleAppointmentChange} required />
-                            </label>
-                            <label>
-                              Customer Phone
-                              <input name="customerPhone" type="tel" value={appointmentForm.customerPhone} onChange={handleAppointmentChange} required />
-                            </label>
-                            <label>
-                              Customer Email
-                              <input name="customerEmail" type="email" value={appointmentForm.customerEmail} onChange={handleAppointmentChange} />
-                            </label>
-                          </div>
-                          <button type="submit" className="primary" disabled={submitting}>
-                            {submitting ? 'Booking appointment…' : 'Book Appointment'}
-                          </button>
-                        </form>
+                                </>
+                              ) : (
+                                <>
+                                  <button type="button" className="secondary" onClick={() => handleSalonSelect(salon)}>
+                                    View Salon
+                                  </button>
+                                  <button type="button" className="primary" onClick={() => { handleSalonSelect(salon); setManagementTab('appointments'); }}>
+                                    Book Appointment
+                                  </button>
+                                </>
+                              )}
+                            </div>
+                          </article>
+                        ))}
                       </div>
                     )}
                   </section>
-                )}
-              </>
+
+                  {/* Salon Management Panel */}
+                  {selectedSalon && (
+                    <section className="panel" aria-labelledby="manage-salon-title">
+                      <div className="section-header">
+                        <div>
+                          <h2 id="manage-salon-title">Manage {selectedSalon.name}</h2>
+                          <p className="page-description">{selectedSalon.address}, {selectedSalon.city}</p>
+                        </div>
+                      </div>
+
+                      <div className="management-tabs">
+                        <button
+                          type="button"
+                          className={managementTab === 'seats' ? 'management-tab active' : 'management-tab'}
+                          onClick={() => setManagementTab('seats')}
+                        >
+                          Seats
+                        </button>
+                        <button
+                          type="button"
+                          className={managementTab === 'services' ? 'management-tab active' : 'management-tab'}
+                          onClick={() => setManagementTab('services')}
+                        >
+                          Services
+                        </button>
+                        {user && selectedSalon && Number(user.id) === Number(selectedSalon.ownerId) && (
+                          <button
+                            type="button"
+                            className={managementTab === 'employees' ? 'management-tab active' : 'management-tab'}
+                            onClick={() => setManagementTab('employees')}
+                          >
+                            Employees
+                          </button>
+                        )}
+                        <button
+                          type="button"
+                          className={managementTab === 'appointments' ? 'management-tab active' : 'management-tab'}
+                          onClick={() => setManagementTab('appointments')}
+                        >
+                          Appointments
+                        </button>
+                      </div>
+
+                      {managementTab === 'seats' && (
+                        <div className="section-card" aria-labelledby="seat-management-title">
+                          <div className="section-header">
+                            <div>
+                              <h3 id="seat-management-title">Seats</h3>
+                            </div>
+                            <button type="button" className="secondary" onClick={() => handleSalonSelect(selectedSalon)} disabled={loadingSeats}>
+                              Reload Seats
+                            </button>
+                          </div>
+
+                          {user && selectedSalon && Number(user.id) === Number(selectedSalon.ownerId) && (
+                            <form onSubmit={handleSeatSubmit} className="form-grid">
+                              <label>
+                                Seat name
+                                <input name="name" type="text" value={seatForm.name} onChange={handleSeatChange} required aria-label="Seat name" />
+                              </label>
+                              <label>
+                                Description
+                                <input name="description" type="text" value={seatForm.description} onChange={handleSeatChange} aria-label="Seat description" />
+                              </label>
+                              <label className="checkbox-label full-width">
+                                <input name="isActive" type="checkbox" checked={seatForm.isActive} onChange={handleSeatChange} aria-label="Seat active status" />
+                                Active
+                              </label>
+                              <button type="submit" className="primary" disabled={submitting}>
+                                {submitting ? 'Adding seat…' : 'Add Seat'}
+                              </button>
+                            </form>
+                          )}
+
+                          {loadingSeats ? (
+                            <p>Loading seats…</p>
+                          ) : seats.length === 0 ? (
+                            <p>No seats found for this salon.</p>
+                          ) : (
+                            <div className="management-list">
+                              {seats.map((seat) => (
+                                <article key={seat.id} className="seat-card">
+                                  <div>
+                                    <strong>{seat.name}</strong>
+                                    <p>{seat.description || 'No description'}</p>
+                                    <span className="status-badge">{seat.isActive ? 'Active' : 'Inactive'}</span>
+                                  </div>
+                                  <div className="card-actions">
+                                    {user && selectedSalon && Number(user.id) === Number(selectedSalon.ownerId) ? (
+                                      <>
+                                        <button type="button" className="secondary" onClick={() => handleSeatToggle(seat)}>
+                                          {seat.isActive ? 'Disable' : 'Enable'}
+                                        </button>
+                                        <button type="button" className="danger" onClick={() => handleSeatDelete(seat.id)}>
+                                          Delete
+                                        </button>
+                                      </>
+                                    ) : (
+                                      <button type="button" className="primary" onClick={() => { setAppointmentForm((f) => ({ ...f, seatId: seat.id })); setManagementTab('appointments'); }}>
+                                        Book
+                                      </button>
+                                    )}
+                                  </div>
+                                </article>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      )}
+
+                      {managementTab === 'services' && (
+                        <div className="section-card" aria-labelledby="service-management-title">
+                          <div className="section-header">
+                            <div>
+                              <h3 id="service-management-title">Services</h3>
+                            </div>
+                            <button type="button" className="secondary" onClick={() => handleSalonSelect(selectedSalon)} disabled={loadingServices}>
+                              Reload Services
+                            </button>
+                          </div>
+
+                          {user && selectedSalon && Number(user.id) === Number(selectedSalon.ownerId) && (
+                            <form onSubmit={editingServiceId ? handleServiceUpdate : handleServiceSubmit} className="form-grid">
+                              <div className="form-header full-width">
+                                <h4>{editingServiceId ? 'Edit Service' : 'Add New Service'}</h4>
+                                {editingServiceId && (
+                                  <button type="button" className="secondary" onClick={cancelServiceEdit}>
+                                    Cancel Edit
+                                  </button>
+                                )}
+                              </div>
+                              <label>
+                                Service name
+                                <input name="service_name" type="text" value={serviceForm.service_name} onChange={handleServiceChange} required aria-label="Service name" />
+                              </label>
+                              <label>
+                                Duration (minutes)
+                                <input name="duration_minutes" type="number" value={serviceForm.duration_minutes} onChange={handleServiceChange} required aria-label="Service duration" />
+                              </label>
+                              <label>
+                                Price
+                                <input name="price" type="number" step="0.01" value={serviceForm.price} onChange={handleServiceChange} required aria-label="Service price" />
+                              </label>
+                              <label>
+                                Status
+                                <select name="status" value={serviceForm.status} onChange={handleServiceChange} aria-label="Service status">
+                                  <option value="active">Active</option>
+                                  <option value="inactive">Inactive</option>
+                                </select>
+                              </label>
+                              <label className="full-width">
+                                Description
+                                <input name="description" type="text" value={serviceForm.description} onChange={handleServiceChange} aria-label="Service description" />
+                              </label>
+                              <button type="submit" className="primary" disabled={submitting}>
+                                {submitting ? (editingServiceId ? 'Updating service…' : 'Adding service…') : (editingServiceId ? 'Update Service' : 'Add Service')}
+                              </button>
+                            </form>
+                          )}
+
+                          {loadingServices ? (
+                            <p>Loading services…</p>
+                          ) : services.length === 0 ? (
+                            <p>No services found for this salon.</p>
+                          ) : (
+                            <div className="management-list">
+                              {services.map((service) => (
+                                <article key={service.id} className="seat-card">
+                                  <div>
+                                    <strong>{service.service_name}</strong>
+                                    <p>{service.description || 'No description'}</p>
+                                    <p>Duration: {service.duration_minutes} mins</p>
+                                    <p>Price: ${service.price}</p>
+                                    <span className="status-badge">{service.status}</span>
+                                  </div>
+                                  <div className="card-actions">
+                                    {user && selectedSalon && Number(user.id) === Number(selectedSalon.ownerId) ? (
+                                      <>
+                                        <button type="button" className="secondary" onClick={() => handleServiceEdit(service)}>
+                                          Edit
+                                        </button>
+                                        <button type="button" className="secondary" onClick={() => handleServiceToggle(service)}>
+                                          Set {service.status === 'active' ? 'Inactive' : 'Active'}
+                                        </button>
+                                        <button type="button" className="danger" onClick={() => handleServiceDelete(service.id)}>
+                                          Delete
+                                        </button>
+                                      </>
+                                    ) : null}
+                                  </div>
+                                </article>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      )}
+
+                      {managementTab === 'employees' && user && selectedSalon && Number(user.id) === Number(selectedSalon.ownerId) && (
+                        <div className="section-card" aria-labelledby="employee-management-title">
+                          <div className="section-header">
+                            <div>
+                              <h3 id="employee-management-title">Employees</h3>
+                            </div>
+                            <button type="button" className="secondary" onClick={() => handleSalonSelect(selectedSalon)} disabled={loadingEmployees}>
+                              Reload Employees
+                            </button>
+                          </div>
+
+                          <form onSubmit={handleEmployeeSubmit} className="form-grid">
+                            <label>
+                              Name
+                              <input name="name" type="text" value={employeeForm.name} onChange={handleEmployeeChange} required aria-label="Employee name" />
+                            </label>
+                            <label>
+                              Role
+                              <input name="role" type="text" value={employeeForm.role} onChange={handleEmployeeChange} required aria-label="Employee role" />
+                            </label>
+                            <label>
+                              Phone
+                              <input name="phone" type="tel" value={employeeForm.phone} onChange={handleEmployeeChange} required aria-label="Employee phone" />
+                            </label>
+                            <label>
+                              Experience
+                              <input name="experience" type="text" value={employeeForm.experience} onChange={handleEmployeeChange} aria-label="Employee experience" />
+                            </label>
+                            <button type="submit" className="primary" disabled={submitting}>
+                              {submitting ? (editingEmployeeId ? 'Updating employee…' : 'Saving employee…') : (editingEmployeeId ? 'Update Employee' : 'Add Employee')}
+                            </button>
+                          </form>
+
+                          {loadingEmployees ? (
+                            <p>Loading employees…</p>
+                          ) : employees.length === 0 ? (
+                            <p>No employees found for this salon.</p>
+                          ) : (
+                            <div className="management-list">
+                              {employees.map((employee) => (
+                                <article key={employee.id} className="seat-card">
+                                  <div>
+                                    <strong>{employee.name}</strong>
+                                    <p>{employee.role} • {employee.phone}</p>
+                                    <p>{employee.experience || 'No experience details'}</p>
+                                  </div>
+                                  <div className="card-actions">
+                                    <button type="button" className="secondary" onClick={() => handleEmployeeEdit(employee)}>
+                                      Edit
+                                    </button>
+                                    <button type="button" className="danger" onClick={() => handleEmployeeDelete(employee.id)}>
+                                      Delete
+                                    </button>
+                                  </div>
+                                </article>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      )}
+
+                      {managementTab === 'appointments' && (
+                        <div className="appointment-management">
+                          <div className="section-header">
+                            <h3>Book Appointment</h3>
+                          </div>
+
+                          <form onSubmit={handleAppointmentSubmit} className="service-form">
+                            <div className="form-grid">
+                              <label>
+                                Select Seat
+                                <select name="seatId" value={appointmentForm.seatId} onChange={handleAppointmentChange} required>
+                                  <option value="">Choose a seat</option>
+                                  {seats.map((seat) => (
+                                    <option key={seat.id} value={seat.id}>
+                                      {seat.name}
+                                    </option>
+                                  ))}
+                                </select>
+                              </label>
+                              <label>
+                                Appointment Date
+                                <input name="date" type="date" value={appointmentForm.date} onChange={handleAppointmentChange} required />
+                              </label>
+                              <label>
+                                Start Time
+                                <input name="startTime" type="time" value={appointmentForm.startTime} onChange={handleAppointmentChange} required />
+                              </label>
+                              <label>
+                                Customer Name
+                                <input name="customerName" type="text" value={appointmentForm.customerName} onChange={handleAppointmentChange} required />
+                              </label>
+                              <label>
+                                Customer Phone
+                                <input name="customerPhone" type="tel" value={appointmentForm.customerPhone} onChange={handleAppointmentChange} required />
+                              </label>
+                              <label>
+                                Customer Email
+                                <input name="customerEmail" type="email" value={appointmentForm.customerEmail} onChange={handleAppointmentChange} />
+                              </label>
+                            </div>
+                            <button type="submit" className="primary" disabled={submitting}>
+                              {submitting ? 'Booking appointment…' : 'Book Appointment'}
+                            </button>
+                          </form>
+                        </div>
+                      )}
+                    </section>
+                  )}
+                </>
             )}
 
-            {status && <div className="feedback success" role="status">{status}</div>}
-            {error && <div className="feedback error" role="alert">{error}</div>}
-          </main>
+                {status && <div className="feedback success" role="status">{status}</div>}
+                {error && <div className="feedback error" role="alert">{error}</div>}
+              </main>
         </div>
       </div>
     </div>

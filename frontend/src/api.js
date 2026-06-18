@@ -8,7 +8,6 @@ async function request(path, options = {}) {
   if (token) {
     headers.Authorization = `Bearer ${token}`
   }
-
   const response = await fetch(`${BASE_URL}${path}`, {
     ...options,
     headers,

@@ -29,13 +29,14 @@ async function servicesManagementRoutes(fastify, options) {
           description: { type: 'string' },
           duration_minutes: { type: 'number' },
           price: { type: 'number' },
+          gender: { type: 'string', enum: ['male', 'female', 'both'], default: 'both' },
           status: { type: 'string', default: 'active' }
         }
       }
     }
   }, async (request, reply) => {
     const { salonId } = request.params;
-    const { service_name, description, duration_minutes, price, status } = request.body;
+    const { service_name, description, duration_minutes, price, status, gender } = request.body;
 
     // Check if salon exists and belongs to user
     const salon = await prisma.salon.findUnique({ where: { id: Number(salonId) } });
@@ -49,6 +50,7 @@ async function servicesManagementRoutes(fastify, options) {
           description,
           duration_minutes,
           price,
+          gender: gender || 'both',
           status: status || 'active',
           salonId: Number(salonId)
         }
@@ -94,13 +96,14 @@ async function servicesManagementRoutes(fastify, options) {
           description: { type: 'string' },
           duration_minutes: { type: 'number' },
           price: { type: 'number' },
+          gender: { type: 'string', enum: ['male', 'female', 'both'] },
           status: { type: 'string' }
         }
       }
     }
   }, async (request, reply) => {
     const { id } = request.params;
-    const { service_name, description, duration_minutes, price, status } = request.body;
+    const { service_name, description, duration_minutes, price, status, gender } = request.body;
 
     try {
       const existingService = await prisma.service.findUnique({ where: { id: Number(id) }, include: { salon: true } });
@@ -108,7 +111,7 @@ async function servicesManagementRoutes(fastify, options) {
       if (existingService.salon.ownerId !== request.user.id) return reply.status(403).send({ error: 'Unauthorized to modify this service' });
       const updatedService = await prisma.service.update({
         where: { id: Number(id) },
-        data: { service_name, description, duration_minutes, price, status }
+        data: { service_name, description, duration_minutes, price, gender, status }
       });
       reply.send({ message: 'Service updated successfully', service: updatedService });
     } catch (error) {

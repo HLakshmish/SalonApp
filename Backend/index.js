@@ -23,6 +23,8 @@ const start = async () => {
     // 0. Register CORS
     await fastify.register(require('@fastify/cors'), {
       origin: '*',
+      methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
+      allowedHeaders: ['Content-Type', 'Authorization']
     });
 
     // 0.1 Register Multipart for file uploads
@@ -93,6 +95,7 @@ const start = async () => {
     await fastify.register(require('./routes/salonOwner/servicesManagement'), { prisma });
     await fastify.register(require('./routes/salonOwner/employee'), { prisma });
     await fastify.register(require('./routes/customer/appointment'), { prisma });
+    await fastify.register(require('./routes/customer/callback'), { prisma });
 
 
     // Wait for plugins to initialize

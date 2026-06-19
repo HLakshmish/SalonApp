@@ -7,11 +7,7 @@ const pump = util.promisify(pipeline);
 async function salonOwnerRoutes(fastify, options) {
   const { prisma } = options;
 
-  // Ensure uploads directory exists
-  const uploadsDir = path.join(__dirname, '../../uploads');
-  if (!fs.existsSync(uploadsDir)) {
-    fs.mkdirSync(uploadsDir, { recursive: true });
-  }
+  // The uploads directory is no longer needed here as we use base64
 
   // Schema for GET, PUT, DELETE
   const paramsSchema = {
@@ -58,11 +54,14 @@ async function salonOwnerRoutes(fastify, options) {
 
       for await (const part of parts) {
         if (part.file) {
-          const filename = `${Date.now()}-${part.filename}`;
-          const filepath = path.join(uploadsDir, filename);
-          await pump(part.file, fs.createWriteStream(filepath));
-          
-          const fileUrl = `/uploads/${filename}`;
+          const chunks = [];
+          for await (const chunk of part.file) {
+            chunks.push(chunk);
+          }
+          const buffer = Buffer.concat(chunks);
+          const base64String = buffer.toString('base64');
+          const fileUrl = `data:${part.mimetype || 'image/jpeg'};base64,${base64String}`;
+
           if (part.fieldname === 'logo') {
             salonData.logoUrl = fileUrl;
           } else if (part.fieldname === 'banner') {
@@ -224,11 +223,14 @@ async function salonOwnerRoutes(fastify, options) {
 
       for await (const part of parts) {
         if (part.file) {
-          const filename = `${Date.now()}-${part.filename}`;
-          const filepath = path.join(uploadsDir, filename);
-          await pump(part.file, fs.createWriteStream(filepath));
-          
-          const fileUrl = `/uploads/${filename}`;
+          const chunks = [];
+          for await (const chunk of part.file) {
+            chunks.push(chunk);
+          }
+          const buffer = Buffer.concat(chunks);
+          const base64String = buffer.toString('base64');
+          const fileUrl = `data:${part.mimetype || 'image/jpeg'};base64,${base64String}`;
+
           if (part.fieldname === 'logo') {
             updateData.logoUrl = fileUrl;
           } else if (part.fieldname === 'banner') {

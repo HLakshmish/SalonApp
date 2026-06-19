@@ -206,3 +206,7 @@ export function getSalonAppointments(salonId) {
   return request(`/appointments/salon/${salonId}`)
 }
 
+export function getOwnerAppointments() {
+  return request('/appointments/owner/salons')
+}
+

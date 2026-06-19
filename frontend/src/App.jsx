@@ -26,6 +26,7 @@ import {
   getMyAppointments,
   getAppointmentsPublic,
   getSalonAppointments,
+  getOwnerAppointments,
 } from './api'
 import { Icon, SalonInitials } from './Icons'
 import { LanguageSwitcher, useTranslation } from './i18n/LanguageContext'
@@ -65,7 +66,11 @@ function App() {
   const { t } = useTranslation()
   const [mode, setMode] = useState('register')
   const [form, setForm] = useState(initialRegister)
+  const [showPassword, setShowPassword] = useState(false)
   const [salonForm, setSalonForm] = useState(initialSalon)
+  const [ownerAppointments, setOwnerAppointments] = useState([])
+  const [ownerServicesCount, setOwnerServicesCount] = useState(0)
+  const [loadingOwnerStats, setLoadingOwnerStats] = useState(false)
   const [salons, setSalons] = useState([])
   const [selectedSalon, setSelectedSalon] = useState(null)
   const [seats, setSeats] = useState([])
@@ -175,6 +180,7 @@ function App() {
     }
     setMode(newMode)
     setForm(newMode === 'register' ? initialRegister : initialLogin)
+    setShowPassword(false)
     setSalonForm(initialSalon)
     setSeatForm(initialSeat)
     setServiceForm(initialService)
@@ -263,6 +269,43 @@ function App() {
       setLoadingSalons(false)
     }
   }
+
+  const loadOwnerDashboardStats = async (userObj, currentSalons) => {
+    if (!userObj) return
+    const ownedSalons = (currentSalons || salons).filter((s) => s.ownerId && Number(s.ownerId) === Number(userObj.id))
+    if (ownedSalons.length === 0) {
+      setOwnerAppointments([])
+      setOwnerServicesCount(0)
+      return
+    }
+    setLoadingOwnerStats(true)
+    try {
+      const appts = await getOwnerAppointments()
+      setOwnerAppointments(appts || [])
+
+      const servicesPromises = ownedSalons.map(s => getServicesBySalon(s.id))
+      const servicesResults = await Promise.all(servicesPromises)
+      
+      let totalServices = 0
+      servicesResults.forEach(srvList => {
+        totalServices += (srvList || []).length
+      })
+      setOwnerServicesCount(totalServices)
+    } catch (e) {
+      console.error('Failed to load owner dashboard stats:', e)
+    } finally {
+      setLoadingOwnerStats(false)
+    }
+  }
+
+  useEffect(() => {
+    if (user && salons.length > 0) {
+      loadOwnerDashboardStats(user, salons)
+    } else {
+      setOwnerAppointments([])
+      setOwnerServicesCount(0)
+    }
+  }, [user, salons])
 
   const handleSalonSubmit = async (event) => {
     event.preventDefault()
@@ -1107,90 +1150,93 @@ function App() {
                 </div>
               ) : (
                 /* Customer booking form */
-                <div className="appointment-management section-card">
-                  <div className="section-header">
-                    <h3>{t('bookAppointment')}</h3>
-                  </div>
+                <div className="appointment-management section-card panel-split">
+                  <div className="panel-split-image booking-form-image" aria-hidden="true"></div>
+                  <div className="panel-split-content">
+                    <div className="section-header">
+                      <h3>{t('bookAppointment')}</h3>
+                    </div>
 
-                  <form onSubmit={handleAppointmentSubmit} className="service-form">
-                    <div className="form-grid">
-                      <label>
-                        {t('selectSeat')}
-                        <select name="seatId" value={appointmentForm.seatId} onChange={handleAppointmentChange} required>
-                          <option value="">{t('chooseSeat')}</option>
-                          {seats.filter(s => s.isActive).map((seat) => (
-                            <option key={seat.id} value={seat.id}>
-                              {seat.name}
-                            </option>
-                          ))}
-                        </select>
-                      </label>
+                    <form onSubmit={handleAppointmentSubmit} className="service-form">
+                      <div className="form-grid">
+                        <label>
+                          {t('selectSeat')}
+                          <select name="seatId" value={appointmentForm.seatId} onChange={handleAppointmentChange} required>
+                            <option value="">{t('chooseSeat')}</option>
+                            {seats.filter(s => s.isActive).map((seat) => (
+                              <option key={seat.id} value={seat.id}>
+                                {seat.name}
+                              </option>
+                            ))}
+                          </select>
+                        </label>
 
-                      <label>
-                        {t('appointmentDate')}
-                        <input name="date" type="date" value={appointmentForm.date} onChange={handleAppointmentChange} required />
-                      </label>
+                        <label>
+                          {t('appointmentDate')}
+                          <input name="date" type="date" value={appointmentForm.date} onChange={handleAppointmentChange} required />
+                        </label>
 
-                      <label>
-                        {t('startTime')}
-                        <input name="startTime" type="time" value={appointmentForm.startTime} onChange={handleAppointmentChange} required />
-                      </label>
+                        <label>
+                          {t('startTime')}
+                          <input name="startTime" type="time" value={appointmentForm.startTime} onChange={handleAppointmentChange} required />
+                        </label>
 
-                      <label>
-                        {t('customerName')}
-                        <input name="customerName" type="text" value={appointmentForm.customerName} onChange={handleAppointmentChange} required />
-                      </label>
+                        <label>
+                          {t('customerName')}
+                          <input name="customerName" type="text" value={appointmentForm.customerName} onChange={handleAppointmentChange} required />
+                        </label>
 
-                      <label>
-                        {t('customerPhone')}
-                        <input name="customerPhone" type="tel" value={appointmentForm.customerPhone} onChange={handleAppointmentChange} required />
-                      </label>
+                        <label>
+                          {t('customerPhone')}
+                          <input name="customerPhone" type="tel" value={appointmentForm.customerPhone} onChange={handleAppointmentChange} required />
+                        </label>
 
-                      <label>
-                        {t('customerEmail')}
-                        <input name="customerEmail" type="email" value={appointmentForm.customerEmail} onChange={handleAppointmentChange} required />
-                      </label>
+                        <label>
+                          {t('customerEmail')}
+                          <input name="customerEmail" type="email" value={appointmentForm.customerEmail} onChange={handleAppointmentChange} required />
+                        </label>
 
-                      <label>
-                        {t('customerGender')}
-                        <select name="customerGender" value={appointmentForm.customerGender} onChange={handleAppointmentChange} required>
-                          <option value="Male">{t('male')}</option>
-                          <option value="Female">{t('female')}</option>
-                          <option value="Other">{t('other')}</option>
-                        </select>
-                      </label>
+                        <label>
+                          {t('customerGender')}
+                          <select name="customerGender" value={appointmentForm.customerGender} onChange={handleAppointmentChange} required>
+                            <option value="Male">{t('male')}</option>
+                            <option value="Female">{t('female')}</option>
+                            <option value="Other">{t('other')}</option>
+                          </select>
+                        </label>
 
-                      <label>
-                        {t('customerCity')}
-                        <input name="customerCity" type="text" value={appointmentForm.customerCity} onChange={handleAppointmentChange} required />
-                      </label>
+                        <label>
+                          {t('customerCity')}
+                          <input name="customerCity" type="text" value={appointmentForm.customerCity} onChange={handleAppointmentChange} required />
+                        </label>
 
-                      <label className="full-width">
-                        {t('customerAddress')}
-                        <input name="customerAddress" type="text" value={appointmentForm.customerAddress} onChange={handleAppointmentChange} required />
-                      </label>
+                        <label className="full-width">
+                          {t('customerAddress')}
+                          <input name="customerAddress" type="text" value={appointmentForm.customerAddress} onChange={handleAppointmentChange} required />
+                        </label>
 
-                      <div className="full-width">
-                        <label>{t('selectServices')}</label>
-                        <div className="services-checkbox-grid">
-                          {services.filter(s => s.status === 'active').map((service) => (
-                            <label key={service.id} className="checkbox-label">
-                              <input
-                                type="checkbox"
-                                value={service.id}
-                                checked={appointmentForm.serviceIds.includes(service.id)}
-                                onChange={() => handleServiceSelectToggle(service.id)}
-                              />
-                              <span>{service.service_name} (${service.price} • {service.duration_minutes}m)</span>
-                            </label>
-                          ))}
+                        <div className="full-width">
+                          <label>{t('selectServices')}</label>
+                          <div className="services-checkbox-grid">
+                            {services.filter(s => s.status === 'active').map((service) => (
+                              <label key={service.id} className="checkbox-label">
+                                <input
+                                  type="checkbox"
+                                  value={service.id}
+                                  checked={appointmentForm.serviceIds.includes(service.id)}
+                                  onChange={() => handleServiceSelectToggle(service.id)}
+                                />
+                                <span>{service.service_name} (${service.price} • {service.duration_minutes}m)</span>
+                              </label>
+                            ))}
+                          </div>
                         </div>
                       </div>
-                    </div>
-                    <button type="submit" className="primary full-width" disabled={submitting}>
-                      {submitting ? t('bookingAppointment') : t('bookAppointment')}
-                    </button>
-                  </form>
+                      <button type="submit" className="primary full-width" disabled={submitting}>
+                        {submitting ? t('bookingAppointment') : t('bookAppointment')}
+                      </button>
+                    </form>
+                  </div>
                 </div>
               )}
             </>
@@ -1335,6 +1381,13 @@ function App() {
                         <p className="hero-copy">
                           {t('heroCopy')}
                         </p>
+                        <button 
+                          type="button" 
+                          className="primary btn-hero-cta" 
+                          onClick={() => document.getElementById('explore-salons-section')?.scrollIntoView({ behavior: 'smooth' })}
+                        >
+                          {t('exploreSalons')} &rarr;
+                        </button>
                         <div className="hero-features">
                           <div className="hero-feature">
                             <strong>{t('heroFeature1Title')}</strong>
@@ -1357,7 +1410,7 @@ function App() {
                     </section>
 
                     {/* Existing salons list */}
-                    <section className="panel" aria-labelledby="salon-list-title">
+                    <section id="explore-salons-section" className="panel" aria-labelledby="salon-list-title">
                       <div className="section-header">
                         <div>
                           <h2 id="salon-list-title">{t('exploreSalons')}</h2>
@@ -1378,6 +1431,9 @@ function App() {
                             const isOwner = user && salon.ownerId && Number(user.id) === Number(salon.ownerId)
                             return (
                               <article key={salon.id} className="salon-card">
+                                <div className="salon-card-badge-row">
+                                  <span className="salon-badge-luxury">Luxury Boutique</span>
+                                </div>
                                 <div className="salon-card-inner">
                                   <div className="salon-card-header">
                                     {salon.logoUrl ? (
@@ -1435,135 +1491,158 @@ function App() {
             )}
 
             {activeView === 'lookup' && (
-              <section className="panel" aria-labelledby="lookup-title">
-                <div>
-                  <h2 id="lookup-title">{t('lookupTitle')}</h2>
-                  <p className="page-description">
-                    {t('lookupDesc')}
-                  </p>
-                </div>
-
-                <form onSubmit={handleLookupSearch} className="form-grid">
-                  <label>
-                    {t('emailAddress')}
-                    <input
-                      name="lookupEmail"
-                      type="email"
-                      placeholder={t('emailPlaceholder')}
-                      value={lookupEmail}
-                      onChange={(e) => setLookupEmail(e.target.value)}
-                      aria-label={t('emailAddress')}
-                    />
-                  </label>
-
-                  <label>
-                    {t('phoneNumber')}
-                    <input
-                      name="lookupPhone"
-                      type="tel"
-                      placeholder={t('phonePlaceholder')}
-                      value={lookupPhone}
-                      onChange={(e) => setLookupPhone(e.target.value)}
-                      aria-label={t('phoneNumber')}
-                    />
-                  </label>
-
-                  <button type="submit" className="primary full-width" disabled={searchingAppointments}>
-                    {searchingAppointments ? t('searching') : t('findAppointments')}
-                  </button>
-                </form>
-
-                {lookupResults.length > 0 && (
-                  <div className="lookup-results">
-                    <h3>{t('bookingResults')}</h3>
-                    {lookupResults.map((appt) => (
-                      <article key={appt.id} className="salon-card lookup-card">
-                        <div className="salon-card-inner appointment-detail-grid">
-                          <div className="appointment-detail-header">
-                            <strong>{appt.salon?.name || t('salon')}</strong>
-                            <span className="status-badge">{appt.status || t('scheduled')}</span>
-                          </div>
-                          <p><strong>{t('addressLabel')}:</strong> {appt.salon?.address}, {appt.salon?.city}</p>
-                          <p><strong>{t('seatLabel')}:</strong> {appt.seat?.name || t('unknownSeat')}</p>
-                          <p><strong>{t('dateTime')}:</strong> {new Date(appt.startTime).toLocaleString()} - {new Date(appt.endTime).toLocaleTimeString()}</p>
-                          <div>
-                            <strong>{t('bookedServices')}:</strong>
-                            <ul className="services-list">
-                              {appt.services?.map((srv, idx) => (
-                                <li key={idx}>{srv.service_name} (${srv.price} • {srv.duration_minutes} mins)</li>
-                              ))}
-                            </ul>
-                          </div>
-                          <div className="customer-footer">
-                            <strong>{t('forLabel')}:</strong> {appt.customerName} ({appt.customerPhone})
-                          </div>
-                        </div>
-                      </article>
-                    ))}
+              <section className="panel panel-split" aria-labelledby="lookup-title">
+                <div className="panel-split-image lookup-image" aria-hidden="true"></div>
+                <div className="panel-split-content">
+                  <div>
+                    <h2 id="lookup-title">{t('lookupTitle')}</h2>
+                    <p className="page-description">
+                      {t('lookupDesc')}
+                    </p>
                   </div>
-                )}
+
+                  <form onSubmit={handleLookupSearch} className="form-grid">
+                    <label>
+                      {t('emailAddress')}
+                      <input
+                        name="lookupEmail"
+                        type="email"
+                        placeholder={t('emailPlaceholder')}
+                        value={lookupEmail}
+                        onChange={(e) => setLookupEmail(e.target.value)}
+                        aria-label={t('emailAddress')}
+                      />
+                    </label>
+
+                    <label>
+                      {t('phoneNumber')}
+                      <input
+                        name="lookupPhone"
+                        type="tel"
+                        placeholder={t('phonePlaceholder')}
+                        value={lookupPhone}
+                        onChange={(e) => setLookupPhone(e.target.value)}
+                        aria-label={t('phoneNumber')}
+                      />
+                    </label>
+
+                    <button type="submit" className="primary full-width" disabled={searchingAppointments}>
+                      {searchingAppointments ? t('searching') : t('findAppointments')}
+                    </button>
+                  </form>
+
+                  {lookupResults.length > 0 && (
+                    <div className="lookup-results">
+                      <h3>{t('bookingResults')}</h3>
+                      {lookupResults.map((appt) => (
+                        <article key={appt.id} className="salon-card lookup-card">
+                          <div className="salon-card-inner appointment-detail-grid">
+                            <div className="appointment-detail-header">
+                              <strong>{appt.salon?.name || t('salon')}</strong>
+                              <span className="status-badge">{appt.status || t('scheduled')}</span>
+                            </div>
+                            <p><strong>{t('addressLabel')}:</strong> {appt.salon?.address}, {appt.salon?.city}</p>
+                            <p><strong>{t('seatLabel')}:</strong> {appt.seat?.name || t('unknownSeat')}</p>
+                            <p><strong>{t('dateTime')}:</strong> {new Date(appt.startTime).toLocaleString()} - {new Date(appt.endTime).toLocaleTimeString()}</p>
+                            <div>
+                              <strong>{t('bookedServices')}:</strong>
+                              <ul className="services-list">
+                                {appt.services?.map((srv, idx) => (
+                                  <li key={idx}>{srv.service_name} (${srv.price} • {srv.duration_minutes} mins)</li>
+                                ))}
+                              </ul>
+                            </div>
+                            <div className="customer-footer">
+                              <strong>{t('forLabel')}:</strong> {appt.customerName} ({appt.customerPhone})
+                            </div>
+                          </div>
+                        </article>
+                      ))}
+                    </div>
+                  )}
+                </div>
               </section>
             )}
 
             {activeView === 'owner-portal' && !user && (
-              <section className="panel" aria-labelledby="auth-title">
-                <div className="auth-header">
-                  <div>
-                    <span className="panel-label">{t('ownerAccess')}</span>
-                    <h2 id="auth-title">{mode === 'register' ? t('registerOwner') : t('ownerLogin')}</h2>
-                    <p className="page-description">
-                      {mode === 'register'
-                        ? t('registerOwnerDesc')
-                        : t('ownerLoginDesc')}
-                    </p>
+              <section className="panel panel-split" aria-labelledby="auth-title">
+                <div className="panel-split-image auth-image" aria-hidden="true"></div>
+                <div className="panel-split-content">
+                  <div className="auth-header">
+                    <div>
+                      <span className="panel-label">{t('ownerAccess')}</span>
+                      <h2 id="auth-title">{mode === 'register' ? t('registerOwner') : t('ownerLogin')}</h2>
+                      <p className="page-description">
+                        {mode === 'register'
+                          ? t('registerOwnerDesc')
+                          : t('ownerLoginDesc')}
+                      </p>
+                    </div>
+                    <div className="auth-toggle">
+                      <button
+                        type="button"
+                        className={mode === 'login' ? 'primary btn-compact' : 'secondary btn-compact'}
+                        onClick={() => handleModeChange('login')}
+                      >
+                        {t('login')}
+                      </button>
+                      <button
+                        type="button"
+                        className={mode === 'register' ? 'primary btn-compact' : 'secondary btn-compact'}
+                        onClick={() => handleModeChange('register')}
+                      >
+                        {t('register')}
+                      </button>
+                    </div>
                   </div>
-                  <div className="auth-toggle">
-                    <button
-                      type="button"
-                      className={mode === 'login' ? 'primary btn-compact' : 'secondary btn-compact'}
-                      onClick={() => handleModeChange('login')}
-                    >
-                      {t('login')}
+
+                  <form onSubmit={handleSubmit} className="form-grid">
+                    {mode === 'register' && (
+                      <label>
+                        {t('name')}
+                        <input name="name" type="text" value={form.name} onChange={handleChange} required aria-label={t('name')} />
+                      </label>
+                    )}
+
+                    <label>
+                      {t('emailAddress')}
+                      <input name="email" type="email" value={form.email} onChange={handleChange} required aria-label={t('emailAddress')} />
+                    </label>
+
+                    {mode === 'register' && (
+                      <label>
+                        {t('phoneNumber')}
+                        <input name="phone" type="tel" value={form.phone} onChange={handleChange} required aria-label={t('phoneNumber')} />
+                      </label>
+                    )}
+
+                    <label>
+                      {t('password')}
+                      <div className="password-input-wrapper">
+                        <input
+                          name="password"
+                          type={showPassword ? 'text' : 'password'}
+                          value={form.password}
+                          onChange={handleChange}
+                          required
+                          aria-label={t('password')}
+                        />
+                        <button
+                          type="button"
+                          className="password-toggle-btn"
+                          onClick={() => setShowPassword(!showPassword)}
+                          aria-label={showPassword ? t('hidePassword') : t('showPassword')}
+                        >
+                          <Icon name={showPassword ? 'eye-off' : 'eye'} />
+                        </button>
+                      </div>
+                    </label>
+
+                    <button type="submit" className="primary full-width" disabled={submitting}>
+                      {submitting ? t('submitting') : mode === 'register' ? t('registerAccount') : t('login')}
                     </button>
-                    <button
-                      type="button"
-                      className={mode === 'register' ? 'primary btn-compact' : 'secondary btn-compact'}
-                      onClick={() => handleModeChange('register')}
-                    >
-                      {t('register')}
-                    </button>
-                  </div>
+                  </form>
                 </div>
-
-                <form onSubmit={handleSubmit} className="form-grid">
-                  {mode === 'register' && (
-                    <label>
-                      {t('name')}
-                      <input name="name" type="text" value={form.name} onChange={handleChange} required aria-label={t('name')} />
-                    </label>
-                  )}
-
-                  <label>
-                    {t('emailAddress')}
-                    <input name="email" type="email" value={form.email} onChange={handleChange} required aria-label={t('emailAddress')} />
-                  </label>
-
-                  {mode === 'register' && (
-                    <label>
-                      {t('phoneNumber')}
-                      <input name="phone" type="tel" value={form.phone} onChange={handleChange} required aria-label={t('phoneNumber')} />
-                    </label>
-                  )}
-
-                  <label>
-                    {t('password')}
-                    <input name="password" type="password" value={form.password} onChange={handleChange} required aria-label={t('password')} />
-                  </label>
-
-                  <button type="submit" className="primary full-width" disabled={submitting}>
-                    {submitting ? t('submitting') : mode === 'register' ? t('registerAccount') : t('login')}
-                  </button>
-                </form>
               </section>
             )}
 
@@ -1622,7 +1701,7 @@ function App() {
                         <div className="stat-body">
                           <h4>{t('bookings')}</h4>
                           <div className="stat-value">
-                            {selectedSalon ? appointments.length : 0}
+                            {selectedSalon ? appointments.length : (loadingOwnerStats ? '...' : ownerAppointments.length)}
                           </div>
                         </div>
                       </div>
@@ -1634,7 +1713,7 @@ function App() {
                         <div className="stat-body">
                           <h4>{t('services')}</h4>
                           <div className="stat-value">
-                            {selectedSalon ? services.length : '—'}
+                            {selectedSalon ? services.length : (loadingOwnerStats ? '...' : (ownerServicesCount > 0 ? ownerServicesCount : '0'))}
                           </div>
                         </div>
                       </div>
@@ -1750,6 +1829,9 @@ function App() {
                             .filter((salon) => salon.ownerId && Number(salon.ownerId) === Number(user.id))
                             .map((salon) => (
                               <article key={salon.id} className="salon-card">
+                                <div className="salon-card-badge-row">
+                                  <span className="salon-badge-luxury">Luxury Boutique</span>
+                                </div>
                                 <div className="salon-card-inner">
                                   <div className="salon-card-header">
                                     {salon.logoUrl ? (

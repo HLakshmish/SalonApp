@@ -219,6 +219,8 @@ export const translations = {
     loggedOut: 'Logged out successfully',
     errReloadAppointments: 'Failed to reload appointments',
     na: 'N/A',
+    showPassword: 'Show Password',
+    hidePassword: 'Hide Password',
   },
   hi: {
     brandTagline: 'सैलून प्रबंधन',
@@ -434,6 +436,8 @@ export const translations = {
     loggedOut: 'सफलतापूर्वक लॉग आउट हुआ',
     errReloadAppointments: 'अपॉइंटमेंट रीलोड करने में विफल',
     na: 'उपलब्ध नहीं',
+    showPassword: 'पासवर्ड दिखाएं',
+    hidePassword: 'पासवर्ड छिपाएं',
   },
   kn: {
     brandTagline: 'ಸಲೂನ್ ನಿರ್ವಹಣೆ',
@@ -649,5 +653,7 @@ export const translations = {
     loggedOut: 'ಯಶಸ್ವಿಯಾಗಿ ಲಾಗ್ ಔಟ್ ಆಗಿದೆ',
     errReloadAppointments: 'ಅಪಾಯಿಂಟ್‌ಮೆಂಟ್‌ಗಳನ್ನು ರೀಲೋಡ್ ಮಾಡಲು ವಿಫಲವಾಯಿತು',
     na: 'ಲಭ್ಯವಿಲ್ಲ',
+    showPassword: 'ಪಾಸ್‌ವರ್ಡ್ ತೋರಿಸು',
+    hidePassword: 'ಪಾಸ್‌ವರ್ಡ್ ಮರೆಮಾಡು',
   },
 }

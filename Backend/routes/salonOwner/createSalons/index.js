@@ -176,7 +176,7 @@ async function salonOwnerRoutes(fastify, options) {
 
     if (!salon) return reply.status(404).send({ error: 'Salon not found' });
     if (salon.ownerId !== request.user.id) return reply.status(403).send({ error: 'Unauthorized to view this salon' });
-    
+
     return salon;
   });
 
@@ -211,7 +211,7 @@ async function salonOwnerRoutes(fastify, options) {
     }
   }, async (request, reply) => {
     const { id } = request.params;
-    
+
     const existing = await prisma.salon.findUnique({ where: { id: Number(id) } });
     if (!existing) return reply.status(404).send({ error: 'Salon not found' });
     if (existing.ownerId !== request.user.id) return reply.status(403).send({ error: 'Unauthorized to edit this salon' });

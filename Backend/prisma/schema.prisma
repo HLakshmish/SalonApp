@@ -15,6 +15,7 @@ model User {
   email     String   @unique
   phone     String
   password  String
+  role      String   @default("salon owner")
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   salons       Salon[]
@@ -166,4 +167,18 @@ model CallbackRequest {
   
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
+}
+
+model WebsiteDetails {
+  id            Int      @id @default(autoincrement())
+  websiteName   String
+  about         String?
+  address       String?
+  phoneNumber   String?
+  email         String?
+  websiteLink   String?
+  instaLink     String?
+  facebookLink  String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
 }

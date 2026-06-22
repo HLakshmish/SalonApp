@@ -15,7 +15,7 @@ async function servicesManagementRoutes(fastify, options) {
 
   // Add Service
   fastify.post('/api/salons/:salonId/services', {
-    preValidation: [fastify.authenticate],
+    preValidation: [fastify.authorizeSalonOwner],
     schema: {
       description: 'Add a new service to a salon',
       tags: ['Services'],
@@ -83,7 +83,7 @@ async function servicesManagementRoutes(fastify, options) {
 
   // Edit Service
   fastify.put('/api/services/:id', {
-    preValidation: [fastify.authenticate],
+    preValidation: [fastify.authorizeSalonOwner],
     schema: {
       description: 'Edit a service',
       tags: ['Services'],
@@ -123,7 +123,7 @@ async function servicesManagementRoutes(fastify, options) {
 
   // Toggle/Update Status
   fastify.patch('/api/services/:id/status', {
-    preValidation: [fastify.authenticate],
+    preValidation: [fastify.authorizeSalonOwner],
     schema: {
       description: 'Update service status',
       tags: ['Services'],
@@ -159,7 +159,7 @@ async function servicesManagementRoutes(fastify, options) {
 
   // Delete Service
   fastify.delete('/api/services/:id', {
-    preValidation: [fastify.authenticate],
+    preValidation: [fastify.authorizeSalonOwner],
     schema: {
       description: 'Delete a service',
       tags: ['Services'],

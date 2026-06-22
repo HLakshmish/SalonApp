@@ -14,6 +14,7 @@ async function authRoutes(fastify, options) {
         email: { type: 'string', format: 'email' },
         phone: { type: 'string' },
         password: { type: 'string' },
+        role: { type: 'string', enum: ['salon owner', 'Admin'] },
       },
     },
     response: {
@@ -30,6 +31,7 @@ async function authRoutes(fastify, options) {
               name: { type: 'string' },
               email: { type: 'string' },
               phone: { type: 'string' },
+              role: { type: 'string' },
               createdAt: { type: 'string', format: 'date-time' },
               updatedAt: { type: 'string', format: 'date-time' },
             },
@@ -40,7 +42,7 @@ async function authRoutes(fastify, options) {
   };
 
   fastify.post('/api/register', { schema: registerSchema }, async (request, reply) => {
-    const { name, email, phone, password } = request.body;
+    const { name, email, phone, password, role } = request.body;
 
     if (!name || !email || !phone || !password) {
       return reply.status(400).send({ error: 'Name, email, phone, and password are required' });
@@ -66,6 +68,7 @@ async function authRoutes(fastify, options) {
           email,
           phone,
           password: hashedPassword,
+          role: role || 'salon owner',
         },
       });
 
@@ -73,11 +76,19 @@ async function authRoutes(fastify, options) {
       const { password: _, ...userWithoutPassword } = newUser;
 
       // Generate token
-      const token = fastify.jwt.sign({ id: userWithoutPassword.id, email: userWithoutPassword.email });
+      const token = fastify.jwt.sign({ id: userWithoutPassword.id, email: userWithoutPassword.email, role: userWithoutPassword.role });
+
+      // Check if they need to pay
+      let requiresPayment = false;
+      if (userWithoutPassword.role === 'salon owner') {
+        requiresPayment = true;
+      }
 
       reply.status(201).send({
-        message: 'User registered successfully',
-        token,
+        message: requiresPayment ? 'Registered successfully. Please complete payment to login.' : 'User registered successfully',
+        token: requiresPayment ? null : token, // Don't give token if payment required to force them to pay first
+        userId: userWithoutPassword.id,
+        requiresPayment,
         user: userWithoutPassword,
       });
     } catch (error) {
@@ -111,6 +122,7 @@ async function authRoutes(fastify, options) {
               name: { type: 'string' },
               email: { type: 'string' },
               phone: { type: 'string' },
+              role: { type: 'string' },
             },
           },
         },
@@ -143,10 +155,29 @@ async function authRoutes(fastify, options) {
         return reply.status(401).send({ error: 'Invalid email or password' });
       }
 
+      // Check subscription for salon owner
+      if (user.role === 'salon owner') {
+        const activeSub = await prisma.subscription.findFirst({
+          where: {
+            user_id: user.id,
+            status: 'active',
+            end_date: { gt: new Date() }
+          }
+        });
+
+        if (!activeSub) {
+          return reply.status(402).send({ 
+            error: 'Payment Required: You must purchase a subscription to log in.', 
+            requiresPayment: true,
+            userId: user.id
+          });
+        }
+      }
+
       const { password: _, createdAt, updatedAt, ...userWithoutPassword } = user;
 
       // Generate token
-      const token = fastify.jwt.sign({ id: userWithoutPassword.id, email: userWithoutPassword.email });
+      const token = fastify.jwt.sign({ id: userWithoutPassword.id, email: userWithoutPassword.email, role: userWithoutPassword.role });
 
       reply.status(200).send({
         message: 'Login successful',

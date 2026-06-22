@@ -15,7 +15,7 @@ async function seatsManagementRoutes(fastify, options) {
 
   // Add Seat
   fastify.post('/api/salons/:salonId/seats', {
-    preValidation: [fastify.authenticate],
+    preValidation: [fastify.authorizeSalonOwner],
     schema: {
       description: 'Add a new seat to a salon',
       tags: ['Seats'],
@@ -77,7 +77,7 @@ async function seatsManagementRoutes(fastify, options) {
 
   // Edit Seat
   fastify.put('/api/seats/:id', {
-    preValidation: [fastify.authenticate],
+    preValidation: [fastify.authorizeSalonOwner],
     schema: {
       description: 'Edit a seat',
       tags: ['Seats'],
@@ -114,7 +114,7 @@ async function seatsManagementRoutes(fastify, options) {
 
   // Disable/Enable Seat
   fastify.patch('/api/seats/:id/toggle-status', {
-    preValidation: [fastify.authenticate],
+    preValidation: [fastify.authorizeSalonOwner],
     schema: {
       description: 'Toggle seat active status (Disable/Enable)',
       tags: ['Seats'],
@@ -150,7 +150,7 @@ async function seatsManagementRoutes(fastify, options) {
 
   // Delete Seat
   fastify.delete('/api/seats/:id', {
-    preValidation: [fastify.authenticate],
+    preValidation: [fastify.authorizeSalonOwner],
     schema: {
       description: 'Delete a seat',
       tags: ['Seats'],

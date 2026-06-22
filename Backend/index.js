@@ -77,6 +77,42 @@ const start = async () => {
       }
     });
 
+    fastify.decorate('authorizeSalonOwner', async function (request, reply) {
+      try {
+        await request.jwtVerify();
+        if (request.user.role !== 'salon owner' && request.user.role !== 'Admin') {
+          return reply.status(403).send({ error: 'Forbidden: Requires salon owner role' });
+        }
+        
+        // Block salon owners without an active subscription
+        if (request.user.role === 'salon owner') {
+          const activeSub = await prisma.subscription.findFirst({
+            where: { 
+              user_id: request.user.id, 
+              status: 'active',
+              end_date: { gt: new Date() }
+            }
+          });
+          if (!activeSub) {
+            return reply.status(402).send({ error: 'Payment Required: Please purchase a subscription to access this feature.', requiresPayment: true });
+          }
+        }
+      } catch (err) {
+        reply.send(err);
+      }
+    });
+
+    fastify.decorate('authorizeAdmin', async function (request, reply) {
+      try {
+        await request.jwtVerify();
+        if (request.user.role !== 'Admin') {
+          return reply.status(403).send({ error: 'Forbidden: Requires Admin role' });
+        }
+      } catch (err) {
+        reply.send(err);
+      }
+    });
+
     // 2. Register Swagger UI
     await fastify.register(require('@fastify/swagger-ui'), {
       routePrefix: '/docs',
@@ -96,6 +132,8 @@ const start = async () => {
     await fastify.register(require('./routes/salonOwner/employee'), { prisma });
     await fastify.register(require('./routes/customer/appointment'), { prisma });
     await fastify.register(require('./routes/customer/callback'), { prisma });
+    await fastify.register(require('./routes/admin/websiteDetails/index'), { prisma });
+    await fastify.register(require('./routes/salonOwner/subscription/index'), { prisma });
 
 
     // Wait for plugins to initialize
@@ -111,3 +149,5 @@ const start = async () => {
 };
 
 start();
+
+// Prisma client updated

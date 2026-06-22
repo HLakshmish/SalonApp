@@ -15,7 +15,7 @@ async function employeeRoutes(fastify, options) {
 
   // Add Employee
   fastify.post('/api/salons/:salonId/employees', {
-    preValidation: [fastify.authenticate],
+    preValidation: [fastify.authorizeSalonOwner],
     schema: {
       description: 'Add a new employee to a salon',
       tags: ['Employees'],
@@ -60,7 +60,7 @@ async function employeeRoutes(fastify, options) {
 
   // Get Employees by Salon
   fastify.get('/api/salons/:salonId/employees', {
-    preValidation: [fastify.authenticate],
+    preValidation: [fastify.authorizeSalonOwner],
     schema: {
       description: 'Get all employees for a salon',
       tags: ['Employees'],
@@ -82,7 +82,7 @@ async function employeeRoutes(fastify, options) {
 
   // Edit Employee
   fastify.put('/api/employees/:id', {
-    preValidation: [fastify.authenticate],
+    preValidation: [fastify.authorizeSalonOwner],
     schema: {
       description: 'Edit an employee',
       tags: ['Employees'],
@@ -120,7 +120,7 @@ async function employeeRoutes(fastify, options) {
 
   // Delete Employee
   fastify.delete('/api/employees/:id', {
-    preValidation: [fastify.authenticate],
+    preValidation: [fastify.authorizeSalonOwner],
     schema: {
       description: 'Delete an employee',
       tags: ['Employees'],

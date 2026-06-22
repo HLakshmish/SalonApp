@@ -521,7 +521,7 @@ async function appointmentRoutes(fastify, options) {
 
   // Get appointments for all salons owned by the logged-in owner
   fastify.get('/api/appointments/owner/salons', {
-    preValidation: [fastify.authenticate],
+    preValidation: [fastify.authorizeSalonOwner],
     schema: {
       description: 'Get all appointments for salons owned by the logged-in owner',
       tags: ['Appointments'],

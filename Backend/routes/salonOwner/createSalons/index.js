@@ -18,7 +18,7 @@ async function salonOwnerRoutes(fastify, options) {
   };
 
   fastify.post('/api/salons', {
-    preValidation: [fastify.authenticate],
+    preValidation: [fastify.authorizeSalonOwner],
     validatorCompiler: () => () => true, // Bypass strict schema validation for multipart
     schema: {
       description: 'Create a new salon',
@@ -127,7 +127,7 @@ async function salonOwnerRoutes(fastify, options) {
 
   // Get My Salons (GET) - For logged-in owner
   fastify.get('/api/salons/my-salons', {
-    preValidation: [fastify.authenticate],
+    preValidation: [fastify.authorizeSalonOwner],
     schema: {
       description: 'Get all salons owned by the logged-in user',
       tags: ['Salon'],
@@ -154,13 +154,11 @@ async function salonOwnerRoutes(fastify, options) {
     return salons;
   });
 
-  // Get Single Salon (GET)
+  // Get Single Salon (GET) - Publicly accessible
   fastify.get('/api/salons/:id', {
-    preValidation: [fastify.authenticate],
     schema: {
-      description: 'Get a salon by ID',
+      description: 'Get a salon by ID (public)',
       tags: ['Salon'],
-      security: [{ bearerAuth: [] }],
       params: paramsSchema
     }
   }, async (request, reply) => {
@@ -175,13 +173,12 @@ async function salonOwnerRoutes(fastify, options) {
     });
 
     if (!salon) return reply.status(404).send({ error: 'Salon not found' });
-    if (salon.ownerId !== request.user.id) return reply.status(403).send({ error: 'Unauthorized to view this salon' });
 
     return salon;
   });
 
   fastify.put('/api/salons/:id', {
-    preValidation: [fastify.authenticate],
+    preValidation: [fastify.authorizeSalonOwner],
     validatorCompiler: () => () => true, // Bypass strict schema validation for multipart
     schema: {
       description: 'Update a salon',
@@ -274,7 +271,7 @@ async function salonOwnerRoutes(fastify, options) {
 
   // Delete Salon (DELETE)
   fastify.delete('/api/salons/:id', {
-    preValidation: [fastify.authenticate],
+    preValidation: [fastify.authorizeSalonOwner],
     schema: {
       description: 'Delete a salon',
       tags: ['Salon'],

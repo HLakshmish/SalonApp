@@ -48,7 +48,7 @@ async function callbackRoutes(fastify, options) {
 
   // GET /api/salons/:salonId/callbacks - Get callbacks for a salon (Owner)
   fastify.get('/api/salons/:salonId/callbacks', {
-    preValidation: [fastify.authenticate],
+    preValidation: [fastify.authorizeSalonOwner],
     schema: {
       description: 'Get callback requests for a salon',
       tags: ['Callback'],
@@ -79,7 +79,7 @@ async function callbackRoutes(fastify, options) {
 
   // PATCH /api/callbacks/:id/status - Update status of a callback
   fastify.patch('/api/callbacks/:id/status', {
-    preValidation: [fastify.authenticate],
+    preValidation: [fastify.authorizeSalonOwner],
     schema: {
       description: 'Update callback request status',
       tags: ['Callback'],
@@ -120,7 +120,7 @@ async function callbackRoutes(fastify, options) {
 
   // DELETE /api/callbacks/:id - Delete a callback
   fastify.delete('/api/callbacks/:id', {
-    preValidation: [fastify.authenticate],
+    preValidation: [fastify.authorizeSalonOwner],
     schema: {
       description: 'Delete a callback request',
       tags: ['Callback'],

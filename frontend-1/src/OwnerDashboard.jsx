@@ -1,7 +1,143 @@
 import React, { useState, useEffect } from 'react';
-import { Image as ImageIcon, Plus } from 'lucide-react';
 import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
+
+const OwnerIcon = ({ name, size = 18, className = '', style = {} }) => {
+  const props = {
+    width: size,
+    height: size,
+    className: className,
+    style: style,
+    viewBox: '0 0 24 24',
+    fill: 'none',
+    stroke: 'currentColor',
+    strokeWidth: '2',
+    strokeLinecap: 'round',
+    strokeLinejoin: 'round',
+  };
+
+  switch (name) {
+    case 'plus':
+      return (
+        <svg {...props}>
+          <line x1="12" y1="5" x2="12" y2="19" />
+          <line x1="5" y1="12" x2="19" y2="12" />
+        </svg>
+      );
+    case 'settings':
+      return (
+        <svg {...props}>
+          <circle cx="12" cy="12" r="3" />
+          <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" />
+        </svg>
+      );
+    case 'logout':
+      return (
+        <svg {...props}>
+          <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+          <polyline points="16 17 21 12 16 7" />
+          <line x1="21" y1="12" x2="9" y2="12" />
+        </svg>
+      );
+    case 'map-pin':
+      return (
+        <svg {...props}>
+          <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
+          <circle cx="12" cy="10" r="3" />
+        </svg>
+      );
+    case 'phone':
+      return (
+        <svg {...props}>
+          <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z" />
+        </svg>
+      );
+    case 'mail':
+      return (
+        <svg {...props}>
+          <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" />
+          <polyline points="22,6 12,13 2,6" />
+        </svg>
+      );
+    case 'info':
+      return (
+        <svg {...props}>
+          <circle cx="12" cy="12" r="10" />
+          <line x1="12" y1="16" x2="12" y2="12" />
+          <line x1="12" y1="8" x2="12.01" y2="8" />
+        </svg>
+      );
+    case 'edit':
+      return (
+        <svg {...props}>
+          <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
+          <path d="M18.5 2.5a2.121 2.121 0 1 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
+        </svg>
+      );
+    case 'save':
+      return (
+        <svg {...props}>
+          <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z" />
+          <polyline points="17 21 17 13 7 13 7 21" />
+          <polyline points="7 3 7 8 15 8" />
+        </svg>
+      );
+    case 'trash':
+      return (
+        <svg {...props}>
+          <polyline points="3 6 5 6 21 6" />
+          <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+          <line x1="10" y1="11" x2="10" y2="17" />
+          <line x1="14" y1="11" x2="14" y2="17" />
+        </svg>
+      );
+    case 'calendar':
+      return (
+        <svg {...props}>
+          <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
+          <line x1="16" y1="2" x2="16" y2="6" />
+          <line x1="8" y1="2" x2="8" y2="6" />
+          <line x1="3" y1="10" x2="21" y2="10" />
+        </svg>
+      );
+    case 'clock':
+      return (
+        <svg {...props}>
+          <circle cx="12" cy="12" r="10" />
+          <polyline points="12 6 12 12 16 14" />
+        </svg>
+      );
+    case 'user':
+      return (
+        <svg {...props}>
+          <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+          <circle cx="12" cy="7" r="4" />
+        </svg>
+      );
+    case 'image':
+      return (
+        <svg {...props}>
+          <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
+          <circle cx="8.5" cy="8.5" r="1.5" />
+          <polyline points="21 15 16 10 5 21" />
+        </svg>
+      );
+    case 'check':
+      return (
+        <svg {...props}>
+          <polyline points="20 6 9 17 4 12" />
+        </svg>
+      );
+    case 'sparkles':
+      return (
+        <svg {...props}>
+          <path d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364-6.364l-.707.707M6.343 17.657l-.707.707m0-12.728l.707.707m11.314 11.314l.707-.707M12 7a5 5 0 1 0 0 10 5 5 0 0 0 0-10z" />
+        </svg>
+      );
+    default:
+      return null;
+  }
+};
 
 const OwnerDashboard = ({ setCurrentView, salons, setSalons, authToken, setAuthToken }) => {
   useEffect(() => {
@@ -55,11 +191,9 @@ const OwnerDashboard = ({ setCurrentView, salons, setSalons, authToken, setAuthT
   const [updateError, setUpdateError] = useState('');
   const [updateLoading, setUpdateLoading] = useState(false);
   
-  // Configuration States
-  const [configTab, setConfigTab] = useState('seats'); // 'seats', 'services', 'employees'
+  const [configTab, setConfigTab] = useState('seats');
   const [isConfiguring, setIsConfiguring] = useState(false);
   
-  // Dynamic Lists for demo/feedback
   const [seatsList, setSeatsList] = useState([]);
   const [servicesList, setServicesList] = useState([]);
   const [employeesList, setEmployeesList] = useState([]);
@@ -141,7 +275,7 @@ const OwnerDashboard = ({ setCurrentView, salons, setSalons, authToken, setAuthT
     if (configTab === 'seats' && salons.length > 0) {
       fetchSeats();
     }
-  }, [configTab, salons]);
+  }, [configTab, salons, activeSalon]);
 
   const fetchServices = async () => {
     if (!activeSalon) return;
@@ -162,7 +296,7 @@ const OwnerDashboard = ({ setCurrentView, salons, setSalons, authToken, setAuthT
     if (configTab === 'services' && salons.length > 0) {
       fetchServices();
     }
-  }, [configTab, salons]);
+  }, [configTab, salons, activeSalon]);
 
   const fetchEmployees = async () => {
     if (!activeSalon) return;
@@ -183,9 +317,8 @@ const OwnerDashboard = ({ setCurrentView, salons, setSalons, authToken, setAuthT
     if (configTab === 'employees' && salons.length > 0) {
       fetchEmployees();
     }
-  }, [configTab, salons]);
+  }, [configTab, salons, activeSalon]);
 
-  // Form States for Configuration
   const [seatName, setSeatName] = useState('');
   const [seatDesc, setSeatDesc] = useState('');
   const [editingSeatId, setEditingSeatId] = useState(null);
@@ -217,7 +350,6 @@ const OwnerDashboard = ({ setCurrentView, salons, setSalons, authToken, setAuthT
   const [editEmpRole, setEditEmpRole] = useState('');
   const [editEmpExp, setEditEmpExp] = useState('');
 
-  // New Salon Form States
   const [salonData, setSalonData] = useState({
     name: '', address: '', city: '', state: '', pincode: '', phoneNumber: '', description: ''
   });
@@ -259,7 +391,6 @@ const OwnerDashboard = ({ setCurrentView, salons, setSalons, authToken, setAuthT
     const formData = new FormData();
     Object.keys(salonData).forEach(key => formData.append(key, salonData[key]));
 
-    // Construct operatingHours JSON using the UI inputs
     const payloadHours = {};
     Object.keys(operatingHours).forEach(day => {
       if (operatingHours[day].closed) {
@@ -669,90 +800,712 @@ const OwnerDashboard = ({ setCurrentView, salons, setSalons, authToken, setAuthT
   });
 
   return (
-    <div>
-      <header className="header-container">
-        <div className="header-top">
-          <div className="logo-section" onClick={() => setCurrentView('home')} style={{cursor: 'pointer'}}>
-            <div className="logo-main">LOOKS</div>
-            <div className="logo-sub">S A L O N</div>
-          </div>
-          <div className="header-actions-wrapper">
-            <div className="top-buttons">
-              <button className="outline-btn" onClick={() => {
-                setCurrentView('home');
-                setSalons([]);
-                setIsCreatingSalon(false);
-                setAuthToken('');
-                setIsConfiguring(false);
-              }}>
-                Logout
-              </button>
-            </div>
-          </div>
+    <div className="owner-portal-wrapper">
+      <style>{`
+        .owner-portal-wrapper {
+          min-height: 100vh;
+          background: radial-gradient(circle at 50% 50%, #121212 0%, #050505 100%);
+          color: #ffffff;
+          font-family: 'Montserrat', sans-serif;
+          position: relative;
+          overflow-x: hidden;
+        }
+        .owner-portal-wrapper::before {
+          content: '';
+          position: absolute;
+          width: 500px;
+          height: 500px;
+          background: radial-gradient(circle, rgba(207, 168, 86, 0.05) 0%, rgba(0, 0, 0, 0) 70%);
+          top: 10%;
+          left: 10%;
+          pointer-events: none;
+          z-index: 0;
+        }
+        .owner-portal-wrapper::after {
+          content: '';
+          position: absolute;
+          width: 550px;
+          height: 550px;
+          background: radial-gradient(circle, rgba(207, 168, 86, 0.04) 0%, rgba(0, 0, 0, 0) 70%);
+          bottom: 10%;
+          right: 10%;
+          pointer-events: none;
+          z-index: 0;
+        }
+        .owner-topbar {
+          background-color: #000;
+          padding: 20px 40px;
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+          position: relative;
+          z-index: 2;
+        }
+        .owner-brand-logo {
+          display: flex;
+          flex-direction: column;
+          align-items: flex-start;
+          cursor: pointer;
+        }
+        .owner-brand-title {
+          font-size: 26px;
+          font-weight: 700;
+          letter-spacing: 2px;
+          line-height: 1;
+        }
+        .owner-brand-subtitle {
+          font-size: 10px;
+          font-weight: 500;
+          letter-spacing: 6px;
+          margin-top: 5px;
+          color: #cfa856;
+          text-transform: uppercase;
+        }
+        .logout-btn-wrapper .secondary-action-btn {
+          background: transparent;
+          border: 1px solid rgba(207, 168, 86, 0.4);
+          color: #cfa856;
+          padding: 8px 16px;
+          font-size: 13px;
+          font-weight: 600;
+          border-radius: 6px;
+          cursor: pointer;
+          transition: all 0.3s ease;
+          display: flex;
+          align-items: center;
+          gap: 6px;
+          text-transform: uppercase;
+          letter-spacing: 1px;
+        }
+        .logout-btn-wrapper .secondary-action-btn:hover {
+          background: #cfa856;
+          color: #000;
+          box-shadow: 0 0 15px rgba(207, 168, 86, 0.2);
+        }
+        .dashboard-main-container {
+          max-width: 1200px;
+          margin: 0 auto;
+          padding: 50px 20px;
+          position: relative;
+          z-index: 1;
+        }
+        .dashboard-header-block {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          margin-bottom: 45px;
+          flex-wrap: wrap;
+          gap: 20px;
+        }
+        .dashboard-title-area h1 {
+          font-family: 'Playfair Display', serif;
+          font-size: 38px;
+          color: #fff;
+          font-weight: 700;
+          margin-bottom: 5px;
+        }
+        .dashboard-title-area p {
+          font-size: 13px;
+          color: #888;
+          letter-spacing: 1px;
+        }
+        .primary-cta-btn {
+          background: linear-gradient(135deg, #cfa856 0%, #aa8c2c 100%);
+          color: #000;
+          border: none;
+          padding: 12px 24px;
+          font-size: 14px;
+          font-weight: 700;
+          border-radius: 8px;
+          cursor: pointer;
+          display: flex;
+          align-items: center;
+          gap: 8px;
+          box-shadow: 0 4px 15px rgba(207, 168, 86, 0.2);
+          transition: all 0.3s ease;
+          text-transform: uppercase;
+          letter-spacing: 0.5px;
+        }
+        .primary-cta-btn:hover {
+          background: linear-gradient(135deg, #e8c678 0%, #cfa856 100%);
+          transform: translateY(-2px);
+          box-shadow: 0 8px 20px rgba(207, 168, 86, 0.35);
+        }
+        .salon-row-card {
+          background: rgba(18, 18, 18, 0.5);
+          backdrop-filter: blur(20px);
+          -webkit-backdrop-filter: blur(20px);
+          border: 1px solid rgba(207, 168, 86, 0.12);
+          border-radius: 16px;
+          display: flex;
+          overflow: hidden;
+          box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+          transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+          margin-bottom: 30px;
+        }
+        .salon-row-card:hover {
+          transform: translateY(-4px);
+          border-color: rgba(207, 168, 86, 0.35);
+          box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5), 0 0 20px rgba(207, 168, 86, 0.05);
+        }
+        @media (max-width: 768px) {
+          .salon-row-card {
+            flex-direction: column;
+          }
+        }
+        .salon-cover-visual {
+          width: 35%;
+          min-width: 250px;
+          position: relative;
+          overflow: hidden;
+          background-size: cover;
+          background-position: center;
+          border-right: 1px solid rgba(207, 168, 86, 0.15);
+        }
+        @media (max-width: 768px) {
+          .salon-cover-visual {
+            width: 100%;
+            height: 200px;
+            border-right: none;
+            border-bottom: 1px solid rgba(207, 168, 86, 0.15);
+          }
+        }
+        .salon-cover-visual::before {
+          content: '';
+          position: absolute;
+          top: 0; left: 0; right: 0; bottom: 0;
+          background: linear-gradient(to right, rgba(0,0,0,0.1) 0%, rgba(0,0,0,0.7) 100%);
+        }
+        @media (max-width: 768px) {
+          .salon-cover-visual::before {
+            background: linear-gradient(to top, rgba(0,0,0,0.7) 0%, rgba(0,0,0,0.1) 100%);
+          }
+        }
+        .salon-logo-badge {
+          position: absolute;
+          bottom: 20px;
+          left: 20px;
+          width: 70px;
+          height: 70px;
+          border-radius: 12px;
+          border: 2px solid #cfa856;
+          background: #000;
+          overflow: hidden;
+          box-shadow: 0 5px 15px rgba(0,0,0,0.5);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+        }
+        .salon-row-details {
+          flex: 1;
+          padding: 30px;
+          display: flex;
+          flex-direction: column;
+          justify-content: space-between;
+        }
+        .salon-row-details h2 {
+          font-family: 'Playfair Display', serif;
+          font-size: 26px;
+          font-weight: 700;
+          color: #cfa856;
+          margin-bottom: 15px;
+        }
+        .salon-meta-group {
+          margin-bottom: 25px;
+        }
+        .salon-meta-item {
+          display: flex;
+          align-items: flex-start;
+          gap: 10px;
+          font-size: 13px;
+          color: #ccc;
+          margin-bottom: 8px;
+          line-height: 1.4;
+        }
+        .salon-meta-item svg {
+          color: #cfa856;
+          flex-shrink: 0;
+          margin-top: 2px;
+        }
+        .salon-description-box {
+          font-size: 13px;
+          color: #888;
+          line-height: 1.6;
+          margin-top: 10px;
+          border-left: 2px solid rgba(207, 168, 86, 0.3);
+          padding-left: 12px;
+          font-style: italic;
+        }
+        .btn-toolbar {
+          display: flex;
+          gap: 12px;
+          flex-wrap: wrap;
+        }
+        .owner-outline-btn {
+          background: transparent;
+          border: 1px solid rgba(255, 255, 255, 0.15);
+          color: #fff;
+          padding: 10px 20px;
+          border-radius: 6px;
+          font-size: 12px;
+          font-weight: 600;
+          cursor: pointer;
+          transition: all 0.3s ease;
+          display: flex;
+          align-items: center;
+          gap: 6px;
+          text-transform: uppercase;
+          letter-spacing: 0.5px;
+        }
+        .owner-outline-btn:hover {
+          border-color: #cfa856;
+          color: #cfa856;
+          background: rgba(207, 168, 86, 0.05);
+        }
+        .owner-danger-btn {
+          background: rgba(239, 68, 68, 0.05);
+          border: 1px solid rgba(239, 68, 68, 0.2);
+          color: #f87171;
+          padding: 10px 20px;
+          border-radius: 6px;
+          font-size: 12px;
+          font-weight: 600;
+          cursor: pointer;
+          transition: all 0.3s ease;
+          display: flex;
+          align-items: center;
+          gap: 6px;
+          text-transform: uppercase;
+          letter-spacing: 0.5px;
+        }
+        .owner-danger-btn:hover {
+          background: rgba(239, 68, 68, 0.15);
+          border-color: #f87171;
+          box-shadow: 0 0 10px rgba(239, 68, 68, 0.15);
+        }
+        .config-panel-container {
+          background: rgba(10, 10, 10, 0.8);
+          border: 1px solid rgba(207, 168, 86, 0.15);
+          border-radius: 16px;
+          overflow: hidden;
+          margin-top: 25px;
+          box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+          animation: slideUp 0.4s ease;
+        }
+        @keyframes slideUp {
+          from { transform: translateY(15px); opacity: 0; }
+          to { transform: translateY(0); opacity: 1; }
+        }
+        .config-tabs-bar {
+          display: flex;
+          background: rgba(255, 255, 255, 0.01);
+          border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+          flex-wrap: wrap;
+        }
+        .config-tab-item {
+          padding: 18px 24px;
+          font-size: 13px;
+          font-weight: 600;
+          color: #888;
+          cursor: pointer;
+          transition: all 0.3s ease;
+          border-bottom: 2px solid transparent;
+          text-transform: uppercase;
+          letter-spacing: 1px;
+          display: flex;
+          align-items: center;
+          gap: 8px;
+        }
+        .config-tab-item:hover {
+          color: #fff;
+          background: rgba(255, 255, 255, 0.02);
+        }
+        .config-tab-item.active {
+          color: #cfa856;
+          border-bottom-color: #cfa856;
+          background: rgba(207, 168, 86, 0.04);
+        }
+        .config-tab-content {
+          padding: 30px;
+        }
+        .tab-title-row {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          margin-bottom: 25px;
+          border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+          padding-bottom: 15px;
+        }
+        .tab-title-row h3 {
+          font-family: 'Playfair Display', serif;
+          font-size: 20px;
+          color: #cfa856;
+          margin: 0;
+        }
+        .tab-grid-form {
+          display: grid;
+          grid-template-columns: 1fr 1fr;
+          gap: 15px;
+          margin-bottom: 25px;
+          background: rgba(255, 255, 255, 0.01);
+          padding: 20px;
+          border-radius: 12px;
+          border: 1px solid rgba(255, 255, 255, 0.03);
+        }
+        .form-row-flex {
+          display: flex;
+          gap: 15px;
+          margin-bottom: 25px;
+          background: rgba(255, 255, 255, 0.01);
+          padding: 20px;
+          border-radius: 12px;
+          border: 1px solid rgba(255, 255, 255, 0.03);
+          flex-wrap: wrap;
+        }
+        .owner-form-input {
+          flex: 1;
+          min-width: 200px;
+          padding: 12px 16px;
+          background: rgba(255, 255, 255, 0.02);
+          border: 1px solid rgba(255, 255, 255, 0.08);
+          border-radius: 8px;
+          color: #fff;
+          font-size: 14px;
+          transition: all 0.3s;
+        }
+        .owner-form-input:focus {
+          outline: none;
+          border-color: #cfa856;
+          box-shadow: 0 0 0 3px rgba(207, 168, 86, 0.15);
+          background: rgba(255, 255, 255, 0.04);
+        }
+        .owner-form-select {
+          padding: 12px 16px;
+          background: #111;
+          border: 1px solid rgba(255, 255, 255, 0.08);
+          border-radius: 8px;
+          color: #fff;
+          font-size: 14px;
+          cursor: pointer;
+          min-width: 150px;
+        }
+        .owner-form-select:focus {
+          outline: none;
+          border-color: #cfa856;
+        }
+        .owner-add-btn {
+          background: linear-gradient(135deg, #cfa856 0%, #aa8c2c 100%);
+          color: #000;
+          border: none;
+          padding: 12px 24px;
+          border-radius: 8px;
+          font-weight: 700;
+          font-size: 13px;
+          cursor: pointer;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          gap: 6px;
+          text-transform: uppercase;
+          letter-spacing: 0.5px;
+          transition: all 0.3s;
+        }
+        .owner-add-btn:hover {
+          background: linear-gradient(135deg, #e8c678 0%, #cfa856 100%);
+          box-shadow: 0 4px 15px rgba(207, 168, 86, 0.25);
+        }
+        .items-listing-stack {
+          display: flex;
+          flex-direction: column;
+          gap: 12px;
+        }
+        .item-list-row {
+          background: rgba(255, 255, 255, 0.02);
+          border: 1px solid rgba(255, 255, 255, 0.05);
+          border-radius: 12px;
+          padding: 16px 20px;
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          transition: all 0.3s;
+        }
+        .item-list-row:hover {
+          background: rgba(255, 255, 255, 0.04);
+          border-color: rgba(207, 168, 86, 0.2);
+        }
+        .item-row-info h4 {
+          font-size: 15px;
+          font-weight: 600;
+          color: #fff;
+          margin-bottom: 4px;
+        }
+        .item-row-info p {
+          font-size: 12px;
+          color: #888;
+        }
+        .item-action-group {
+          display: flex;
+          gap: 8px;
+          align-items: center;
+        }
+        .status-badge-custom {
+          font-size: 10px;
+          font-weight: 700;
+          text-transform: uppercase;
+          letter-spacing: 0.5px;
+          padding: 4px 8px;
+          border-radius: 4px;
+          background: rgba(255, 255, 255, 0.05);
+          color: #888;
+        }
+        .status-badge-custom.active {
+          background: rgba(16, 185, 129, 0.08);
+          color: #34d399;
+          border: 1px solid rgba(16, 185, 129, 0.15);
+        }
+        .appt-card {
+          background: rgba(255, 255, 255, 0.01);
+          border: 1px solid rgba(255, 255, 255, 0.05);
+          border-radius: 12px;
+          padding: 20px;
+          margin-bottom: 15px;
+          display: flex;
+          flex-direction: column;
+          gap: 15px;
+          transition: all 0.3s;
+        }
+        .appt-card:hover {
+          background: rgba(255, 255, 255, 0.02);
+          border-color: rgba(207, 168, 86, 0.15);
+        }
+        .appt-header-row {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+          padding-bottom: 10px;
+        }
+        .appt-time-info {
+          font-size: 13px;
+          font-weight: 700;
+          color: #cfa856;
+          display: flex;
+          align-items: center;
+          gap: 6px;
+        }
+        .appt-details-grid {
+          display: grid;
+          grid-template-columns: 1.2fr 0.8fr;
+          gap: 20px;
+        }
+        @media (max-width: 600px) {
+          .appt-details-grid {
+            grid-template-columns: 1fr;
+            gap: 15px;
+          }
+        }
+        .appt-col-left {
+          border-right: 1px solid rgba(255, 255, 255, 0.05);
+          padding-right: 15px;
+        }
+        @media (max-width: 600px) {
+          .appt-col-left {
+            border-right: none;
+            padding-right: 0;
+          }
+        }
+        .appt-col-right {
+          display: flex;
+          flex-direction: column;
+          gap: 6px;
+        }
+        .appt-detail-text {
+          font-size: 13px;
+          color: #aaa;
+          margin-bottom: 6px;
+          line-height: 1.4;
+        }
+        .appt-detail-text strong {
+          color: #fff;
+        }
+        .register-form-card {
+          background: rgba(18, 18, 18, 0.7);
+          backdrop-filter: blur(25px);
+          border: 1px solid rgba(207, 168, 86, 0.15);
+          padding: 40px;
+          border-radius: 20px;
+          box-shadow: 0 20px 45px rgba(0, 0, 0, 0.5);
+          max-width: 850px;
+          margin: 0 auto;
+          animation: slideUp 0.4s ease;
+        }
+        .form-grid-layout {
+          display: grid;
+          grid-template-columns: 1fr 1fr;
+          gap: 20px;
+        }
+        @media (max-width: 600px) {
+          .form-grid-layout {
+            grid-template-columns: 1fr;
+          }
+        }
+        .form-full-width {
+          grid-column: 1 / -1;
+        }
+        .form-label-txt {
+          display: block;
+          font-size: 12px;
+          color: #aaa;
+          margin-bottom: 8px;
+          font-weight: 600;
+          letter-spacing: 0.5px;
+        }
+        .hours-row-item {
+          display: grid;
+          grid-template-columns: 120px 1.2fr 1.2fr auto;
+          gap: 15px;
+          align-items: center;
+          padding: 8px 12px;
+          background: rgba(255, 255, 255, 0.01);
+          border: 1px solid rgba(255, 255, 255, 0.03);
+          border-radius: 8px;
+          margin-bottom: 8px;
+        }
+        @media (max-width: 600px) {
+          .hours-row-item {
+            grid-template-columns: 1fr;
+            gap: 10px;
+            padding: 15px;
+          }
+        }
+        .custom-switch-label {
+          display: flex;
+          align-items: center;
+          gap: 8px;
+          color: #aaa;
+          font-size: 13px;
+          cursor: pointer;
+        }
+        .custom-switch-checkbox {
+          width: 18px;
+          height: 18px;
+          accent-color: #cfa856;
+          cursor: pointer;
+        }
+        .form-btn-row {
+          margin-top: 30px;
+          display: flex;
+          flex-direction: column;
+          gap: 15px;
+        }
+        .file-upload-input {
+          padding: 8px 0;
+          color: #aaa;
+          font-size: 13px;
+          cursor: pointer;
+        }
+        .empty-state-text {
+          color: #888;
+          text-align: center;
+          margin-top: 40px;
+          font-size: 16px;
+          padding: 40px;
+          background: rgba(255, 255, 255, 0.01);
+          border: 1px dashed rgba(255, 255, 255, 0.08);
+          border-radius: 12px;
+        }
+      `}</style>
+
+      <header className="owner-topbar">
+        <div className="owner-brand-logo" onClick={() => setCurrentView('home')}>
+          <span className="owner-brand-title">LOOKS</span>
+          <span className="owner-brand-subtitle">S A L O N</span>
+        </div>
+        <div className="logout-btn-wrapper">
+          <button className="secondary-action-btn" onClick={() => {
+            setCurrentView('home');
+            setSalons([]);
+            setIsCreatingSalon(false);
+            setAuthToken('');
+            setIsConfiguring(false);
+          }}>
+            <OwnerIcon name="logout" size={14} />
+            Logout
+          </button>
         </div>
       </header>
 
-      <div className="dashboard-container">
-        <div className="dashboard-header">
-          <h1 className="dashboard-title">Owner Dashboard</h1>
-          {salons.length < maxSalons && !isCreatingSalon && (
-            <button className="create-salon-btn" onClick={() => setIsCreatingSalon(true)}>
-              + Create Salon
+      <div className="dashboard-main-container">
+        
+        <div className="dashboard-header-block">
+          <div className="dashboard-title-area">
+            <h1>Owner Dashboard</h1>
+            <p>Portfolio: {salons.length} of {maxSalons} salons registered</p>
+          </div>
+          {salons.length < maxSalons && !isCreatingSalon && !isEditingSalon && (
+            <button className="primary-cta-btn" onClick={() => setIsCreatingSalon(true)}>
+              <OwnerIcon name="plus" size={16} />
+              Register New Salon
             </button>
           )}
         </div>
 
         {isCreatingSalon && salons.length < maxSalons ? (
-          <div className="create-salon-form">
-            <h2 className="auth-title" style={{ textAlign: 'left', marginBottom: '30px' }}>Register New Salon</h2>
+          <div className="register-form-card">
+            <div style={{ marginBottom: '30px', borderBottom: '1px solid rgba(255,255,255,0.08)', paddingBottom: '15px' }}>
+              <h2 style={{ fontFamily: 'Playfair Display, serif', fontSize: '26px', color: '#cfa856', margin: 0 }}>Register New Salon</h2>
+              <p style={{ fontSize: '13px', color: '#888', margin: '5px 0 0 0' }}>Provide the details below to publish your salon listing.</p>
+            </div>
+            
             {createError && <div className="error-message">{createError}</div>}
             
             <form onSubmit={handleCreateSalon}>
-              <div className="form-grid">
-                <div className="form-group full-width">
-                  <label className="form-label">Salon Name</label>
-                  <input type="text" name="name" className="form-input" required value={salonData.name} onChange={handleSalonDataChange} />
+              <div className="form-grid-layout">
+                <div className="form-group form-full-width">
+                  <label className="form-label-txt">Salon Name</label>
+                  <input type="text" name="name" className="owner-form-input" required value={salonData.name} onChange={handleSalonDataChange} placeholder="e.g. Looks Elite Salon" />
                 </div>
                 
                 <div className="form-group">
-                  <label className="form-label">Phone Number</label>
-                  <input type="tel" name="phoneNumber" className="form-input" required value={salonData.phoneNumber} onChange={handleSalonDataChange} />
+                  <label className="form-label-txt">Phone Number</label>
+                  <input type="tel" name="phoneNumber" className="owner-form-input" required value={salonData.phoneNumber} onChange={handleSalonDataChange} placeholder="e.g. +91 9876543210" />
                 </div>
                 
                 <div className="form-group">
-                  <label className="form-label">Pincode</label>
-                  <input type="text" name="pincode" className="form-input" required value={salonData.pincode} onChange={handleSalonDataChange} />
+                  <label className="form-label-txt">Pincode</label>
+                  <input type="text" name="pincode" className="owner-form-input" required value={salonData.pincode} onChange={handleSalonDataChange} placeholder="e.g. 576201" />
                 </div>
                 
-                <div className="form-group full-width">
-                  <label className="form-label">Address</label>
-                  <input type="text" name="address" className="form-input" required value={salonData.address} onChange={handleSalonDataChange} />
-                </div>
-                
-                <div className="form-group">
-                  <label className="form-label">City</label>
-                  <input type="text" name="city" className="form-input" required value={salonData.city} onChange={handleSalonDataChange} />
+                <div className="form-group form-full-width">
+                  <label className="form-label-txt">Address</label>
+                  <input type="text" name="address" className="owner-form-input" required value={salonData.address} onChange={handleSalonDataChange} placeholder="e.g. 1st Cross, MG Road" />
                 </div>
                 
                 <div className="form-group">
-                  <label className="form-label">State</label>
-                  <input type="text" name="state" className="form-input" required value={salonData.state} onChange={handleSalonDataChange} />
+                  <label className="form-label-txt">City</label>
+                  <input type="text" name="city" className="owner-form-input" required value={salonData.city} onChange={handleSalonDataChange} placeholder="e.g. Kundapur" />
+                </div>
+                
+                <div className="form-group">
+                  <label className="form-label-txt">State</label>
+                  <input type="text" name="state" className="owner-form-input" required value={salonData.state} onChange={handleSalonDataChange} placeholder="e.g. Karnataka" />
                 </div>
 
-                <div className="form-group full-width">
-                  <label className="form-label">Operating Hours</label>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', backgroundColor: '#222', padding: '15px', borderRadius: '8px', border: '1px solid #333' }}>
+                <div className="form-group form-full-width">
+                  <label className="form-label-txt" style={{ marginBottom: '12px' }}>Operating Hours</label>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', background: 'rgba(255,255,255,0.02)', padding: '15px', borderRadius: '12px', border: '1px solid rgba(255, 255, 255, 0.05)' }}>
                     {Object.keys(operatingHours).map(day => (
-                      <div key={day} style={{ display: 'grid', gridTemplateColumns: '100px 1fr 1fr auto', gap: '15px', alignItems: 'center' }}>
-                        <span style={{ textTransform: 'capitalize', color: operatingHours[day].closed ? '#888' : '#fff', fontWeight: 'bold' }}>{day}</span>
-                        <select className="form-input" disabled={operatingHours[day].closed} value={operatingHours[day].open} onChange={(e) => handleOperatingHoursChange(day, 'open', e.target.value)} style={{ opacity: operatingHours[day].closed ? 0.3 : 1, cursor: 'pointer' }}>
+                      <div key={day} className="hours-scheduler-item hours-row-item">
+                        <span style={{ textTransform: 'capitalize', color: operatingHours[day].closed ? '#666' : '#fff', fontWeight: '700', fontSize: '13px' }}>{day}</span>
+                        <select className="owner-form-select" disabled={operatingHours[day].closed} value={operatingHours[day].open} onChange={(e) => handleOperatingHoursChange(day, 'open', e.target.value)} style={{ opacity: operatingHours[day].closed ? 0.3 : 1 }}>
                           {timeOptions.map(opt => <option key={`open-${opt.value}`} value={opt.value}>{opt.label}</option>)}
                         </select>
-                        <select className="form-input" disabled={operatingHours[day].closed} value={operatingHours[day].close} onChange={(e) => handleOperatingHoursChange(day, 'close', e.target.value)} style={{ opacity: operatingHours[day].closed ? 0.3 : 1, cursor: 'pointer' }}>
+                        <select className="owner-form-select" disabled={operatingHours[day].closed} value={operatingHours[day].close} onChange={(e) => handleOperatingHoursChange(day, 'close', e.target.value)} style={{ opacity: operatingHours[day].closed ? 0.3 : 1 }}>
                           {timeOptions.map(opt => <option key={`close-${opt.value}`} value={opt.value}>{opt.label}</option>)}
                         </select>
-                        <label style={{ display: 'flex', alignItems: 'center', gap: '5px', color: '#aaa', fontSize: '0.9rem', cursor: 'pointer' }}>
-                          <input type="checkbox" checked={operatingHours[day].closed} onChange={(e) => handleOperatingHoursChange(day, 'closed', e.target.checked)} style={{ width: '16px', height: '16px', cursor: 'pointer' }} />
+                        <label className="custom-switch-label">
+                          <input type="checkbox" className="custom-switch-checkbox" checked={operatingHours[day].closed} onChange={(e) => handleOperatingHoursChange(day, 'closed', e.target.checked)} />
                           Closed
                         </label>
                       </div>
@@ -760,26 +1513,27 @@ const OwnerDashboard = ({ setCurrentView, salons, setSalons, authToken, setAuthT
                   </div>
                 </div>
 
-                <div className="form-group full-width">
-                  <label className="form-label">Description</label>
-                  <textarea name="description" className="form-input" rows="3" value={salonData.description} onChange={handleSalonDataChange} />
+                <div className="form-group form-full-width">
+                  <label className="form-label-txt">Description</label>
+                  <textarea name="description" className="owner-form-input" style={{ resize: 'vertical', minHeight: '80px' }} rows="3" value={salonData.description} onChange={handleSalonDataChange} placeholder="Describe the ambiance, services, and specialties of your salon..." />
                 </div>
 
                 <div className="form-group">
-                  <label className="form-label">Salon Logo</label>
-                  <input type="file" name="logo" className="form-input file-input" onChange={handleFileChange} accept="image/*" />
+                  <label className="form-label-txt">Salon Logo</label>
+                  <input type="file" name="logo" className="file-upload-input" onChange={handleFileChange} accept="image/*" />
                 </div>
 
                 <div className="form-group">
-                  <label className="form-label">Banner Image</label>
-                  <input type="file" name="banner" className="form-input file-input" onChange={handleFileChange} accept="image/*" />
+                  <label className="form-label-txt">Banner Image</label>
+                  <input type="file" name="banner" className="file-upload-input" onChange={handleFileChange} accept="image/*" />
                 </div>
 
-                <div className="form-group full-width">
-                  <button type="submit" className="auth-btn" disabled={createLoading}>
-                    {createLoading ? 'Creating Salon...' : 'Submit Salon Details'}
+                <div className="form-group form-full-width form-btn-row">
+                  <button type="submit" className="primary-cta-btn" style={{ width: '100%', justifyContent: 'center' }} disabled={createLoading}>
+                    <OwnerIcon name="check" size={16} />
+                    {createLoading ? 'Registering Salon...' : 'Register Salon'}
                   </button>
-                  <button type="button" className="outline-btn" style={{marginTop: '15px', width: '100%', justifyContent: 'center'}} onClick={() => setIsCreatingSalon(false)}>
+                  <button type="button" className="owner-outline-btn" style={{ width: '100%', justifyContent: 'center' }} onClick={() => setIsCreatingSalon(false)}>
                     Cancel
                   </button>
                 </div>
@@ -787,56 +1541,60 @@ const OwnerDashboard = ({ setCurrentView, salons, setSalons, authToken, setAuthT
             </form>
           </div>
         ) : isEditingSalon && salons.length > 0 ? (
-          <div className="create-salon-form">
-            <h2 className="auth-title" style={{ textAlign: 'left', marginBottom: '30px' }}>Edit Salon Details</h2>
+          <div className="register-form-card">
+            <div style={{ marginBottom: '30px', borderBottom: '1px solid rgba(255,255,255,0.08)', paddingBottom: '15px' }}>
+              <h2 style={{ fontFamily: 'Playfair Display, serif', fontSize: '26px', color: '#cfa856', margin: 0 }}>Edit Salon Details</h2>
+              <p style={{ fontSize: '13px', color: '#888', margin: '5px 0 0 0' }}>Modify the details of your registered salon.</p>
+            </div>
+            
             {updateError && <div className="error-message">{updateError}</div>}
             
             <form onSubmit={handleUpdateSalon}>
-              <div className="form-grid">
-                <div className="form-group full-width">
-                  <label className="form-label">Salon Name</label>
-                  <input type="text" name="name" className="form-input" required value={salonData.name} onChange={handleSalonDataChange} />
+              <div className="form-grid-layout">
+                <div className="form-group form-full-width">
+                  <label className="form-label-txt">Salon Name</label>
+                  <input type="text" name="name" className="owner-form-input" required value={salonData.name} onChange={handleSalonDataChange} />
                 </div>
                 
                 <div className="form-group">
-                  <label className="form-label">Phone Number</label>
-                  <input type="tel" name="phoneNumber" className="form-input" required value={salonData.phoneNumber} onChange={handleSalonDataChange} />
+                  <label className="form-label-txt">Phone Number</label>
+                  <input type="tel" name="phoneNumber" className="owner-form-input" required value={salonData.phoneNumber} onChange={handleSalonDataChange} />
                 </div>
                 
                 <div className="form-group">
-                  <label className="form-label">Pincode</label>
-                  <input type="text" name="pincode" className="form-input" required value={salonData.pincode} onChange={handleSalonDataChange} />
+                  <label className="form-label-txt">Pincode</label>
+                  <input type="text" name="pincode" className="owner-form-input" required value={salonData.pincode} onChange={handleSalonDataChange} />
                 </div>
                 
-                <div className="form-group full-width">
-                  <label className="form-label">Address</label>
-                  <input type="text" name="address" className="form-input" required value={salonData.address} onChange={handleSalonDataChange} />
-                </div>
-                
-                <div className="form-group">
-                  <label className="form-label">City</label>
-                  <input type="text" name="city" className="form-input" required value={salonData.city} onChange={handleSalonDataChange} />
+                <div className="form-group form-full-width">
+                  <label className="form-label-txt">Address</label>
+                  <input type="text" name="address" className="owner-form-input" required value={salonData.address} onChange={handleSalonDataChange} />
                 </div>
                 
                 <div className="form-group">
-                  <label className="form-label">State</label>
-                  <input type="text" name="state" className="form-input" required value={salonData.state} onChange={handleSalonDataChange} />
+                  <label className="form-label-txt">City</label>
+                  <input type="text" name="city" className="owner-form-input" required value={salonData.city} onChange={handleSalonDataChange} />
+                </div>
+                
+                <div className="form-group">
+                  <label className="form-label-txt">State</label>
+                  <input type="text" name="state" className="owner-form-input" required value={salonData.state} onChange={handleSalonDataChange} />
                 </div>
 
-                <div className="form-group full-width">
-                  <label className="form-label">Operating Hours</label>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', backgroundColor: '#222', padding: '15px', borderRadius: '8px', border: '1px solid #333' }}>
+                <div className="form-group form-full-width">
+                  <label className="form-label-txt" style={{ marginBottom: '12px' }}>Operating Hours</label>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', background: 'rgba(255,255,255,0.02)', padding: '15px', borderRadius: '12px', border: '1px solid rgba(255, 255, 255, 0.05)' }}>
                     {Object.keys(operatingHours).map(day => (
-                      <div key={day} style={{ display: 'grid', gridTemplateColumns: '100px 1fr 1fr auto', gap: '15px', alignItems: 'center' }}>
-                        <span style={{ textTransform: 'capitalize', color: operatingHours[day].closed ? '#888' : '#fff', fontWeight: 'bold' }}>{day}</span>
-                        <select className="form-input" disabled={operatingHours[day].closed} value={operatingHours[day].open} onChange={(e) => handleOperatingHoursChange(day, 'open', e.target.value)} style={{ opacity: operatingHours[day].closed ? 0.3 : 1, cursor: 'pointer' }}>
+                      <div key={day} className="hours-row-item">
+                        <span style={{ textTransform: 'capitalize', color: operatingHours[day].closed ? '#666' : '#fff', fontWeight: '700', fontSize: '13px' }}>{day}</span>
+                        <select className="owner-form-select" disabled={operatingHours[day].closed} value={operatingHours[day].open} onChange={(e) => handleOperatingHoursChange(day, 'open', e.target.value)} style={{ opacity: operatingHours[day].closed ? 0.3 : 1 }}>
                           {timeOptions.map(opt => <option key={`open-${opt.value}`} value={opt.value}>{opt.label}</option>)}
                         </select>
-                        <select className="form-input" disabled={operatingHours[day].closed} value={operatingHours[day].close} onChange={(e) => handleOperatingHoursChange(day, 'close', e.target.value)} style={{ opacity: operatingHours[day].closed ? 0.3 : 1, cursor: 'pointer' }}>
+                        <select className="owner-form-select" disabled={operatingHours[day].closed} value={operatingHours[day].close} onChange={(e) => handleOperatingHoursChange(day, 'close', e.target.value)} style={{ opacity: operatingHours[day].closed ? 0.3 : 1 }}>
                           {timeOptions.map(opt => <option key={`close-${opt.value}`} value={opt.value}>{opt.label}</option>)}
                         </select>
-                        <label style={{ display: 'flex', alignItems: 'center', gap: '5px', color: '#aaa', fontSize: '0.9rem', cursor: 'pointer' }}>
-                          <input type="checkbox" checked={operatingHours[day].closed} onChange={(e) => handleOperatingHoursChange(day, 'closed', e.target.checked)} style={{ width: '16px', height: '16px', cursor: 'pointer' }} />
+                        <label className="custom-switch-label">
+                          <input type="checkbox" className="custom-switch-checkbox" checked={operatingHours[day].closed} onChange={(e) => handleOperatingHoursChange(day, 'closed', e.target.checked)} />
                           Closed
                         </label>
                       </div>
@@ -844,26 +1602,27 @@ const OwnerDashboard = ({ setCurrentView, salons, setSalons, authToken, setAuthT
                   </div>
                 </div>
 
-                <div className="form-group full-width">
-                  <label className="form-label">Description</label>
-                  <textarea name="description" className="form-input" rows="3" value={salonData.description} onChange={handleSalonDataChange} />
+                <div className="form-group form-full-width">
+                  <label className="form-label-txt">Description</label>
+                  <textarea name="description" className="owner-form-input" style={{ resize: 'vertical', minHeight: '80px' }} rows="3" value={salonData.description} onChange={handleSalonDataChange} />
                 </div>
 
                 <div className="form-group">
-                  <label className="form-label">Salon Logo (Leave blank to keep current)</label>
-                  <input type="file" name="logo" className="form-input file-input" onChange={handleFileChange} accept="image/*" />
+                  <label className="form-label-txt">Salon Logo (Leave blank to keep current)</label>
+                  <input type="file" name="logo" className="file-upload-input" onChange={handleFileChange} accept="image/*" />
                 </div>
 
                 <div className="form-group">
-                  <label className="form-label">Banner Image (Leave blank to keep current)</label>
-                  <input type="file" name="banner" className="form-input file-input" onChange={handleFileChange} accept="image/*" />
+                  <label className="form-label-txt">Banner Image (Leave blank to keep current)</label>
+                  <input type="file" name="banner" className="file-upload-input" onChange={handleFileChange} accept="image/*" />
                 </div>
 
-                <div className="form-group full-width">
-                  <button type="submit" className="auth-btn" disabled={updateLoading}>
-                    {updateLoading ? 'Updating Salon...' : 'Update Salon Details'}
+                <div className="form-group form-full-width form-btn-row">
+                  <button type="submit" className="primary-cta-btn" style={{ width: '100%', justifyContent: 'center' }} disabled={updateLoading}>
+                    <OwnerIcon name="save" size={16} />
+                    {updateLoading ? 'Updating Salon...' : 'Save Changes'}
                   </button>
-                  <button type="button" className="outline-btn" style={{marginTop: '15px', width: '100%', justifyContent: 'center'}} onClick={() => setIsEditingSalon(false)}>
+                  <button type="button" className="owner-outline-btn" style={{ width: '100%', justifyContent: 'center' }} onClick={() => setIsEditingSalon(false)}>
                     Cancel
                   </button>
                 </div>
@@ -871,325 +1630,403 @@ const OwnerDashboard = ({ setCurrentView, salons, setSalons, authToken, setAuthT
             </form>
           </div>
         ) : salons.length > 0 ? (
-          <div style={{ maxWidth: '800px', margin: '0 auto', display: 'flex', flexDirection: 'column', gap: '30px' }}>
-            {salons.map(salon => (
-              <div key={salon.id}>
-                <div className="salon-card" style={{ border: selectedSalonId === salon.id ? '2px solid var(--gold-accent, #d4af37)' : '1px solid rgba(255,255,255,0.05)' }}>
-                  <div className="salon-logo-placeholder">
-                    {salon.logoUrl ? (
-                      <img src={salon.logoUrl} alt="Logo" style={{width: '100%', height: '100%', objectFit: 'cover', borderRadius: '8px'}} />
-                    ) : (
-                      <ImageIcon size={48} />
-                    )}
-                  </div>
-                  <div className="salon-info">
-                    <h2>{salon.name}</h2>
-                    <p><strong>Address:</strong> {salon.address}, {salon.city}, {salon.state} - {salon.pincode}</p>
-                    <p><strong>Phone:</strong> {salon.phoneNumber}</p>
-                    <p><strong>Description:</strong> {salon.description || 'No description provided.'}</p>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '30px' }}>
+            {salons.map(salon => {
+              const hasValidBanner = salon.bannerUrl && salon.bannerUrl !== 'null' && salon.bannerUrl !== 'undefined' && salon.bannerUrl.trim() !== '';
+              const bgImg = hasValidBanner ? salon.bannerUrl : '/luxury-salon-card.png';
+              
+              return (
+                <div key={salon.id}>
+                  <div className="salon-row-card" style={{ border: selectedSalonId === salon.id ? '1px solid var(--gold-accent, #cfa856)' : '1px solid rgba(255, 255, 255, 0.08)' }}>
+                    <div className="salon-cover-visual" style={{ backgroundImage: `url(${bgImg})` }}>
+                      <div className="salon-logo-badge" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                        {salon.logoUrl ? (
+                          <img src={salon.logoUrl} alt="Logo" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                        ) : (
+                          <span style={{ 
+                            color: '#cfa856', 
+                            fontSize: '20px', 
+                            fontWeight: '700', 
+                            fontFamily: "'Playfair Display', serif", 
+                            letterSpacing: '1px' 
+                          }}>
+                            {salon.name ? salon.name.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase() : 'LS'}
+                          </span>
+                        )}
+                      </div>
+                    </div>
                     
-                    <div style={{marginTop: '20px', display: 'flex', gap: '10px', flexWrap: 'wrap'}}>
-                      <button className="outline-btn" onClick={() => {
-                        setSelectedSalonId(salon.id);
-                        if (selectedSalonId === salon.id && isConfiguring) setIsConfiguring(false);
-                        else setIsConfiguring(true);
-                      }}>
-                        {isConfiguring && selectedSalonId === salon.id ? 'Close Configuration' : 'Manage Salon'}
-                      </button>
-                      <button className="outline-btn" onClick={() => { setSelectedSalonId(salon.id); handleEditSalonClick(); }}>
-                        Edit Salon Details
-                      </button>
-                      <button className="outline-btn" style={{color: '#ff4d4d', borderColor: '#552222', backgroundColor: 'rgba(255, 77, 77, 0.1)'}} onClick={() => { setSelectedSalonId(salon.id); handleDeleteSalon(); }}>
-                        Delete Salon
-                      </button>
+                    <div className="salon-row-details">
+                      <div>
+                        <h2>{salon.name}</h2>
+                        <div className="salon-meta-group">
+                          <div className="salon-meta-item">
+                            <OwnerIcon name="map-pin" size={15} />
+                            <span>{salon.address}, {salon.city}, {salon.state} - {salon.pincode}</span>
+                          </div>
+                          <div className="salon-meta-item">
+                            <OwnerIcon name="phone" size={15} />
+                            <span>{salon.phoneNumber}</span>
+                          </div>
+                          {salon.description && (
+                            <p className="salon-description-box">
+                              "{salon.description}"
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                      
+                      <div className="btn-toolbar">
+                        <button className="primary-cta-btn" onClick={() => {
+                          setSelectedSalonId(salon.id);
+                          if (selectedSalonId === salon.id && isConfiguring) setIsConfiguring(false);
+                          else setIsConfiguring(true);
+                        }}>
+                          <OwnerIcon name="settings" size={14} style={{ stroke: '#000' }} />
+                          {isConfiguring && selectedSalonId === salon.id ? 'Close Panel' : 'Configure Salon'}
+                        </button>
+                        
+                        <button className="owner-outline-btn" onClick={() => { setSelectedSalonId(salon.id); handleEditSalonClick(); }}>
+                          <OwnerIcon name="edit" size={14} />
+                          Edit Details
+                        </button>
+                        
+                        <button className="owner-danger-btn" onClick={() => { setSelectedSalonId(salon.id); handleDeleteSalon(); }}>
+                          <OwnerIcon name="trash" size={14} />
+                          Delete Salon
+                        </button>
+                      </div>
                     </div>
                   </div>
-                </div>
 
-                {/* Configuration Section for this specific salon */}
-                {isConfiguring && selectedSalonId === salon.id && (
-              <div className="config-container">
-                <div className="config-tabs">
-                  <div className={`config-tab ${configTab === 'seats' ? 'active' : ''}`} onClick={() => setConfigTab('seats')}>Seats</div>
-                  <div className={`config-tab ${configTab === 'services' ? 'active' : ''}`} onClick={() => setConfigTab('services')}>Services</div>
-                  <div className={`config-tab ${configTab === 'employees' ? 'active' : ''}`} onClick={() => setConfigTab('employees')}>Employees</div>
-                  <div className={`config-tab ${configTab === 'appointments' ? 'active' : ''}`} onClick={() => setConfigTab('appointments')}>Appointments</div>
-                  <div className={`config-tab ${configTab === 'callbacks' ? 'active' : ''}`} onClick={() => setConfigTab('callbacks')}>Callbacks</div>
-                </div>
-
-                <div className="config-content">
-                  {/* Seats Configuration */}
-                  {configTab === 'seats' && (
-                    <div>
-                      <div className="config-header">
-                        <h3 className="config-title">Manage Seats</h3>
-                      </div>
-                      <form onSubmit={handleAddSeat} style={{display: 'flex', gap: '15px', marginBottom: '20px'}}>
-                        <input type="text" placeholder="Seat Name (e.g. S1)" className="form-input" value={seatName} onChange={e => setSeatName(e.target.value)} required />
-                        <input type="text" placeholder="Description" className="form-input" value={seatDesc} onChange={e => setSeatDesc(e.target.value)} />
-                        <button type="submit" className="add-btn" style={{whiteSpace: 'nowrap'}}><Plus size={16} style={{marginRight:'4px', verticalAlign:'text-bottom'}}/> Add</button>
-                      </form>
-                      <div className="config-list">
-                        {seatsList.map((s, i) => (
-                          <div key={i} className="config-item" style={{ alignItems: 'center' }}>
-                            {editingSeatId === s.id ? (
-                              <div style={{ display: 'flex', gap: '10px', width: '100%', flexWrap: 'wrap' }}>
-                                <input type="text" className="form-input" value={editSeatName} onChange={e => setEditSeatName(e.target.value)} style={{ flex: 1, minWidth: '150px' }} />
-                                <input type="text" className="form-input" value={editSeatDesc} onChange={e => setEditSeatDesc(e.target.value)} style={{ flex: 2, minWidth: '200px' }} />
-                                <button onClick={() => handleUpdateSeat(s.id)} className="add-btn" style={{ padding: '6px 15px', whiteSpace: 'nowrap' }}>Save</button>
-                                <button onClick={() => setEditingSeatId(null)} className="outline-btn" style={{ padding: '6px 15px', whiteSpace: 'nowrap' }}>Cancel</button>
-                              </div>
-                            ) : (
-                              <>
-                                <div style={{ flex: 1 }}>
-                                  <div className="config-item-main">{s.name}</div>
-                                  <div className="config-item-sub">{s.description}</div>
-                                </div>
-                                <div style={{ display: 'flex', gap: '10px', alignItems: 'center', flexWrap: 'wrap' }}>
-                                  <span className={`status-badge ${s.isActive ? 'active' : ''}`}>{s.isActive ? 'Active' : 'Inactive'}</span>
-                                  <button onClick={() => handleEditClick(s)} className="outline-btn" style={{ padding: '4px 10px', fontSize: '0.8rem' }}>Edit</button>
-                                  <button onClick={() => handleDeleteSeat(s.id)} className="outline-btn" style={{ padding: '4px 10px', fontSize: '0.8rem', color: '#ff4d4d', borderColor: '#552222', backgroundColor: 'rgba(255, 77, 77, 0.1)' }}>Delete</button>
-                                </div>
-                              </>
-                            )}
-                          </div>
-                        ))}
-                        {seatsList.length === 0 && <p style={{color: '#888'}}>No seats added yet.</p>}
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Services Configuration */}
-                  {configTab === 'services' && (
-                    <div>
-                      <div className="config-header">
-                        <h3 className="config-title">Manage Services</h3>
-                      </div>
-                      <form onSubmit={handleAddService} style={{display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px', marginBottom: '20px'}}>
-                        <input type="text" placeholder="Service Name (e.g. Hair Cut)" className="form-input" value={serviceName} onChange={e => setServiceName(e.target.value)} required />
-                        <input type="number" placeholder="Price (₹)" className="form-input" value={servicePrice} onChange={e => setServicePrice(e.target.value)} required />
-                        <input type="number" placeholder="Duration (Mins)" className="form-input" value={serviceDuration} onChange={e => setServiceDuration(e.target.value)} required />
-                        <select className="form-input" value={serviceGender} onChange={e => setServiceGender(e.target.value)} required>
-                          <option value="both">Both (Unisex)</option>
-                          <option value="male">Male</option>
-                          <option value="female">Female</option>
-                        </select>
-                        <input type="text" placeholder="Description" className="form-input" value={serviceDesc} onChange={e => setServiceDesc(e.target.value)} style={{gridColumn: '1 / -1'}} />
-                        <button type="submit" className="add-btn" style={{gridColumn: '1 / -1'}}><Plus size={16} style={{marginRight:'4px', verticalAlign:'text-bottom'}}/> Add Service</button>
-                      </form>
-                      <div className="config-list">
-                        {servicesList.map((s, i) => (
-                          <div key={i} className="config-item" style={{ alignItems: 'center' }}>
-                            {editingServiceId === s.id ? (
-                              <div style={{ display: 'flex', gap: '10px', width: '100%', flexWrap: 'wrap', flexDirection: 'column' }}>
-                                <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
-                                  <input type="text" className="form-input" value={editServiceName} onChange={e => setEditServiceName(e.target.value)} style={{ flex: 1, minWidth: '150px' }} placeholder="Service Name" />
-                                  <input type="number" className="form-input" value={editServicePrice} onChange={e => setEditServicePrice(e.target.value)} style={{ width: '100px' }} placeholder="Price (₹)" />
-                                  <input type="number" className="form-input" value={editServiceDuration} onChange={e => setEditServiceDuration(e.target.value)} style={{ width: '120px' }} placeholder="Duration (mins)" />
-                                  <select className="form-input" value={editServiceGender} onChange={e => setEditServiceGender(e.target.value)} style={{ width: '100px', margin: 0 }}>
-                                    <option value="both">Both</option>
-                                    <option value="male">Male</option>
-                                    <option value="female">Female</option>
-                                  </select>
-                                </div>
-                                <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', alignItems: 'center' }}>
-                                  <input type="text" className="form-input" value={editServiceDesc} onChange={e => setEditServiceDesc(e.target.value)} style={{ flex: 1, minWidth: '200px' }} placeholder="Description" />
-                                  <select className="form-input" value={editServiceStatus} onChange={e => setEditServiceStatus(e.target.value)} style={{ width: '120px', margin: 0 }}>
-                                    <option value="active">Active</option>
-                                    <option value="inactive">Inactive</option>
-                                  </select>
-                                  <button onClick={() => handleUpdateService(s.id)} className="add-btn" style={{ padding: '6px 15px', whiteSpace: 'nowrap' }}>Save</button>
-                                  <button onClick={() => setEditingServiceId(null)} className="outline-btn" style={{ padding: '6px 15px', whiteSpace: 'nowrap' }}>Cancel</button>
-                                </div>
-                              </div>
-                            ) : (
-                              <>
-                                <div style={{ flex: 1 }}>
-                                  <div className="config-item-main">{s.service_name} <span style={{color: 'var(--gold-accent)'}}>- ₹{s.price}</span></div>
-                                  <div className="config-item-sub">{s.duration_minutes} mins | {s.gender ? s.gender.charAt(0).toUpperCase() + s.gender.slice(1) : 'Both'} | {s.description}</div>
-                                </div>
-                                <div style={{ display: 'flex', gap: '10px', alignItems: 'center', flexWrap: 'wrap' }}>
-                                  <span className={`status-badge ${s.status === 'active' ? 'active' : ''}`} style={{ textTransform: 'capitalize' }}>{s.status}</span>
-                                  <button onClick={() => handleEditServiceClick(s)} className="outline-btn" style={{ padding: '4px 10px', fontSize: '0.8rem' }}>Edit</button>
-                                  <button onClick={() => handleDeleteService(s.id)} className="outline-btn" style={{ padding: '4px 10px', fontSize: '0.8rem', color: '#ff4d4d', borderColor: '#552222', backgroundColor: 'rgba(255, 77, 77, 0.1)' }}>Delete</button>
-                                </div>
-                              </>
-                            )}
-                          </div>
-                        ))}
-                        {servicesList.length === 0 && <p style={{color: '#888'}}>No services added yet.</p>}
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Employees Configuration */}
-                  {configTab === 'employees' && (
-                    <div>
-                      <div className="config-header">
-                        <h3 className="config-title">Manage Employees</h3>
-                      </div>
-                      <form onSubmit={handleAddEmployee} style={{display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px', marginBottom: '20px'}}>
-                        <input type="text" placeholder="Employee Name" className="form-input" value={empName} onChange={e => setEmpName(e.target.value)} required />
-                        <input type="tel" placeholder="Phone Number" className="form-input" value={empPhone} onChange={e => setEmpPhone(e.target.value)} required />
-                        <input type="text" placeholder="Role (e.g. Senior Stylist)" className="form-input" value={empRole} onChange={e => setEmpRole(e.target.value)} required />
-                        <input type="text" placeholder="Experience (e.g. 5 Years)" className="form-input" value={empExp} onChange={e => setEmpExp(e.target.value)} required />
-                        <button type="submit" className="add-btn" style={{gridColumn: '1 / -1'}}><Plus size={16} style={{marginRight:'4px', verticalAlign:'text-bottom'}}/> Add Employee</button>
-                      </form>
-                      <div className="config-list">
-                        {employeesList.map((emp, i) => (
-                          <div key={i} className="config-item" style={{ alignItems: 'center' }}>
-                            {editingEmployeeId === emp.id ? (
-                              <div style={{ display: 'flex', gap: '10px', width: '100%', flexWrap: 'wrap', flexDirection: 'column' }}>
-                                <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
-                                  <input type="text" className="form-input" value={editEmpName} onChange={e => setEditEmpName(e.target.value)} style={{ flex: 1, minWidth: '150px' }} placeholder="Name" />
-                                  <input type="tel" className="form-input" value={editEmpPhone} onChange={e => setEditEmpPhone(e.target.value)} style={{ flex: 1, minWidth: '150px' }} placeholder="Phone" />
-                                </div>
-                                <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', alignItems: 'center' }}>
-                                  <input type="text" className="form-input" value={editEmpRole} onChange={e => setEditEmpRole(e.target.value)} style={{ flex: 1, minWidth: '150px' }} placeholder="Role" />
-                                  <input type="text" className="form-input" value={editEmpExp} onChange={e => setEditEmpExp(e.target.value)} style={{ flex: 1, minWidth: '100px' }} placeholder="Experience" />
-                                  <button onClick={() => handleUpdateEmployee(emp.id)} className="add-btn" style={{ padding: '6px 15px', whiteSpace: 'nowrap' }}>Save</button>
-                                  <button onClick={() => setEditingEmployeeId(null)} className="outline-btn" style={{ padding: '6px 15px', whiteSpace: 'nowrap' }}>Cancel</button>
-                                </div>
-                              </div>
-                            ) : (
-                              <>
-                                <div style={{ flex: 1 }}>
-                                  <div className="config-item-main">{emp.name} - {emp.role}</div>
-                                  <div className="config-item-sub">📞 {emp.phone} | ⭐ {emp.experience} Exp</div>
-                                </div>
-                                <div style={{ display: 'flex', gap: '10px', alignItems: 'center', flexWrap: 'wrap' }}>
-                                  <button onClick={() => handleEditEmployeeClick(emp)} className="outline-btn" style={{ padding: '4px 10px', fontSize: '0.8rem' }}>Edit</button>
-                                  <button onClick={() => handleDeleteEmployee(emp.id)} className="outline-btn" style={{ padding: '4px 10px', fontSize: '0.8rem', color: '#ff4d4d', borderColor: '#552222', backgroundColor: 'rgba(255, 77, 77, 0.1)' }}>Delete</button>
-                                </div>
-                              </>
-                            )}
-                          </div>
-                        ))}
-                        {employeesList.length === 0 && <p style={{color: '#888'}}>No employees added yet.</p>}
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Appointments View */}
-                  {configTab === 'appointments' && (
-                    <div>
-                      <div className="config-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '10px' }}>
-                        <h3 className="config-title" style={{ margin: 0 }}>Salon Appointments</h3>
-                        <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
-                          <DatePicker 
-                            selected={appointmentDateFilter} 
-                            onChange={(date) => setAppointmentDateFilter(date)}
-                            customInput={
-                              <input className="form-input" style={{ padding: '6px 10px', width: '130px', margin: 0, cursor: 'pointer' }} />
-                            }
-                            placeholderText="Select date"
-                            dateFormat="yyyy-MM-dd"
-                          />
-                          {appointmentDateFilter && (
-                            <button onClick={() => setAppointmentDateFilter(null)} className="outline-btn" style={{ padding: '6px 15px', fontSize: '0.9rem' }}>Clear</button>
-                          )}
-                          <button onClick={fetchAppointments} className="outline-btn" style={{ padding: '6px 15px', fontSize: '0.9rem' }}>Refresh</button>
+                  {isConfiguring && selectedSalonId === salon.id && (
+                    <div className="config-panel-container">
+                      <div className="config-tabs-bar">
+                        <div className={`config-tab-item ${configTab === 'seats' ? 'active' : ''}`} onClick={() => setConfigTab('seats')}>
+                          <OwnerIcon name="user" size={14} /> Seats
+                        </div>
+                        <div className={`config-tab-item ${configTab === 'services' ? 'active' : ''}`} onClick={() => setConfigTab('services')}>
+                          <OwnerIcon name="sparkles" size={14} /> Services
+                        </div>
+                        <div className={`config-tab-item ${configTab === 'employees' ? 'active' : ''}`} onClick={() => setConfigTab('employees')}>
+                          <OwnerIcon name="settings" size={14} /> Employees
+                        </div>
+                        <div className={`config-tab-item ${configTab === 'appointments' ? 'active' : ''}`} onClick={() => setConfigTab('appointments')}>
+                          <OwnerIcon name="calendar" size={14} /> Appointments
+                        </div>
+                        <div className={`config-tab-item ${configTab === 'callbacks' ? 'active' : ''}`} onClick={() => setConfigTab('callbacks')}>
+                          <OwnerIcon name="phone" size={14} /> Callbacks
                         </div>
                       </div>
-                      
-                      {loadingAppointments ? (
-                        <p style={{ color: '#888', textAlign: 'center', padding: '20px' }}>Loading appointments...</p>
-                      ) : (
-                        <div className="config-list" style={{ display: 'grid', gap: '15px' }}>
-                          {filteredAppointments.length > 0 ? filteredAppointments.map((apt, i) => (
-                            <div key={i} className="config-item" style={{ flexDirection: 'column', alignItems: 'flex-start', padding: '15px' }}>
-                              <div style={{ display: 'flex', justifyContent: 'space-between', width: '100%', marginBottom: '10px' }}>
-                                <div className="config-item-main" style={{ color: 'var(--gold-accent, #d4af37)' }}>
-                                  {new Date(apt.startTime).toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' })} | {new Date(apt.startTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} - {new Date(apt.endTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+
+                      <div className="config-tab-content">
+                        {configTab === 'seats' && (
+                          <div>
+                            <div className="tab-title-row">
+                              <h3>Manage Styling Seats</h3>
+                            </div>
+                            <form onSubmit={handleAddSeat} className="form-row-flex">
+                              <input type="text" placeholder="Seat Name (e.g. Chair 1)" className="owner-form-input" value={seatName} onChange={e => setSeatName(e.target.value)} required />
+                              <input type="text" placeholder="Short Description / Area" className="owner-form-input" style={{ flex: 2 }} value={seatDesc} onChange={e => setSeatDesc(e.target.value)} />
+                              <button type="submit" className="owner-add-btn">
+                                <OwnerIcon name="plus" size={14} /> Add Seat
+                              </button>
+                            </form>
+                            <div className="items-listing-stack">
+                              {seatsList.map((s, i) => (
+                                <div key={i} className="item-list-row">
+                                  {editingSeatId === s.id ? (
+                                    <div style={{ display: 'flex', gap: '10px', width: '100%', flexWrap: 'wrap' }}>
+                                      <input type="text" className="owner-form-input" value={editSeatName} onChange={e => setEditSeatName(e.target.value)} style={{ flex: 1 }} />
+                                      <input type="text" className="owner-form-input" value={editSeatDesc} onChange={e => setEditSeatDesc(e.target.value)} style={{ flex: 2 }} />
+                                      <button onClick={() => handleUpdateSeat(s.id)} className="owner-add-btn">Save</button>
+                                      <button onClick={() => setEditingSeatId(null)} className="owner-outline-btn">Cancel</button>
+                                    </div>
+                                  ) : (
+                                    <>
+                                      <div className="item-row-info">
+                                        <h4>{s.name}</h4>
+                                        <p>{s.description || 'No description'}</p>
+                                      </div>
+                                      <div className="item-action-group">
+                                        <span className={`status-badge-custom ${s.isActive ? 'active' : ''}`}>{s.isActive ? 'Active' : 'Inactive'}</span>
+                                        <button onClick={() => handleEditClick(s)} className="owner-outline-btn" style={{ padding: '6px 12px', fontSize: '11px' }}>Edit</button>
+                                        <button onClick={() => handleDeleteSeat(s.id)} className="owner-danger-btn" style={{ padding: '6px 12px', fontSize: '11px' }}>Delete</button>
+                                      </div>
+                                    </>
+                                  )}
                                 </div>
-                                <span className={`status-badge ${apt.status === 'scheduled' ? 'active' : ''}`} style={{ textTransform: 'capitalize' }}>{apt.status || 'Scheduled'}</span>
+                              ))}
+                              {seatsList.length === 0 && <p className="empty-state-text">No styling seats configured yet. Create one above.</p>}
+                            </div>
+                          </div>
+                        )}
+
+                        {configTab === 'services' && (
+                          <div>
+                            <div className="tab-title-row">
+                              <h3>Manage Service Catalog</h3>
+                            </div>
+                            <form onSubmit={handleAddService} className="tab-grid-form">
+                              <div className="input-group">
+                                <label className="form-label-txt">Service Name</label>
+                                <input type="text" placeholder="e.g. Premium Haircut" className="owner-form-input" value={serviceName} onChange={e => setServiceName(e.target.value)} required />
                               </div>
-                              
-                              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', width: '100%', gap: '10px', fontSize: '0.95rem' }}>
-                                <div style={{ borderRight: '1px solid #333', paddingRight: '10px' }}>
-                                  <p style={{ margin: '5px 0', color: '#fff' }}><strong>Customer:</strong> {apt.customerName} {apt.customerGender ? `(${apt.customerGender})` : ''}</p>
-                                  <p style={{ margin: '5px 0', color: '#aaa' }}>📞 {apt.customerPhone}</p>
-                                  <p style={{ margin: '5px 0', color: '#aaa' }}>✉️ {apt.customerEmail}</p>
+                              <div className="input-group">
+                                <label className="form-label-txt">Price (₹)</label>
+                                <input type="number" placeholder="e.g. 500" className="owner-form-input" value={servicePrice} onChange={e => setServicePrice(e.target.value)} required />
+                              </div>
+                              <div className="input-group">
+                                <label className="form-label-txt">Duration (Minutes)</label>
+                                <input type="number" placeholder="e.g. 45" className="owner-form-input" value={serviceDuration} onChange={e => setServiceDuration(e.target.value)} required />
+                              </div>
+                              <div className="input-group">
+                                <label className="form-label-txt">Gender Target</label>
+                                <select className="owner-form-select" style={{ width: '100%', height: '47px' }} value={serviceGender} onChange={e => setServiceGender(e.target.value)} required>
+                                  <option value="both">Both (Unisex)</option>
+                                  <option value="male">Male Only</option>
+                                  <option value="female">Female Only</option>
+                                </select>
+                              </div>
+                              <div className="input-group form-full-width">
+                                <label className="form-label-txt">Description</label>
+                                <input type="text" placeholder="e.g. Wash, condition, haircut and blow dry styling included" className="owner-form-input" value={serviceDesc} onChange={e => setServiceDesc(e.target.value)} />
+                              </div>
+                              <button type="submit" className="owner-add-btn form-full-width" style={{ marginTop: '10px' }}>
+                                <OwnerIcon name="plus" size={14} /> Add Service
+                              </button>
+                            </form>
+                            <div className="items-listing-stack">
+                              {servicesList.map((s, i) => (
+                                <div key={i} className="item-list-row">
+                                  {editingServiceId === s.id ? (
+                                    <div style={{ display: 'flex', gap: '12px', width: '100%', flexWrap: 'wrap', flexDirection: 'column' }}>
+                                      <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
+                                        <input type="text" className="owner-form-input" value={editServiceName} onChange={e => setEditServiceName(e.target.value)} placeholder="Service Name" style={{ flex: 2 }} />
+                                        <input type="number" className="owner-form-input" value={editServicePrice} onChange={e => setEditServicePrice(e.target.value)} placeholder="Price" style={{ flex: 0.5 }} />
+                                        <input type="number" className="owner-form-input" value={editServiceDuration} onChange={e => setEditServiceDuration(e.target.value)} placeholder="Duration" style={{ flex: 0.5 }} />
+                                        <select className="owner-form-select" value={editServiceGender} onChange={e => setEditServiceGender(e.target.value)} style={{ height: '47px' }}>
+                                          <option value="both">Both</option>
+                                          <option value="male">Male</option>
+                                          <option value="female">Female</option>
+                                        </select>
+                                      </div>
+                                      <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', alignItems: 'center' }}>
+                                        <input type="text" className="owner-form-input" value={editServiceDesc} onChange={e => setEditServiceDesc(e.target.value)} placeholder="Description" style={{ flex: 2 }} />
+                                        <select className="owner-form-select" value={editServiceStatus} onChange={e => setEditServiceStatus(e.target.value)} style={{ height: '47px' }}>
+                                          <option value="active">Active</option>
+                                          <option value="inactive">Inactive</option>
+                                        </select>
+                                        <button onClick={() => handleUpdateService(s.id)} className="owner-add-btn">Save</button>
+                                        <button onClick={() => setEditingServiceId(null)} className="owner-outline-btn">Cancel</button>
+                                      </div>
+                                    </div>
+                                  ) : (
+                                    <>
+                                      <div className="item-row-info">
+                                        <h4>{s.service_name} <span style={{ color: '#cfa856', marginLeft: '8px' }}>₹{s.price}</span></h4>
+                                        <p>{s.duration_minutes} Mins • Target: <span style={{ textTransform: 'capitalize' }}>{s.gender || 'both'}</span> • {s.description || 'No description'}</p>
+                                      </div>
+                                      <div className="item-action-group">
+                                        <span className={`status-badge-custom ${s.status === 'active' ? 'active' : ''}`}>{s.status}</span>
+                                        <button onClick={() => handleEditServiceClick(s)} className="owner-outline-btn" style={{ padding: '6px 12px', fontSize: '11px' }}>Edit</button>
+                                        <button onClick={() => handleDeleteService(s.id)} className="owner-danger-btn" style={{ padding: '6px 12px', fontSize: '11px' }}>Delete</button>
+                                      </div>
+                                    </>
+                                  )}
                                 </div>
-                                <div style={{ paddingLeft: '10px' }}>
-                                  <p style={{ margin: '5px 0', color: '#fff' }}><strong>Seat:</strong> {apt.seat?.name || 'N/A'}</p>
-                                  <p style={{ margin: '5px 0', color: '#aaa' }}>
-                                    <strong>Services:</strong> {apt.services?.map(s => s.service_name).join(', ') || 'N/A'}
-                                  </p>
-                                  <p style={{ margin: '5px 0', color: '#aaa' }}>
-                                    <strong>Duration:</strong> {apt.services?.reduce((acc, s) => acc + (s.duration_minutes || 0), 0) || 0} mins
-                                  </p>
+                              ))}
+                              {servicesList.length === 0 && <p className="empty-state-text">No services registered. Publish your first service above.</p>}
+                            </div>
+                          </div>
+                        )}
+
+                        {configTab === 'employees' && (
+                          <div>
+                            <div className="tab-title-row">
+                              <h3>Manage Salon Employees</h3>
+                            </div>
+                            <form onSubmit={handleAddEmployee} className="tab-grid-form">
+                              <div className="input-group">
+                                <label className="form-label-txt">Employee Name</label>
+                                <input type="text" placeholder="e.g. Sarah Connor" className="owner-form-input" value={empName} onChange={e => setEmpName(e.target.value)} required />
+                              </div>
+                              <div className="input-group">
+                                <label className="form-label-txt">Phone Number</label>
+                                <input type="tel" placeholder="e.g. +91 9900887766" className="owner-form-input" value={empPhone} onChange={e => setEmpPhone(e.target.value)} required />
+                              </div>
+                              <div className="input-group">
+                                <label className="form-label-txt">Role / Title</label>
+                                <input type="text" placeholder="e.g. Master Colorist" className="owner-form-input" value={empRole} onChange={e => setEmpRole(e.target.value)} required />
+                              </div>
+                              <div className="input-group">
+                                <label className="form-label-txt">Experience</label>
+                                <input type="text" placeholder="e.g. 6 Years" className="owner-form-input" value={empExp} onChange={e => setEmpExp(e.target.value)} required />
+                              </div>
+                              <button type="submit" className="owner-add-btn form-full-width" style={{ marginTop: '10px' }}>
+                                <OwnerIcon name="plus" size={14} /> Add Employee
+                              </button>
+                            </form>
+                            <div className="items-listing-stack">
+                              {employeesList.map((emp, i) => (
+                                <div key={i} className="item-list-row">
+                                  {editingEmployeeId === emp.id ? (
+                                    <div style={{ display: 'flex', gap: '12px', width: '100%', flexWrap: 'wrap', flexDirection: 'column' }}>
+                                      <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
+                                        <input type="text" className="owner-form-input" value={editEmpName} onChange={e => setEditEmpName(e.target.value)} placeholder="Name" style={{ flex: 1 }} />
+                                        <input type="tel" className="owner-form-input" value={editEmpPhone} onChange={e => setEditEmpPhone(e.target.value)} placeholder="Phone" style={{ flex: 1 }} />
+                                      </div>
+                                      <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', alignItems: 'center' }}>
+                                        <input type="text" className="owner-form-input" value={editEmpRole} onChange={e => setEditEmpRole(e.target.value)} placeholder="Role" style={{ flex: 1.5 }} />
+                                        <input type="text" className="owner-form-input" value={editEmpExp} onChange={e => setEditEmpExp(e.target.value)} placeholder="Experience" style={{ flex: 1 }} />
+                                        <button onClick={() => handleUpdateEmployee(emp.id)} className="owner-add-btn">Save</button>
+                                        <button onClick={() => setEditingEmployeeId(null)} className="owner-outline-btn">Cancel</button>
+                                      </div>
+                                    </div>
+                                  ) : (
+                                    <>
+                                      <div className="item-row-info">
+                                        <h4>{emp.name} <span style={{ fontSize: '11px', color: '#cfa856', marginLeft: '10px', background: 'rgba(207, 168, 86, 0.1)', padding: '2px 8px', borderRadius: '4px' }}>{emp.role}</span></h4>
+                                        <p>📞 Phone: {emp.phone} • Experience: {emp.experience}</p>
+                                      </div>
+                                      <div className="item-action-group">
+                                        <button onClick={() => handleEditEmployeeClick(emp)} className="owner-outline-btn" style={{ padding: '6px 12px', fontSize: '11px' }}>Edit</button>
+                                        <button onClick={() => handleDeleteEmployee(emp.id)} className="owner-danger-btn" style={{ padding: '6px 12px', fontSize: '11px' }}>Delete</button>
+                                      </div>
+                                    </>
+                                  )}
                                 </div>
+                              ))}
+                              {employeesList.length === 0 && <p className="empty-state-text">No employees listed. Add your salon team above.</p>}
+                            </div>
+                          </div>
+                        )}
+
+                        {configTab === 'appointments' && (
+                          <div>
+                            <div className="tab-title-row" style={{ flexWrap: 'wrap', gap: '15px' }}>
+                              <h3>Scheduled Appointments</h3>
+                              <div style={{ display: 'flex', gap: '10px', alignItems: 'center', flexWrap: 'wrap' }}>
+                                <DatePicker 
+                                  selected={appointmentDateFilter} 
+                                  onChange={(date) => setAppointmentDateFilter(date)}
+                                  customInput={
+                                    <input className="owner-form-input" style={{ width: '130px', cursor: 'pointer', margin: 0, padding: '10px 14px' }} />
+                                  }
+                                  placeholderText="Filter by Date"
+                                  dateFormat="yyyy-MM-dd"
+                                />
+                                {appointmentDateFilter && (
+                                  <button onClick={() => setAppointmentDateFilter(null)} className="owner-outline-btn">Clear</button>
+                                )}
+                                <button onClick={fetchAppointments} className="owner-outline-btn">
+                                  Refresh
+                                </button>
                               </div>
                             </div>
-                          )) : (
-                            <p style={{ color: '#888', textAlign: 'center', padding: '20px' }}>
-                              {appointmentsList.length > 0 && appointmentDateFilter ? `No appointments found for ${appointmentDateFilter.toLocaleDateString()}.` : 'No appointments found.'}
-                            </p>
-                          )}
-                        </div>
-                      )}
-                    </div>
-                  )}
+                            
+                            {loadingAppointments ? (
+                              <p style={{ color: '#888', textAlign: 'center', padding: '20px' }}>Loading appointments list...</p>
+                            ) : (
+                              <div className="items-listing-stack">
+                                {filteredAppointments.length > 0 ? filteredAppointments.map((apt, i) => (
+                                  <div key={i} className="appt-card">
+                                    <div className="appt-header-row">
+                                      <div className="appt-time-info">
+                                        <OwnerIcon name="clock" size={14} />
+                                        <span>
+                                          {new Date(apt.startTime).toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' })}
+                                          {' • '}
+                                          {new Date(apt.startTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} - {new Date(apt.endTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                        </span>
+                                      </div>
+                                      <span className={`status-badge-custom ${apt.status === 'scheduled' ? 'active' : ''}`}>{apt.status || 'Scheduled'}</span>
+                                    </div>
+                                    
+                                    <div className="appt-details-grid">
+                                      <div className="appt-col-left">
+                                        <div className="appt-detail-text"><strong>Customer:</strong> {apt.customerName} {apt.customerGender ? `(${apt.customerGender})` : ''}</div>
+                                        <div className="appt-detail-text"><strong>Phone:</strong> {apt.customerPhone}</div>
+                                        {apt.customerEmail && <div className="appt-detail-text"><strong>Email:</strong> {apt.customerEmail}</div>}
+                                      </div>
+                                      <div className="appt-col-right">
+                                        <div className="appt-detail-text"><strong>Styling Seat:</strong> {apt.seat?.name || 'Unassigned'}</div>
+                                        <div className="appt-detail-text"><strong>Booked Services:</strong> {apt.services?.map(s => s.service_name).join(', ') || 'N/A'}</div>
+                                        <div className="appt-detail-text"><strong>Total Duration:</strong> {apt.services?.reduce((acc, s) => acc + (s.duration_minutes || 0), 0) || 0} mins</div>
+                                      </div>
+                                    </div>
+                                  </div>
+                                )) : (
+                                  <p className="empty-state-text">
+                                    {appointmentsList.length > 0 && appointmentDateFilter ? `No appointments found for ${appointmentDateFilter.toLocaleDateString()}.` : 'No appointments scheduled.'}
+                                  </p>
+                                )}
+                              </div>
+                            )}
+                          </div>
+                        )}
 
-                  {/* Callbacks Configuration */}
-                  {configTab === 'callbacks' && (
-                    <div>
-                      <div className="config-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-                        <h3 className="config-title">Callback Requests</h3>
-                        <button onClick={fetchCallbacks} className="outline-btn" style={{ padding: '6px 15px', fontSize: '0.9rem' }}>Refresh</button>
-                      </div>
-                      
-                      {loadingCallbacks ? (
-                        <p style={{ color: '#888', textAlign: 'center', padding: '20px' }}>Loading callbacks...</p>
-                      ) : (
-                        <div className="config-list" style={{ display: 'grid', gap: '15px' }}>
-                          {callbacksList.length > 0 ? callbacksList.map((cb, i) => (
-                            <div key={i} className="config-item" style={{ flexDirection: 'column', alignItems: 'flex-start', padding: '15px' }}>
-                              <div style={{ display: 'flex', justifyContent: 'space-between', width: '100%', marginBottom: '10px' }}>
-                                <div className="config-item-main" style={{ color: 'var(--gold-accent, #d4af37)' }}>
-                                  {new Date(cb.dateTime).toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' })} | {new Date(cb.dateTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                                </div>
-                                <span className={`status-badge ${cb.status === 'pending' ? 'active' : ''}`} style={{ textTransform: 'capitalize' }}>{cb.status || 'Pending'}</span>
-                              </div>
-                              
-                              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', width: '100%', gap: '10px', fontSize: '0.95rem' }}>
-                                <div style={{ borderRight: '1px solid #333', paddingRight: '10px' }}>
-                                  <p style={{ margin: '5px 0', color: '#fff' }}><strong>Name:</strong> {cb.name}</p>
-                                  <p style={{ margin: '5px 0', color: '#aaa' }}>📞 {cb.phoneNumber}</p>
-                                  <p style={{ margin: '5px 0', color: '#aaa' }}>✉️ {cb.email}</p>
-                                </div>
-                                <div style={{ paddingLeft: '10px' }}>
-                                  <p style={{ margin: '5px 0', color: '#fff' }}><strong>Services:</strong> {cb.services}</p>
-                                  <p style={{ margin: '5px 0', color: '#aaa' }}>
-                                    <strong>Purpose:</strong> {cb.purpose}
-                                  </p>
-                                  <p style={{ margin: '5px 0', color: '#aaa' }}>
-                                    <strong>Message:</strong> {cb.message}
-                                  </p>
-                                </div>
-                              </div>
+                        {configTab === 'callbacks' && (
+                          <div>
+                            <div className="tab-title-row">
+                              <h3>Callback Requests</h3>
+                              <button onClick={fetchCallbacks} className="owner-outline-btn">Refresh</button>
                             </div>
-                          )) : (
-                            <p style={{ color: '#888', textAlign: 'center', padding: '20px' }}>
-                              No callback requests found.
-                            </p>
-                          )}
-                        </div>
-                      )}
+                            
+                            {loadingCallbacks ? (
+                              <p style={{ color: '#888', textAlign: 'center', padding: '20px' }}>Loading requests...</p>
+                            ) : (
+                              <div className="items-listing-stack">
+                                {callbacksList.length > 0 ? callbacksList.map((cb, i) => (
+                                  <div key={i} className="appt-card">
+                                    <div className="appt-header-row">
+                                      <div className="appt-time-info">
+                                        <OwnerIcon name="calendar" size={14} />
+                                        <span>
+                                          Requested on: {new Date(cb.dateTime).toLocaleDateString()} at {new Date(cb.dateTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                        </span>
+                                      </div>
+                                      <span className={`status-badge-custom ${cb.status === 'pending' ? 'active' : ''}`}>{cb.status || 'Pending'}</span>
+                                    </div>
+                                    
+                                    <div className="appt-details-grid">
+                                      <div className="appt-col-left">
+                                        <div className="appt-detail-text"><strong>Requestor Name:</strong> {cb.name}</div>
+                                        <div className="appt-detail-text"><strong>Phone Number:</strong> {cb.phoneNumber}</div>
+                                        <div className="appt-detail-text"><strong>Email:</strong> {cb.email}</div>
+                                      </div>
+                                      <div className="appt-col-right">
+                                        <div className="appt-detail-text"><strong>Services Desired:</strong> {cb.services}</div>
+                                        <div className="appt-detail-text"><strong>Purpose of Call:</strong> {cb.purpose}</div>
+                                        {cb.message && <div className="appt-detail-text" style={{ fontStyle: 'italic', background: 'rgba(255,255,255,0.02)', padding: '8px 12px', borderRadius: '6px', border: '1px solid rgba(255,255,255,0.03)' }}><strong>Notes:</strong> {cb.message}</div>}
+                                      </div>
+                                    </div>
+                                  </div>
+                                )) : (
+                                  <p className="empty-state-text">No callback requests received yet.</p>
+                                )}
+                              </div>
+                            )}
+                          </div>
+                        )}
+
+                      </div>
                     </div>
                   )}
                 </div>
-              </div>
-            )}
-              </div>
-            ))}
+              );
+            })}
           </div>
         ) : (
-          <p style={{color: '#888', textAlign: 'center', marginTop: '40px', fontSize: '18px'}}>
-            You haven't created any salons yet. Click "+ Create Salon" to get started.
-          </p>
+          <div className="empty-state-text" style={{ padding: '60px 40px', fontSize: '18px' }}>
+            <OwnerIcon name="sparkles" size={48} style={{ color: '#cfa856', marginBottom: '20px', display: 'block', marginLeft: 'auto', marginRight: 'auto' }} />
+            You haven't listed any salons yet.
+            <button className="primary-cta-btn" style={{ margin: '20px auto 0 auto' }} onClick={() => setIsCreatingSalon(true)}>
+              Register Your First Salon
+            </button>
+          </div>
         )}
+
       </div>
     </div>
   );

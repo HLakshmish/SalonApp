@@ -202,7 +202,7 @@ const SalonDetails = ({ salon, setCurrentView }) => {
   };
 
   const hasValidBanner = salon?.bannerUrl && salon.bannerUrl !== 'null' && salon.bannerUrl !== 'undefined' && salon.bannerUrl.trim() !== '';
-  const bannerImage = hasValidBanner ? salon.bannerUrl : 'https://images.unsplash.com/photo-1560066984-138dadb4c035?ixlib=rb-4.0.3&auto=format&fit=crop&w=1920&q=80';
+  const bannerImage = hasValidBanner ? salon.bannerUrl : '/luxury-salon-card.png';
 
   return (
     <>

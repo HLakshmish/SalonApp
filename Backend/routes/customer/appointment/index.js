@@ -39,6 +39,11 @@ async function appointmentRoutes(fastify, options) {
       salonId, seatId, serviceIds, startTime,
       customerName, customerGender, customerPhone, customerEmail, customerCity, customerAddress
     } = request.body;
+
+    const nameRegex = /^[a-zA-Z\s]+$/;
+    if (!nameRegex.test(customerName)) {
+      return reply.status(400).send({ error: 'Customer name must contain characters and spaces only (no numbers or special characters)' });
+    }
     
     // Optional: if the user included a Bearer token and we want to attach the appointment to their account
     let userId = null;

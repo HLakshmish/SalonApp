@@ -145,6 +145,18 @@ const App = () => {
     e.preventDefault();
     setAuthError('');
     setAuthSuccess('');
+
+    // Validations
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      setAuthError('Please enter a valid email address.');
+      return;
+    }
+    if (!password) {
+      setAuthError('Password is required.');
+      return;
+    }
+
     try {
       const response = await fetch('http://localhost:3000/api/login', {
         method: 'POST',
@@ -174,6 +186,32 @@ const App = () => {
     e.preventDefault();
     setAuthError('');
     setAuthSuccess('');
+
+    // Validations
+    if (!name || name.trim().length < 2) {
+      setAuthError('Full Name must be at least 2 characters.');
+      return;
+    }
+    const nameRegex = /^[a-zA-Z\s]+$/;
+    if (!nameRegex.test(name)) {
+      setAuthError('Full Name must consist of characters only.');
+      return;
+    }
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      setAuthError('Please enter a valid email address.');
+      return;
+    }
+    const phoneRegex = /^[6-9]\d{9}$/;
+    if (!phoneRegex.test(phone)) {
+      setAuthError('Phone Number must be a valid 10-digit Indian mobile number.');
+      return;
+    }
+    if (!password || password.length < 6) {
+      setAuthError('Password must be at least 6 characters long.');
+      return;
+    }
+
     try {
       const response = await fetch('http://localhost:3000/api/register', {
         method: 'POST',
@@ -202,6 +240,23 @@ const App = () => {
     e.preventDefault();
     setAuthError('');
     setAuthSuccess('');
+
+    // Validations
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      setAuthError('Please enter a valid email address.');
+      return;
+    }
+    const phoneRegex = /^[6-9]\d{9}$/;
+    if (!phoneRegex.test(phone)) {
+      setAuthError('Phone Number must be a valid 10-digit Indian mobile number.');
+      return;
+    }
+    if (!password || password.length < 6) {
+      setAuthError('New Password must be at least 6 characters long.');
+      return;
+    }
+
     try {
       const response = await fetch('http://localhost:3000/api/forgot-password', {
         method: 'POST',

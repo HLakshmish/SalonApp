@@ -36,6 +36,11 @@ async function employeeRoutes(fastify, options) {
     const { salonId } = request.params;
     const { name, phone, role, experience } = request.body;
 
+    const nameRegex = /^[a-zA-Z\s]+$/;
+    if (!nameRegex.test(name)) {
+      return reply.status(400).send({ error: 'Employee name must contain characters and spaces only (no numbers or special characters)' });
+    }
+
     // Check if salon exists and belongs to user
     const salon = await prisma.salon.findUnique({ where: { id: Number(salonId) } });
     if (!salon) return reply.status(404).send({ error: 'Salon not found' });
@@ -101,6 +106,13 @@ async function employeeRoutes(fastify, options) {
   }, async (request, reply) => {
     const { id } = request.params;
     const { name, phone, role, experience } = request.body;
+
+    if (name) {
+      const nameRegex = /^[a-zA-Z\s]+$/;
+      if (!nameRegex.test(name)) {
+        return reply.status(400).send({ error: 'Employee name must contain characters and spaces only (no numbers or special characters)' });
+      }
+    }
 
     try {
       const existingEmployee = await prisma.employee.findUnique({ where: { id: Number(id) }, include: { salon: true } });

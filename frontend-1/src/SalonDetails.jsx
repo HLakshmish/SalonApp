@@ -22,6 +22,8 @@ const SalonDetails = ({ salon, setCurrentView }) => {
   const [address, setAddress] = useState('');
   const [seat, setSeat] = useState('');
 
+  const [bookingError, setBookingError] = useState('');
+  const [modalError, setModalError] = useState('');
 
   const [availableServices, setAvailableServices] = useState([]);
   const [availableSeats, setAvailableSeats] = useState([]);
@@ -34,9 +36,15 @@ const SalonDetails = ({ salon, setCurrentView }) => {
   const [modalService, setModalService] = useState([]);
   const [modalTime, setModalTime] = useState('');
 
+  // Clear modal error on modal close or open
+  useEffect(() => {
+    setModalError('');
+  }, [showSeatModal, selectedSeatForDetails]);
+
   const handleSeatClick = async (seatId) => {
+    setModalError('');
     if (!date) {
-      alert("Please select a date first.");
+      setModalError("Please select a date first.");
       return;
     }
     setSelectedSeatForDetails(seatId);
@@ -55,8 +63,9 @@ const SalonDetails = ({ salon, setCurrentView }) => {
   };
 
   const handleConfirmModal = () => {
+    setModalError('');
     if (!modalTime) {
-      alert("Please select a time slot.");
+      setModalError("Please select a time slot.");
       return;
     }
     setSeat(selectedSeatForDetails);
@@ -144,10 +153,75 @@ const SalonDetails = ({ salon, setCurrentView }) => {
 
   const handleBook = async (e) => {
     e.preventDefault();
-    if (service.length === 0) {
-      alert("Please select at least one service.");
+    setBookingError('');
+
+    // Validations
+    if (!date) {
+      setBookingError("Please select a date first.");
       return;
     }
+    const selectedDate = new Date(date + 'T00:00:00');
+    const today = new Date();
+    today.setHours(0,0,0,0);
+    if (selectedDate < today) {
+      setBookingError("Selected date cannot be in the past.");
+      return;
+    }
+
+    if (!seat) {
+      setBookingError("Please select a seat.");
+      return;
+    }
+
+    if (!time) {
+      setBookingError("Please select a time slot.");
+      return;
+    }
+
+    if (service.length === 0) {
+      setBookingError("Please select at least one service.");
+      return;
+    }
+
+    if (!name || name.trim().length < 2) {
+      setBookingError("Name must be at least 2 characters.");
+      return;
+    }
+    const nameRegex = /^[a-zA-Z\s]+$/;
+    if (!nameRegex.test(name)) {
+      setBookingError("Name must consist of characters only.");
+      return;
+    }
+
+    const phoneRegex = /^[6-9]\d{9}$/;
+    if (!phone || !phoneRegex.test(phone)) {
+      setBookingError("Phone number must be a valid 10-digit Indian mobile number.");
+      return;
+    }
+
+    if (email) {
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(email)) {
+        setBookingError("Please enter a valid email address.");
+        return;
+      }
+    }
+
+    if (!gender) {
+      setBookingError("Please select your gender.");
+      return;
+    }
+
+    if (!city || city.trim().length === 0) {
+      setBookingError("City is required.");
+      return;
+    }
+
+    if (!address || address.trim().length === 0) {
+      setBookingError("Address is required.");
+      return;
+    }
+
     setBookingState('booking');
     
     const startTime = new Date(`${date}T${time}`).toISOString();
@@ -157,12 +231,12 @@ const SalonDetails = ({ salon, setCurrentView }) => {
       seatId: parseInt(seat) || 1,
       serviceIds: service.map(s => parseInt(s)),
       startTime,
-      customerName: name,
+      customerName: name.trim(),
       customerGender: gender,
-      customerPhone: phone,
-      customerEmail: email,
-      customerCity: city,
-      customerAddress: address
+      customerPhone: phone.trim(),
+      customerEmail: email.trim(),
+      customerCity: city.trim(),
+      customerAddress: address.trim()
     };
 
     try {
@@ -192,12 +266,12 @@ const SalonDetails = ({ salon, setCurrentView }) => {
         const errorData = await response.json();
         console.error("Failed to book appointment", errorData);
         setBookingState('idle');
-        alert("Failed to book appointment: " + (errorData.message || "Unknown error"));
+        setBookingError("Failed to book appointment: " + (errorData.message || "Unknown error"));
       }
     } catch (err) {
       console.error(err);
       setBookingState('idle');
-      alert("Network error. Please try again.");
+      setBookingError("Network error. Please try again.");
     }
   };
 
@@ -371,6 +445,7 @@ const SalonDetails = ({ salon, setCurrentView }) => {
               </div>
             ) : (
               <form onSubmit={handleBook}>
+                {bookingError && <div className="error-message" style={{ color: '#ef4444', backgroundColor: 'rgba(239, 68, 68, 0.08)', border: '1px solid rgba(239, 68, 68, 0.15)', padding: '12px', borderRadius: '6px', marginBottom: '20px', fontSize: '13px', fontWeight: '500', display: 'flex', alignItems: 'center', gap: '8px', justifyContent: 'center' }}>{bookingError}</div>}
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px', marginBottom: '20px' }}>
                   {/* Date */}
                   <div style={{ display: 'flex', flexDirection: 'column' }}>
@@ -586,6 +661,7 @@ const SalonDetails = ({ salon, setCurrentView }) => {
             <h3 style={{ fontSize: '1.5rem', marginBottom: '5px', color: 'var(--gold-accent, #d4af37)', textAlign: 'center' }}>
               {!selectedSeatForDetails ? 'Select a Seat' : 'Seat Availability'}
             </h3>
+            {modalError && <div className="error-message" style={{ color: '#ef4444', backgroundColor: 'rgba(239, 68, 68, 0.08)', border: '1px solid rgba(239, 68, 68, 0.15)', padding: '12px', borderRadius: '6px', marginBottom: '20px', fontSize: '13px', fontWeight: '500', display: 'flex', alignItems: 'center', gap: '8px', justifyContent: 'center' }}>{modalError}</div>}
             
             {!date && !selectedSeatForDetails && <p style={{ textAlign: 'center', color: '#666', marginBottom: '20px', fontSize: '0.9rem' }}>Select a date first to see availability.</p>}
             

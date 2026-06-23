@@ -162,6 +162,55 @@ const AdminDashboard = ({ authToken, setCurrentView }) => {
     setError('');
     setIsSubmitting(true);
 
+    // Validations
+    if (!formData.websiteName || formData.websiteName.trim().length === 0) {
+      setError('Website Name is required.');
+      setIsSubmitting(false);
+      return;
+    }
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!formData.email || !emailRegex.test(formData.email)) {
+      setError('Please enter a valid email address.');
+      setIsSubmitting(false);
+      return;
+    }
+    if (!formData.about || formData.about.trim().length === 0) {
+      setError('About paragraph is required.');
+      setIsSubmitting(false);
+      return;
+    } else if (formData.about.length > 1000) {
+      setError('About paragraph cannot exceed 1000 characters.');
+      setIsSubmitting(false);
+      return;
+    }
+    const phoneRegex = /^[6-9]\d{9}$/;
+    if (!formData.phoneNumber || !phoneRegex.test(formData.phoneNumber)) {
+      setError('Phone number must be a valid 10-digit Indian mobile number.');
+      setIsSubmitting(false);
+      return;
+    }
+    if (!formData.address || formData.address.trim().length === 0) {
+      setError('Office Address is required.');
+      setIsSubmitting(false);
+      return;
+    }
+    const urlRegex = /^(https?:\/\/)?([\da-z\.-]+)\.([a-z\.]{2,6})([\/\w \.-]*)*\/?$/i;
+    if (formData.websiteLink && !urlRegex.test(formData.websiteLink)) {
+      setError('Website URL is invalid.');
+      setIsSubmitting(false);
+      return;
+    }
+    if (formData.instaLink && !urlRegex.test(formData.instaLink)) {
+      setError('Instagram URL is invalid.');
+      setIsSubmitting(false);
+      return;
+    }
+    if (formData.facebookLink && !urlRegex.test(formData.facebookLink)) {
+      setError('Facebook URL is invalid.');
+      setIsSubmitting(false);
+      return;
+    }
+
     try {
       const response = await fetch('http://localhost:3000/api/admin/website-details', {
         method: 'POST',

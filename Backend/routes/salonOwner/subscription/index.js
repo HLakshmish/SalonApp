@@ -12,21 +12,7 @@ async function subscriptionRoutes(fastify, options) {
   // Get all active plans
   fastify.get('/api/subscription/plans', async (request, reply) => {
     try {
-      let plans = await prisma.subscriptionPlan.findMany({ where: { is_active: true } });
-      
-      // Auto-create a default plan if none exist
-      if (plans.length === 0) {
-        const defaultPlan = await prisma.subscriptionPlan.create({
-          data: {
-            plan_name: 'Standard Plan',
-            price: 999, // INR
-            duration_days: 30,
-            max_salons: 1
-          }
-        });
-        plans = [defaultPlan];
-      }
-      
+      const plans = await prisma.subscriptionPlan.findMany({ where: { is_active: true } });
       reply.send(plans);
     } catch (error) {
       fastify.log.error(error);

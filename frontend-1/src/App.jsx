@@ -266,10 +266,10 @@ const App = () => {
               {authSuccess && <div className="success-message">{authSuccess}</div>}
 
               <form onSubmit={
-                authMode === 'login' 
-                  ? handleLogin 
-                  : authMode === 'register' 
-                    ? handleRegister 
+                authMode === 'login'
+                  ? handleLogin
+                  : authMode === 'register'
+                    ? handleRegister
                     : handleForgotPassword
               }>
                 {authMode === 'register' && (
@@ -680,7 +680,7 @@ const App = () => {
             <ul style={{ listStyle: 'none', padding: 0, margin: 0, color: '#aaa', lineHeight: '2.2', fontSize: '0.95rem' }}>
               <li><a href="#" style={{ color: '#aaa', textDecoration: 'none', transition: 'color 0.3s' }} onMouseOver={e => e.target.style.color = 'var(--gold-accent, #d4af37)'} onMouseOut={e => e.target.style.color = '#aaa'}>{t('Home')}</a></li>
               <li><a href="#" style={{ color: '#aaa', textDecoration: 'none', transition: 'color 0.3s' }} onMouseOver={e => e.target.style.color = 'var(--gold-accent, #d4af37)'} onMouseOut={e => e.target.style.color = '#aaa'}>{t('About Us')}</a></li>
-              <li><a href="#" style={{ color: '#aaa', textDecoration: 'none', transition: 'color 0.3s' }} onMouseOver={e => e.target.style.color = 'var(--gold-accent, #d4af37)'} onMouseOut={e => e.target.style.color = '#aaa'}>{t('Services')}</a></li>
+              {/* <li><a href="#" style={{ color: '#aaa', textDecoration: 'none', transition: 'color 0.3s' }} onMouseOver={e => e.target.style.color = 'var(--gold-accent, #d4af37)'} onMouseOut={e => e.target.style.color = '#aaa'}>{t('Services')}</a></li> */}
               <li><a href="#salons-section" style={{ color: '#aaa', textDecoration: 'none', transition: 'color 0.3s' }} onMouseOver={e => e.target.style.color = 'var(--gold-accent, #d4af37)'} onMouseOut={e => e.target.style.color = '#aaa'}>{t('Our Salons')}</a></li>
             </ul>
           </div>

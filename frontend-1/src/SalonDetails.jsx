@@ -177,6 +177,17 @@ const SalonDetails = ({ salon, setCurrentView }) => {
       
       if (response.ok) {
         setBookingState('success');
+        // Clear all booking inputs
+        setDate('');
+        setTime('');
+        setName('');
+        setPhone('');
+        setService([]);
+        setEmail('');
+        setGender('');
+        setCity('');
+        setAddress('');
+        setSeat('');
       } else {
         const errorData = await response.json();
         console.error("Failed to book appointment", errorData);
@@ -422,7 +433,7 @@ const SalonDetails = ({ salon, setCurrentView }) => {
                         return s ? (
                           <div key={s.id} style={{ color: '#111', marginBottom: '8px', fontSize: '0.9rem', display: 'flex', alignItems: 'center' }}>
                             <CheckCircle size={14} style={{ color: 'var(--gold-accent, #d4af37)', marginRight: '8px' }} />
-                            {s.service_name} - ${s.price}
+                            {s.service_name} - ₹{s.price}
                           </div>
                         ) : null;
                       }) : (
@@ -454,7 +465,7 @@ const SalonDetails = ({ salon, setCurrentView }) => {
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px', marginBottom: '20px' }}>
                   <div>
                     <label style={{ display: 'block', marginBottom: '8px', color: '#666' }}>Email</label>
-                    <input type="email" required value={email} onChange={e => setEmail(e.target.value)} style={{ width: '100%', padding: '12px', backgroundColor: '#f9f9f9', border: '1px solid #eaeaea', color: '#111', borderRadius: '4px' }} placeholder="Your Email" />
+                    <input type="email" value={email} onChange={e => setEmail(e.target.value)} style={{ width: '100%', padding: '12px', backgroundColor: '#f9f9f9', border: '1px solid #eaeaea', color: '#111', borderRadius: '4px' }} placeholder="Your Email" />
                   </div>
                   <div>
                     <label style={{ display: 'block', marginBottom: '8px', color: '#666' }}>Gender</label>
@@ -694,7 +705,7 @@ const SalonDetails = ({ salon, setCurrentView }) => {
                                   }}
                                   style={{ width: '18px', height: '18px', accentColor: 'var(--gold-accent, #d4af37)', cursor: 'pointer' }}
                                 />
-                                {s.service_name} - {s.duration_minutes} mins (${s.price})
+                                {s.service_name} - {s.duration_minutes} mins (₹{s.price})
                               </label>
                             ))}
                           </div>

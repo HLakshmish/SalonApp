@@ -189,6 +189,62 @@ async function authRoutes(fastify, options) {
       reply.status(500).send({ error: 'Internal Server Error' });
     }
   });
+
+  const forgotPasswordSchema = {
+    description: 'Reset password using email and phone verification',
+    tags: ['User'],
+    body: {
+      type: 'object',
+      required: ['email', 'phone', 'newPassword'],
+      properties: {
+        email: { type: 'string', format: 'email' },
+        phone: { type: 'string' },
+        newPassword: { type: 'string' },
+      },
+    },
+    response: {
+      200: {
+        description: 'Successful password reset',
+        type: 'object',
+        properties: {
+          message: { type: 'string' },
+        },
+      },
+      400: {
+        description: 'Bad request',
+        type: 'object',
+        properties: {
+          error: { type: 'string' },
+        },
+      },
+    },
+  };
+
+  fastify.post('/api/forgot-password', { schema: forgotPasswordSchema }, async (request, reply) => {
+    const { email, phone, newPassword } = request.body;
+
+    try {
+      const user = await prisma.user.findFirst({
+        where: { email, phone },
+      });
+
+      if (!user) {
+        return reply.status(400).send({ error: 'User not found with matching email and phone number' });
+      }
+
+      const hashedPassword = await bcrypt.hash(newPassword, 10);
+
+      await prisma.user.update({
+        where: { id: user.id },
+        data: { password: hashedPassword },
+      });
+
+      return reply.status(200).send({ message: 'Password reset successfully' });
+    } catch (error) {
+      fastify.log.error(error);
+      return reply.status(500).send({ error: 'Internal Server Error' });
+    }
+  });
 }
 
 module.exports = authRoutes;

@@ -9,7 +9,7 @@ async function appointmentRoutes(fastify, options) {
         type: 'object',
         required: [
           'salonId', 'seatId', 'serviceIds', 'startTime',
-          'customerName', 'customerGender', 'customerPhone', 'customerEmail', 'customerCity', 'customerAddress'
+          'customerName', 'customerGender', 'customerPhone', 'customerCity', 'customerAddress'
         ],
         properties: {
           salonId: { type: 'number' },
@@ -23,7 +23,12 @@ async function appointmentRoutes(fastify, options) {
           customerName: { type: 'string' },
           customerGender: { type: 'string' },
           customerPhone: { type: 'string' },
-          customerEmail: { type: 'string', format: 'email' },
+          customerEmail: {
+            anyOf: [
+              { type: 'string', format: 'email' },
+              { type: 'string', const: '' }
+            ]
+          },
           customerCity: { type: 'string' },
           customerAddress: { type: 'string' }
         }
@@ -134,7 +139,7 @@ async function appointmentRoutes(fastify, options) {
           customerName,
           customerGender,
           customerPhone,
-          customerEmail,
+          customerEmail: customerEmail || '',
           customerCity,
           customerAddress,
           userId,

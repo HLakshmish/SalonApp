@@ -190,10 +190,30 @@ const OwnerDashboard = ({ setCurrentView, salons, setSalons, authToken, setAuthT
   const [isEditingSalon, setIsEditingSalon] = useState(false);
   const [updateError, setUpdateError] = useState('');
   const [updateLoading, setUpdateLoading] = useState(false);
-  
+
+  const [validationErrors, setValidationErrors] = useState({});
+
+  const [seatValidationError, setSeatValidationError] = useState('');
+  const [seatSuccessMessage, setSeatSuccessMessage] = useState('');
+
+  const [serviceValidationError, setServiceValidationError] = useState('');
+  const [serviceSuccessMessage, setServiceSuccessMessage] = useState('');
+
+  const [employeeValidationError, setEmployeeValidationError] = useState('');
+  const [employeeSuccessMessage, setEmployeeSuccessMessage] = useState('');
+
   const [configTab, setConfigTab] = useState('seats');
   const [isConfiguring, setIsConfiguring] = useState(false);
-  
+
+  useEffect(() => {
+    setSeatValidationError('');
+    setSeatSuccessMessage('');
+    setServiceValidationError('');
+    setServiceSuccessMessage('');
+    setEmployeeValidationError('');
+    setEmployeeSuccessMessage('');
+  }, [configTab]);
+
   const [seatsList, setSeatsList] = useState([]);
   const [servicesList, setServicesList] = useState([]);
   const [employeesList, setEmployeesList] = useState([]);
@@ -383,9 +403,102 @@ const OwnerDashboard = ({ setCurrentView, salons, setSalons, authToken, setAuthT
     }
   };
 
+  const validateSalon = (data, logoFile, bannerFile) => {
+    const errors = {};
+    if (!data.name || data.name.trim().length === 0) {
+      errors.name = 'Salon name is required.';
+    } else if (data.name.length > 100) {
+      errors.name = 'Salon name cannot exceed 100 characters.';
+    }
+
+    if (!data.address || data.address.trim().length === 0) {
+      errors.address = 'Address is required.';
+    } else if (data.address.length > 200) {
+      errors.address = 'Address cannot exceed 200 characters.';
+    }
+
+    if (!data.city || data.city.trim().length === 0) {
+      errors.city = 'City is required.';
+    }
+
+    if (!data.state || data.state.trim().length === 0) {
+      errors.state = 'State is required.';
+    }
+
+    const pinRegex = /^\d{5,6}$/;
+    if (!data.pincode) {
+      errors.pincode = 'Pincode is required.';
+    } else if (!pinRegex.test(data.pincode)) {
+      errors.pincode = 'Pincode must be exactly 5 or 6 digits (numeric only).';
+    }
+
+    const phoneRegex = /^[6-9]\d{9}$/;
+    if (!data.phoneNumber) {
+      errors.phoneNumber = 'Phone number is required.';
+    } else if (!phoneRegex.test(data.phoneNumber)) {
+      errors.phoneNumber = 'Phone number must be a valid 10-digit Indian mobile number.';
+    }
+
+    if (data.description && data.description.length > 500) {
+      errors.description = 'Description cannot exceed 500 characters.';
+    }
+
+    // Logo validation
+    if (logoFile) {
+      if (!logoFile.type.startsWith('image/')) {
+        errors.logo = 'Logo must be an image file.';
+      } else if (logoFile.size > 5242880) {
+        errors.logo = 'Logo size must be under 5MB.';
+      }
+    }
+
+    // Banner validation
+    if (bannerFile) {
+      if (!bannerFile.type.startsWith('image/')) {
+        errors.banner = 'Banner must be an image file.';
+      } else if (bannerFile.size > 5242880) {
+        errors.banner = 'Banner size must be under 5MB.';
+      }
+    }
+
+    // Operating Hours validation
+    let hoursError = false;
+    Object.keys(operatingHours).forEach(day => {
+      if (!operatingHours[day].closed) {
+        const [openH, openM] = operatingHours[day].open.split(':').map(Number);
+        const [closeH, closeM] = operatingHours[day].close.split(':').map(Number);
+        const openMin = openH * 60 + openM;
+        const closeMin = closeH * 60 + closeM;
+        if (closeMin <= openMin) {
+          hoursError = true;
+        }
+      }
+    });
+    if (hoursError) {
+      errors.operatingHours = 'Closing time must be after opening time on all open days.';
+    }
+
+    return errors;
+  };
+
+  useEffect(() => {
+    setValidationErrors({});
+    setCreateError('');
+    setUpdateError('');
+  }, [isCreatingSalon, isEditingSalon]);
+
   const handleCreateSalon = async (e) => {
     e.preventDefault();
     setCreateError('');
+    setValidationErrors({});
+
+    const errors = validateSalon(salonData, files.logo, files.banner);
+    if (Object.keys(errors).length > 0) {
+      setValidationErrors(errors);
+      setCreateError('Please correct the validation errors below.');
+      return;
+    }
+
     setCreateLoading(true);
 
     const formData = new FormData();
@@ -403,7 +516,7 @@ const OwnerDashboard = ({ setCurrentView, salons, setSalons, authToken, setAuthT
 
     if (files.logo) formData.append('logo', files.logo);
     if (files.banner) formData.append('banner', files.banner);
-    if (files.photos) formData.append('photos', files.photos); 
+    if (files.photos) formData.append('photos', files.photos);
 
     try {
       const response = await fetch('http://localhost:3000/api/salons', {
@@ -412,7 +525,7 @@ const OwnerDashboard = ({ setCurrentView, salons, setSalons, authToken, setAuthT
         body: formData
       });
       const data = await response.json();
-      
+
       if (response.ok) {
         setSalons(prev => [...prev, data.salon]);
         setIsCreatingSalon(false);
@@ -437,16 +550,16 @@ const OwnerDashboard = ({ setCurrentView, salons, setSalons, authToken, setAuthT
       phoneNumber: s.phoneNumber || '',
       description: s.description || ''
     });
-    
+
     let parsedHours = {};
     if (s.operatingHours) {
       if (typeof s.operatingHours === 'string') {
-        try { parsedHours = JSON.parse(s.operatingHours); } catch(e) {}
+        try { parsedHours = JSON.parse(s.operatingHours); } catch (e) { }
       } else {
         parsedHours = s.operatingHours;
       }
     }
-    
+
     const defaultHours = {
       monday: { open: '09:00', close: '18:00', closed: false },
       tuesday: { open: '09:00', close: '18:00', closed: false },
@@ -460,13 +573,13 @@ const OwnerDashboard = ({ setCurrentView, salons, setSalons, authToken, setAuthT
     const newHours = { ...defaultHours };
     Object.keys(newHours).forEach(day => {
       if (parsedHours[day]) {
-         if (parsedHours[day].closed) {
-           newHours[day].closed = true;
-         } else {
-           newHours[day].open = parsedHours[day].open || '09:00';
-           newHours[day].close = parsedHours[day].close || '18:00';
-           newHours[day].closed = false;
-         }
+        if (parsedHours[day].closed) {
+          newHours[day].closed = true;
+        } else {
+          newHours[day].open = parsedHours[day].open || '09:00';
+          newHours[day].close = parsedHours[day].close || '18:00';
+          newHours[day].closed = false;
+        }
       }
     });
     setOperatingHours(newHours);
@@ -478,6 +591,15 @@ const OwnerDashboard = ({ setCurrentView, salons, setSalons, authToken, setAuthT
   const handleUpdateSalon = async (e) => {
     e.preventDefault();
     setUpdateError('');
+    setValidationErrors({});
+
+    const errors = validateSalon(salonData, files.logo, files.banner);
+    if (Object.keys(errors).length > 0) {
+      setValidationErrors(errors);
+      setUpdateError('Please correct the validation errors below.');
+      return;
+    }
+
     setUpdateLoading(true);
 
     const formData = new FormData();
@@ -495,7 +617,7 @@ const OwnerDashboard = ({ setCurrentView, salons, setSalons, authToken, setAuthT
 
     if (files.logo) formData.append('logo', files.logo);
     if (files.banner) formData.append('banner', files.banner);
-    if (files.photos) formData.append('photos', files.photos); 
+    if (files.photos) formData.append('photos', files.photos);
 
     try {
       const response = await fetch(`http://localhost:3000/api/salons/${activeSalon.id}`, {
@@ -504,7 +626,7 @@ const OwnerDashboard = ({ setCurrentView, salons, setSalons, authToken, setAuthT
         body: formData
       });
       const data = await response.json();
-      
+
       if (response.ok) {
         setSalons(prev => prev.map(s => s.id === data.salon.id ? data.salon : s));
         setIsEditingSalon(false);
@@ -520,7 +642,7 @@ const OwnerDashboard = ({ setCurrentView, salons, setSalons, authToken, setAuthT
 
   const handleDeleteSalon = async () => {
     if (!window.confirm('Are you sure you want to delete this salon? This action cannot be undone.')) return;
-    
+
     try {
       const response = await fetch(`http://localhost:3000/api/salons/${activeSalon.id}`, {
         method: 'DELETE',
@@ -529,7 +651,7 @@ const OwnerDashboard = ({ setCurrentView, salons, setSalons, authToken, setAuthT
           'accept': '*/*'
         }
       });
-      
+
       if (response.ok) {
         setSalons([]);
         setIsConfiguring(false);
@@ -539,7 +661,7 @@ const OwnerDashboard = ({ setCurrentView, salons, setSalons, authToken, setAuthT
         try {
           const data = await response.json();
           errorMsg = data.message || errorMsg;
-        } catch(e) {
+        } catch (e) {
           errorMsg = await response.text();
         }
         alert(`Error deleting salon: ${errorMsg}`);
@@ -553,54 +675,106 @@ const OwnerDashboard = ({ setCurrentView, salons, setSalons, authToken, setAuthT
   const handleAddSeat = async (e) => {
     e.preventDefault();
     if (!activeSalon) return;
+    setSeatValidationError('');
+    setSeatSuccessMessage('');
+
+    // Validations
+    if (!seatName || seatName.trim().length === 0) {
+      setSeatValidationError('Seat name is required.');
+      return;
+    }
+    if (seatName.length > 50) {
+      setSeatValidationError('Seat name cannot exceed 50 characters.');
+      return;
+    }
+    if (seatDesc && seatDesc.length > 200) {
+      setSeatValidationError('Seat description cannot exceed 200 characters.');
+      return;
+    }
+    // Duplicate check
+    const isDuplicate = seatsList.some(s => s.name.toLowerCase().trim() === seatName.toLowerCase().trim());
+    if (isDuplicate) {
+      setSeatValidationError(`A seat with the name "${seatName}" already exists in this salon.`);
+      return;
+    }
+
     try {
       const res = await fetch(`http://localhost:3000/api/salons/${activeSalon.id}/seats`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${authToken}` },
-        body: JSON.stringify({ name: seatName, description: seatDesc, isActive: true })
+        body: JSON.stringify({ name: seatName.trim(), description: seatDesc.trim(), isActive: true })
       });
       if (res.ok) {
         const data = await res.json();
         setSeatsList([...seatsList, data.seat]);
         setSeatName(''); setSeatDesc('');
+        setSeatSuccessMessage('Seat added successfully.');
       } else {
         const text = await res.text();
-        alert(`Error adding seat: ${text}`);
+        setSeatValidationError(`Error adding seat: ${text}`);
       }
     } catch (err) {
       console.error("Add seat error:", err);
-      alert('Network error: ' + err.message);
+      setSeatValidationError('Network error: ' + err.message);
     }
   };
 
   const handleEditClick = (seat) => {
+    setSeatValidationError('');
+    setSeatSuccessMessage('');
     setEditingSeatId(seat.id);
     setEditSeatName(seat.name);
     setEditSeatDesc(seat.description || '');
   };
 
   const handleUpdateSeat = async (id) => {
+    setSeatValidationError('');
+    setSeatSuccessMessage('');
+
+    // Validations
+    if (!editSeatName || editSeatName.trim().length === 0) {
+      setSeatValidationError('Seat name is required.');
+      return;
+    }
+    if (editSeatName.length > 50) {
+      setSeatValidationError('Seat name cannot exceed 50 characters.');
+      return;
+    }
+    if (editSeatDesc && editSeatDesc.length > 200) {
+      setSeatValidationError('Seat description cannot exceed 200 characters.');
+      return;
+    }
+    // Duplicate check excluding current seat
+    const isDuplicate = seatsList.some(s => s.id !== id && s.name.toLowerCase().trim() === editSeatName.toLowerCase().trim());
+    if (isDuplicate) {
+      setSeatValidationError(`A seat with the name "${editSeatName}" already exists in this salon.`);
+      return;
+    }
+
     try {
       const res = await fetch(`http://localhost:3000/api/seats/${id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${authToken}` },
-        body: JSON.stringify({ name: editSeatName, description: editSeatDesc, isActive: true })
+        body: JSON.stringify({ name: editSeatName.trim(), description: editSeatDesc.trim(), isActive: true })
       });
       if (res.ok) {
         const data = await res.json();
         setSeatsList(seatsList.map(s => s.id === id ? data.seat : s));
         setEditingSeatId(null);
+        setSeatSuccessMessage('Seat updated successfully.');
       } else {
         const text = await res.text();
-        alert(`Error updating seat: ${text}`);
+        setSeatValidationError(`Error updating seat: ${text}`);
       }
-    } catch(err) {
+    } catch (err) {
       console.error("Update seat error:", err);
-      alert('Network error: ' + err.message);
+      setSeatValidationError('Network error: ' + err.message);
     }
   };
 
   const handleDeleteSeat = async (id) => {
+    setSeatValidationError('');
+    setSeatSuccessMessage('');
     if (!window.confirm('Are you sure you want to delete this seat?')) return;
     try {
       const res = await fetch(`http://localhost:3000/api/seats/${id}`, {
@@ -609,40 +783,84 @@ const OwnerDashboard = ({ setCurrentView, salons, setSalons, authToken, setAuthT
       });
       if (res.ok) {
         setSeatsList(seatsList.filter(s => s.id !== id));
+        setSeatSuccessMessage('Seat deleted successfully.');
       } else {
         const text = await res.text();
-        alert(`Error deleting seat: ${text}`);
+        setSeatValidationError(`Error deleting seat: ${text}`);
       }
-    } catch(err) {
+    } catch (err) {
       console.error("Delete seat error:", err);
-      alert('Network error: ' + err.message);
+      setSeatValidationError('Network error: ' + err.message);
     }
   };
 
   const handleAddService = async (e) => {
     e.preventDefault();
     if (!activeSalon) return;
+    setServiceValidationError('');
+    setServiceSuccessMessage('');
+
+    // Validations
+    if (!serviceName || serviceName.trim().length === 0) {
+      setServiceValidationError('Service name is required.');
+      return;
+    }
+    if (serviceName.length > 100) {
+      setServiceValidationError('Service name cannot exceed 100 characters.');
+      return;
+    }
+    if (serviceDesc && serviceDesc.length > 200) {
+      setServiceValidationError('Service description cannot exceed 200 characters.');
+      return;
+    }
+    const priceNum = Number(servicePrice);
+    if (isNaN(priceNum) || priceNum < 0) {
+      setServiceValidationError('Price must be a valid positive number or zero.');
+      return;
+    }
+    const durationNum = Number(serviceDuration);
+    if (isNaN(durationNum) || !Number.isInteger(durationNum) || durationNum < 1 || durationNum > 480) {
+      setServiceValidationError('Duration must be a positive integer between 1 and 480 minutes.');
+      return;
+    }
+    // Duplicate check
+    const isDuplicate = servicesList.some(s => s.service_name.toLowerCase().trim() === serviceName.toLowerCase().trim());
+    if (isDuplicate) {
+      setServiceValidationError(`A service with the name "${serviceName}" already exists in this salon.`);
+      return;
+    }
+
     try {
       const res = await fetch(`http://localhost:3000/api/salons/${activeSalon.id}/services`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${authToken}` },
-        body: JSON.stringify({ service_name: serviceName, description: serviceDesc, duration_minutes: Number(serviceDuration), price: Number(servicePrice), status: 'active', gender: serviceGender })
+        body: JSON.stringify({
+          service_name: serviceName.trim(),
+          description: serviceDesc.trim(),
+          duration_minutes: durationNum,
+          price: priceNum,
+          status: 'active',
+          gender: serviceGender
+        })
       });
       if (res.ok) {
         const data = await res.json();
         setServicesList([...servicesList, data.service]);
         setServiceName(''); setServiceDesc(''); setServiceDuration(''); setServicePrice(''); setServiceGender('both');
+        setServiceSuccessMessage('Service added successfully.');
       } else {
         const text = await res.text();
-        alert(`Error adding service: ${text}`);
+        setServiceValidationError(`Error adding service: ${text}`);
       }
     } catch (err) {
       console.error("Add service error:", err);
-      alert('Network error: ' + err.message);
+      setServiceValidationError('Network error: ' + err.message);
     }
   };
 
   const handleEditServiceClick = (s) => {
+    setServiceValidationError('');
+    setServiceSuccessMessage('');
     setEditingServiceId(s.id);
     setEditServiceName(s.service_name);
     setEditServiceDesc(s.description || '');
@@ -653,15 +871,48 @@ const OwnerDashboard = ({ setCurrentView, salons, setSalons, authToken, setAuthT
   };
 
   const handleUpdateService = async (id) => {
+    setServiceValidationError('');
+    setServiceSuccessMessage('');
+
+    // Validations
+    if (!editServiceName || editServiceName.trim().length === 0) {
+      setServiceValidationError('Service name is required.');
+      return;
+    }
+    if (editServiceName.length > 100) {
+      setServiceValidationError('Service name cannot exceed 100 characters.');
+      return;
+    }
+    if (editServiceDesc && editServiceDesc.length > 200) {
+      setServiceValidationError('Service description cannot exceed 200 characters.');
+      return;
+    }
+    const priceNum = Number(editServicePrice);
+    if (isNaN(priceNum) || priceNum < 0) {
+      setServiceValidationError('Price must be a valid positive number or zero.');
+      return;
+    }
+    const durationNum = Number(editServiceDuration);
+    if (isNaN(durationNum) || !Number.isInteger(durationNum) || durationNum < 1 || durationNum > 480) {
+      setServiceValidationError('Duration must be a positive integer between 1 and 480 minutes.');
+      return;
+    }
+    // Duplicate check excluding current service
+    const isDuplicate = servicesList.some(s => s.id !== id && s.service_name.toLowerCase().trim() === editServiceName.toLowerCase().trim());
+    if (isDuplicate) {
+      setServiceValidationError(`A service with the name "${editServiceName}" already exists in this salon.`);
+      return;
+    }
+
     try {
       const res = await fetch(`http://localhost:3000/api/services/${id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${authToken}` },
         body: JSON.stringify({
-          service_name: editServiceName,
-          description: editServiceDesc,
-          duration_minutes: Number(editServiceDuration),
-          price: Number(editServicePrice),
+          service_name: editServiceName.trim(),
+          description: editServiceDesc.trim(),
+          duration_minutes: durationNum,
+          price: priceNum,
           status: editServiceStatus,
           gender: editServiceGender
         })
@@ -670,17 +921,20 @@ const OwnerDashboard = ({ setCurrentView, salons, setSalons, authToken, setAuthT
         const data = await res.json();
         setServicesList(servicesList.map(s => s.id === id ? data.service : s));
         setEditingServiceId(null);
+        setServiceSuccessMessage('Service updated successfully.');
       } else {
         const text = await res.text();
-        alert(`Error updating service: ${text}`);
+        setServiceValidationError(`Error updating service: ${text}`);
       }
-    } catch(err) {
+    } catch (err) {
       console.error("Update service error:", err);
-      alert('Network error: ' + err.message);
+      setServiceValidationError('Network error: ' + err.message);
     }
   };
 
   const handleDeleteService = async (id) => {
+    setServiceValidationError('');
+    setServiceSuccessMessage('');
     if (!window.confirm('Are you sure you want to delete this service?')) return;
     try {
       const res = await fetch(`http://localhost:3000/api/services/${id}`, {
@@ -689,40 +943,87 @@ const OwnerDashboard = ({ setCurrentView, salons, setSalons, authToken, setAuthT
       });
       if (res.ok) {
         setServicesList(servicesList.filter(s => s.id !== id));
+        setServiceSuccessMessage('Service deleted successfully.');
       } else {
         const text = await res.text();
-        alert(`Error deleting service: ${text}`);
+        setServiceValidationError(`Error deleting service: ${text}`);
       }
-    } catch(err) {
+    } catch (err) {
       console.error("Delete service error:", err);
-      alert('Network error: ' + err.message);
+      setServiceValidationError('Network error: ' + err.message);
     }
   };
 
   const handleAddEmployee = async (e) => {
     e.preventDefault();
     if (!activeSalon) return;
+    setEmployeeValidationError('');
+    setEmployeeSuccessMessage('');
+
+    // Validations
+    if (!empName || empName.trim().length === 0) {
+      setEmployeeValidationError('Employee name is required.');
+      return;
+    }
+    const nameRegex = /^[a-zA-Z\s]+$/;
+    if (!nameRegex.test(empName)) {
+      setEmployeeValidationError('Employee name must consist of characters only.');
+      return;
+    }
+    if (empName.length > 50) {
+      setEmployeeValidationError('Employee name cannot exceed 50 characters.');
+      return;
+    }
+    const phoneRegex = /^[0-9+\-\s()]{10,15}$/;
+    if (!empPhone || !phoneRegex.test(empPhone)) {
+      setEmployeeValidationError('Employee phone number must be between 10 and 15 digits (spaces, +, -, and parentheses allowed).');
+      return;
+    }
+    if (!empRole || empRole.trim().length === 0) {
+      setEmployeeValidationError('Role is required.');
+      return;
+    }
+    const expNum = Number(empExp);
+    if (isNaN(expNum) || !Number.isInteger(expNum) || expNum < 0) {
+      setEmployeeValidationError('Experience must be a valid positive integer (years).');
+      return;
+    }
+    // Duplicate phone check
+    const isDuplicatePhone = employeesList.some(emp => emp.phone.trim() === empPhone.trim());
+    if (isDuplicatePhone) {
+      setEmployeeValidationError(`An employee with the phone number "${empPhone}" already exists.`);
+      return;
+    }
+
     try {
       const res = await fetch(`http://localhost:3000/api/salons/${activeSalon.id}/employees`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${authToken}` },
-        body: JSON.stringify({ name: empName, phone: empPhone, role: empRole, experience: empExp })
+        body: JSON.stringify({
+          name: empName.trim(),
+          phone: empPhone.trim(),
+          role: empRole.trim(),
+          experience: expNum
+        })
       });
       if (res.ok) {
         const data = await res.json();
         setEmployeesList([...employeesList, data.employee]);
         setEmpName(''); setEmpPhone(''); setEmpRole(''); setEmpExp('');
+        setEmployeeSuccessMessage('Employee added successfully.');
       } else {
         const text = await res.text();
-        alert(`Error adding employee: ${text}`);
+        setEmployeeValidationError(`Error adding employee: ${text}`);
       }
     } catch (err) {
       console.error("Add employee error:", err);
-      alert('Network error: ' + err.message);
+      setEmployeeValidationError('Network error: ' + err.message);
     }
   };
 
   const handleEditEmployeeClick = (e) => {
+    setEmployeeValidationError('');
+    setEmployeeSuccessMessage('');
     setEditingEmployeeId(e.id);
     setEditEmpName(e.name);
     setEditEmpPhone(e.phone);
@@ -731,32 +1032,73 @@ const OwnerDashboard = ({ setCurrentView, salons, setSalons, authToken, setAuthT
   };
 
   const handleUpdateEmployee = async (id) => {
+    setEmployeeValidationError('');
+    setEmployeeSuccessMessage('');
+
+    // Validations
+    if (!editEmpName || editEmpName.trim().length === 0) {
+      setEmployeeValidationError('Employee name is required.');
+      return;
+    }
+    const nameRegex = /^[a-zA-Z\s]+$/;
+    if (!nameRegex.test(editEmpName)) {
+      setEmployeeValidationError('Employee name must consist of characters only.');
+      return;
+    }
+    if (editEmpName.length > 50) {
+      setEmployeeValidationError('Employee name cannot exceed 50 characters.');
+      return;
+    }
+    const phoneRegex = /^[0-9+\-\s()]{10,15}$/;
+    if (!editEmpPhone || !phoneRegex.test(editEmpPhone)) {
+      setEmployeeValidationError('Employee phone number must be between 10 and 15 digits (spaces, +, -, and parentheses allowed).');
+      return;
+    }
+    if (!editEmpRole || editEmpRole.trim().length === 0) {
+      setEmployeeValidationError('Role is required.');
+      return;
+    }
+    const expNum = Number(editEmpExp);
+    if (isNaN(expNum) || !Number.isInteger(expNum) || expNum < 0) {
+      setEmployeeValidationError('Experience must be a valid positive integer (years).');
+      return;
+    }
+    // Duplicate phone check excluding current employee
+    const isDuplicatePhone = employeesList.some(emp => emp.id !== id && emp.phone.trim() === editEmpPhone.trim());
+    if (isDuplicatePhone) {
+      setEmployeeValidationError(`An employee with the phone number "${editEmpPhone}" already exists.`);
+      return;
+    }
+
     try {
       const res = await fetch(`http://localhost:3000/api/employees/${id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${authToken}` },
         body: JSON.stringify({
-          name: editEmpName,
-          phone: editEmpPhone,
-          role: editEmpRole,
-          experience: editEmpExp
+          name: editEmpName.trim(),
+          phone: editEmpPhone.trim(),
+          role: editEmpRole.trim(),
+          experience: expNum
         })
       });
       if (res.ok) {
         const data = await res.json();
         setEmployeesList(employeesList.map(emp => emp.id === id ? data.employee : emp));
         setEditingEmployeeId(null);
+        setEmployeeSuccessMessage('Employee updated successfully.');
       } else {
         const text = await res.text();
-        alert(`Error updating employee: ${text}`);
+        setEmployeeValidationError(`Error updating employee: ${text}`);
       }
-    } catch(err) {
+    } catch (err) {
       console.error("Update employee error:", err);
-      alert('Network error: ' + err.message);
+      setEmployeeValidationError('Network error: ' + err.message);
     }
   };
 
   const handleDeleteEmployee = async (id) => {
+    setEmployeeValidationError('');
+    setEmployeeSuccessMessage('');
     if (!window.confirm('Are you sure you want to delete this employee?')) return;
     try {
       const res = await fetch(`http://localhost:3000/api/employees/${id}`, {
@@ -765,13 +1107,14 @@ const OwnerDashboard = ({ setCurrentView, salons, setSalons, authToken, setAuthT
       });
       if (res.ok) {
         setEmployeesList(employeesList.filter(emp => emp.id !== id));
+        setEmployeeSuccessMessage('Employee deleted successfully.');
       } else {
         const text = await res.text();
-        alert(`Error deleting employee: ${text}`);
+        setEmployeeValidationError(`Error deleting employee: ${text}`);
       }
-    } catch(err) {
+    } catch (err) {
       console.error("Delete employee error:", err);
-      alert('Network error: ' + err.message);
+      setEmployeeValidationError('Network error: ' + err.message);
     }
   };
 
@@ -795,7 +1138,7 @@ const OwnerDashboard = ({ setCurrentView, salons, setSalons, authToken, setAuthT
     const filY = appointmentDateFilter.getFullYear();
     const filM = appointmentDateFilter.getMonth();
     const filD = appointmentDateFilter.getDate();
-    
+
     return aptY === filY && aptM === filM && aptD === filD;
   });
 
@@ -1437,7 +1780,7 @@ const OwnerDashboard = ({ setCurrentView, salons, setSalons, authToken, setAuthT
       </header>
 
       <div className="dashboard-main-container">
-        
+
         <div className="dashboard-header-block">
           <div className="dashboard-title-area">
             <h1>Owner Dashboard</h1>
@@ -1457,39 +1800,45 @@ const OwnerDashboard = ({ setCurrentView, salons, setSalons, authToken, setAuthT
               <h2 style={{ fontFamily: 'Playfair Display, serif', fontSize: '26px', color: '#cfa856', margin: 0 }}>Register New Salon</h2>
               <p style={{ fontSize: '13px', color: '#888', margin: '5px 0 0 0' }}>Provide the details below to publish your salon listing.</p>
             </div>
-            
+
             {createError && <div className="error-message">{createError}</div>}
-            
+
             <form onSubmit={handleCreateSalon}>
               <div className="form-grid-layout">
                 <div className="form-group form-full-width">
                   <label className="form-label-txt">Salon Name</label>
                   <input type="text" name="name" className="owner-form-input" required value={salonData.name} onChange={handleSalonDataChange} placeholder="e.g. Looks Elite Salon" />
+                  {validationErrors.name && <div className="field-error-text" style={{ color: '#ef4444', fontSize: '11px', marginTop: '4px', fontWeight: '500' }}>{validationErrors.name}</div>}
                 </div>
-                
+
                 <div className="form-group">
                   <label className="form-label-txt">Phone Number</label>
-                  <input type="tel" name="phoneNumber" className="owner-form-input" required value={salonData.phoneNumber} onChange={handleSalonDataChange} placeholder="e.g. +91 9876543210" />
+                  <input type="tel" name="phoneNumber" className="owner-form-input" required value={salonData.phoneNumber} onChange={handleSalonDataChange} placeholder="e.g. 9876543210" />
+                  {validationErrors.phoneNumber && <div className="field-error-text" style={{ color: '#ef4444', fontSize: '11px', marginTop: '4px', fontWeight: '500' }}>{validationErrors.phoneNumber}</div>}
                 </div>
-                
+
                 <div className="form-group">
                   <label className="form-label-txt">Pincode</label>
                   <input type="text" name="pincode" className="owner-form-input" required value={salonData.pincode} onChange={handleSalonDataChange} placeholder="e.g. 576201" />
+                  {validationErrors.pincode && <div className="field-error-text" style={{ color: '#ef4444', fontSize: '11px', marginTop: '4px', fontWeight: '500' }}>{validationErrors.pincode}</div>}
                 </div>
-                
+
                 <div className="form-group form-full-width">
                   <label className="form-label-txt">Address</label>
                   <input type="text" name="address" className="owner-form-input" required value={salonData.address} onChange={handleSalonDataChange} placeholder="e.g. 1st Cross, MG Road" />
+                  {validationErrors.address && <div className="field-error-text" style={{ color: '#ef4444', fontSize: '11px', marginTop: '4px', fontWeight: '500' }}>{validationErrors.address}</div>}
                 </div>
-                
+
                 <div className="form-group">
                   <label className="form-label-txt">City</label>
                   <input type="text" name="city" className="owner-form-input" required value={salonData.city} onChange={handleSalonDataChange} placeholder="e.g. Kundapur" />
+                  {validationErrors.city && <div className="field-error-text" style={{ color: '#ef4444', fontSize: '11px', marginTop: '4px', fontWeight: '500' }}>{validationErrors.city}</div>}
                 </div>
-                
+
                 <div className="form-group">
                   <label className="form-label-txt">State</label>
                   <input type="text" name="state" className="owner-form-input" required value={salonData.state} onChange={handleSalonDataChange} placeholder="e.g. Karnataka" />
+                  {validationErrors.state && <div className="field-error-text" style={{ color: '#ef4444', fontSize: '11px', marginTop: '4px', fontWeight: '500' }}>{validationErrors.state}</div>}
                 </div>
 
                 <div className="form-group form-full-width">
@@ -1511,21 +1860,25 @@ const OwnerDashboard = ({ setCurrentView, salons, setSalons, authToken, setAuthT
                       </div>
                     ))}
                   </div>
+                  {validationErrors.operatingHours && <div className="field-error-text" style={{ color: '#ef4444', fontSize: '11px', marginTop: '4px', fontWeight: '500' }}>{validationErrors.operatingHours}</div>}
                 </div>
 
                 <div className="form-group form-full-width">
                   <label className="form-label-txt">Description</label>
                   <textarea name="description" className="owner-form-input" style={{ resize: 'vertical', minHeight: '80px' }} rows="3" value={salonData.description} onChange={handleSalonDataChange} placeholder="Describe the ambiance, services, and specialties of your salon..." />
+                  {validationErrors.description && <div className="field-error-text" style={{ color: '#ef4444', fontSize: '11px', marginTop: '4px', fontWeight: '500' }}>{validationErrors.description}</div>}
                 </div>
 
                 <div className="form-group">
                   <label className="form-label-txt">Salon Logo</label>
                   <input type="file" name="logo" className="file-upload-input" onChange={handleFileChange} accept="image/*" />
+                  {validationErrors.logo && <div className="field-error-text" style={{ color: '#ef4444', fontSize: '11px', marginTop: '4px', fontWeight: '500' }}>{validationErrors.logo}</div>}
                 </div>
 
                 <div className="form-group">
                   <label className="form-label-txt">Banner Image</label>
                   <input type="file" name="banner" className="file-upload-input" onChange={handleFileChange} accept="image/*" />
+                  {validationErrors.banner && <div className="field-error-text" style={{ color: '#ef4444', fontSize: '11px', marginTop: '4px', fontWeight: '500' }}>{validationErrors.banner}</div>}
                 </div>
 
                 <div className="form-group form-full-width form-btn-row">
@@ -1546,39 +1899,45 @@ const OwnerDashboard = ({ setCurrentView, salons, setSalons, authToken, setAuthT
               <h2 style={{ fontFamily: 'Playfair Display, serif', fontSize: '26px', color: '#cfa856', margin: 0 }}>Edit Salon Details</h2>
               <p style={{ fontSize: '13px', color: '#888', margin: '5px 0 0 0' }}>Modify the details of your registered salon.</p>
             </div>
-            
+
             {updateError && <div className="error-message">{updateError}</div>}
-            
+
             <form onSubmit={handleUpdateSalon}>
               <div className="form-grid-layout">
                 <div className="form-group form-full-width">
                   <label className="form-label-txt">Salon Name</label>
                   <input type="text" name="name" className="owner-form-input" required value={salonData.name} onChange={handleSalonDataChange} />
+                  {validationErrors.name && <div className="field-error-text" style={{ color: '#ef4444', fontSize: '11px', marginTop: '4px', fontWeight: '500' }}>{validationErrors.name}</div>}
                 </div>
-                
+
                 <div className="form-group">
                   <label className="form-label-txt">Phone Number</label>
                   <input type="tel" name="phoneNumber" className="owner-form-input" required value={salonData.phoneNumber} onChange={handleSalonDataChange} />
+                  {validationErrors.phoneNumber && <div className="field-error-text" style={{ color: '#ef4444', fontSize: '11px', marginTop: '4px', fontWeight: '500' }}>{validationErrors.phoneNumber}</div>}
                 </div>
-                
+
                 <div className="form-group">
                   <label className="form-label-txt">Pincode</label>
                   <input type="text" name="pincode" className="owner-form-input" required value={salonData.pincode} onChange={handleSalonDataChange} />
+                  {validationErrors.pincode && <div className="field-error-text" style={{ color: '#ef4444', fontSize: '11px', marginTop: '4px', fontWeight: '500' }}>{validationErrors.pincode}</div>}
                 </div>
-                
+
                 <div className="form-group form-full-width">
                   <label className="form-label-txt">Address</label>
                   <input type="text" name="address" className="owner-form-input" required value={salonData.address} onChange={handleSalonDataChange} />
+                  {validationErrors.address && <div className="field-error-text" style={{ color: '#ef4444', fontSize: '11px', marginTop: '4px', fontWeight: '500' }}>{validationErrors.address}</div>}
                 </div>
-                
+
                 <div className="form-group">
                   <label className="form-label-txt">City</label>
                   <input type="text" name="city" className="owner-form-input" required value={salonData.city} onChange={handleSalonDataChange} />
+                  {validationErrors.city && <div className="field-error-text" style={{ color: '#ef4444', fontSize: '11px', marginTop: '4px', fontWeight: '500' }}>{validationErrors.city}</div>}
                 </div>
-                
+
                 <div className="form-group">
                   <label className="form-label-txt">State</label>
                   <input type="text" name="state" className="owner-form-input" required value={salonData.state} onChange={handleSalonDataChange} />
+                  {validationErrors.state && <div className="field-error-text" style={{ color: '#ef4444', fontSize: '11px', marginTop: '4px', fontWeight: '500' }}>{validationErrors.state}</div>}
                 </div>
 
                 <div className="form-group form-full-width">
@@ -1600,21 +1959,25 @@ const OwnerDashboard = ({ setCurrentView, salons, setSalons, authToken, setAuthT
                       </div>
                     ))}
                   </div>
+                  {validationErrors.operatingHours && <div className="field-error-text" style={{ color: '#ef4444', fontSize: '11px', marginTop: '4px', fontWeight: '500' }}>{validationErrors.operatingHours}</div>}
                 </div>
 
                 <div className="form-group form-full-width">
                   <label className="form-label-txt">Description</label>
                   <textarea name="description" className="owner-form-input" style={{ resize: 'vertical', minHeight: '80px' }} rows="3" value={salonData.description} onChange={handleSalonDataChange} />
+                  {validationErrors.description && <div className="field-error-text" style={{ color: '#ef4444', fontSize: '11px', marginTop: '4px', fontWeight: '500' }}>{validationErrors.description}</div>}
                 </div>
 
                 <div className="form-group">
                   <label className="form-label-txt">Salon Logo (Leave blank to keep current)</label>
                   <input type="file" name="logo" className="file-upload-input" onChange={handleFileChange} accept="image/*" />
+                  {validationErrors.logo && <div className="field-error-text" style={{ color: '#ef4444', fontSize: '11px', marginTop: '4px', fontWeight: '500' }}>{validationErrors.logo}</div>}
                 </div>
 
                 <div className="form-group">
                   <label className="form-label-txt">Banner Image (Leave blank to keep current)</label>
                   <input type="file" name="banner" className="file-upload-input" onChange={handleFileChange} accept="image/*" />
+                  {validationErrors.banner && <div className="field-error-text" style={{ color: '#ef4444', fontSize: '11px', marginTop: '4px', fontWeight: '500' }}>{validationErrors.banner}</div>}
                 </div>
 
                 <div className="form-group form-full-width form-btn-row">
@@ -1634,7 +1997,7 @@ const OwnerDashboard = ({ setCurrentView, salons, setSalons, authToken, setAuthT
             {salons.map(salon => {
               const hasValidBanner = salon.bannerUrl && salon.bannerUrl !== 'null' && salon.bannerUrl !== 'undefined' && salon.bannerUrl.trim() !== '';
               const bgImg = hasValidBanner ? salon.bannerUrl : '/luxury-salon-card.png';
-              
+
               return (
                 <div key={salon.id}>
                   <div className="salon-row-card" style={{ border: selectedSalonId === salon.id ? '1px solid var(--gold-accent, #cfa856)' : '1px solid rgba(255, 255, 255, 0.08)' }}>
@@ -1643,19 +2006,19 @@ const OwnerDashboard = ({ setCurrentView, salons, setSalons, authToken, setAuthT
                         {salon.logoUrl ? (
                           <img src={salon.logoUrl} alt="Logo" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                         ) : (
-                          <span style={{ 
-                            color: '#cfa856', 
-                            fontSize: '20px', 
-                            fontWeight: '700', 
-                            fontFamily: "'Playfair Display', serif", 
-                            letterSpacing: '1px' 
+                          <span style={{
+                            color: '#cfa856',
+                            fontSize: '20px',
+                            fontWeight: '700',
+                            fontFamily: "'Playfair Display', serif",
+                            letterSpacing: '1px'
                           }}>
                             {salon.name ? salon.name.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase() : 'LS'}
                           </span>
                         )}
                       </div>
                     </div>
-                    
+
                     <div className="salon-row-details">
                       <div>
                         <h2>{salon.name}</h2>
@@ -1675,7 +2038,7 @@ const OwnerDashboard = ({ setCurrentView, salons, setSalons, authToken, setAuthT
                           )}
                         </div>
                       </div>
-                      
+
                       <div className="btn-toolbar">
                         <button className="primary-cta-btn" onClick={() => {
                           setSelectedSalonId(salon.id);
@@ -1685,12 +2048,12 @@ const OwnerDashboard = ({ setCurrentView, salons, setSalons, authToken, setAuthT
                           <OwnerIcon name="settings" size={14} style={{ stroke: '#000' }} />
                           {isConfiguring && selectedSalonId === salon.id ? 'Close Panel' : 'Configure Salon'}
                         </button>
-                        
+
                         <button className="owner-outline-btn" onClick={() => { setSelectedSalonId(salon.id); handleEditSalonClick(); }}>
                           <OwnerIcon name="edit" size={14} />
                           Edit Details
                         </button>
-                        
+
                         <button className="owner-danger-btn" onClick={() => { setSelectedSalonId(salon.id); handleDeleteSalon(); }}>
                           <OwnerIcon name="trash" size={14} />
                           Delete Salon
@@ -1725,6 +2088,8 @@ const OwnerDashboard = ({ setCurrentView, salons, setSalons, authToken, setAuthT
                             <div className="tab-title-row">
                               <h3>Manage Styling Seats</h3>
                             </div>
+                            {seatValidationError && <div className="error-message" style={{ marginBottom: '15px' }}>{seatValidationError}</div>}
+                            {seatSuccessMessage && <div className="success-message" style={{ background: 'rgba(16, 185, 129, 0.1)', color: '#34d399', border: '1px solid rgba(16, 185, 129, 0.2)', padding: '10px 15px', borderRadius: '8px', marginBottom: '15px', fontSize: '13px' }}>{seatSuccessMessage}</div>}
                             <form onSubmit={handleAddSeat} className="form-row-flex">
                               <input type="text" placeholder="Seat Name (e.g. Chair 1)" className="owner-form-input" value={seatName} onChange={e => setSeatName(e.target.value)} required />
                               <input type="text" placeholder="Short Description / Area" className="owner-form-input" style={{ flex: 2 }} value={seatDesc} onChange={e => setSeatDesc(e.target.value)} />
@@ -1767,6 +2132,8 @@ const OwnerDashboard = ({ setCurrentView, salons, setSalons, authToken, setAuthT
                             <div className="tab-title-row">
                               <h3>Manage Service Catalog</h3>
                             </div>
+                            {serviceValidationError && <div className="error-message" style={{ marginBottom: '15px' }}>{serviceValidationError}</div>}
+                            {serviceSuccessMessage && <div className="success-message" style={{ background: 'rgba(16, 185, 129, 0.1)', color: '#34d399', border: '1px solid rgba(16, 185, 129, 0.2)', padding: '10px 15px', borderRadius: '8px', marginBottom: '15px', fontSize: '13px' }}>{serviceSuccessMessage}</div>}
                             <form onSubmit={handleAddService} className="tab-grid-form">
                               <div className="input-group">
                                 <label className="form-label-txt">Service Name</label>
@@ -1846,6 +2213,8 @@ const OwnerDashboard = ({ setCurrentView, salons, setSalons, authToken, setAuthT
                             <div className="tab-title-row">
                               <h3>Manage Salon Employees</h3>
                             </div>
+                            {employeeValidationError && <div className="error-message" style={{ marginBottom: '15px' }}>{employeeValidationError}</div>}
+                            {employeeSuccessMessage && <div className="success-message" style={{ background: 'rgba(16, 185, 129, 0.1)', color: '#34d399', border: '1px solid rgba(16, 185, 129, 0.2)', padding: '10px 15px', borderRadius: '8px', marginBottom: '15px', fontSize: '13px' }}>{employeeSuccessMessage}</div>}
                             <form onSubmit={handleAddEmployee} className="tab-grid-form">
                               <div className="input-group">
                                 <label className="form-label-txt">Employee Name</label>
@@ -1907,8 +2276,8 @@ const OwnerDashboard = ({ setCurrentView, salons, setSalons, authToken, setAuthT
                             <div className="tab-title-row" style={{ flexWrap: 'wrap', gap: '15px' }}>
                               <h3>Scheduled Appointments</h3>
                               <div style={{ display: 'flex', gap: '10px', alignItems: 'center', flexWrap: 'wrap' }}>
-                                <DatePicker 
-                                  selected={appointmentDateFilter} 
+                                <DatePicker
+                                  selected={appointmentDateFilter}
                                   onChange={(date) => setAppointmentDateFilter(date)}
                                   customInput={
                                     <input className="owner-form-input" style={{ width: '130px', cursor: 'pointer', margin: 0, padding: '10px 14px' }} />
@@ -1924,7 +2293,7 @@ const OwnerDashboard = ({ setCurrentView, salons, setSalons, authToken, setAuthT
                                 </button>
                               </div>
                             </div>
-                            
+
                             {loadingAppointments ? (
                               <p style={{ color: '#888', textAlign: 'center', padding: '20px' }}>Loading appointments list...</p>
                             ) : (
@@ -1942,7 +2311,7 @@ const OwnerDashboard = ({ setCurrentView, salons, setSalons, authToken, setAuthT
                                       </div>
                                       <span className={`status-badge-custom ${apt.status === 'scheduled' ? 'active' : ''}`}>{apt.status || 'Scheduled'}</span>
                                     </div>
-                                    
+
                                     <div className="appt-details-grid">
                                       <div className="appt-col-left">
                                         <div className="appt-detail-text"><strong>Customer:</strong> {apt.customerName} {apt.customerGender ? `(${apt.customerGender})` : ''}</div>
@@ -1972,7 +2341,7 @@ const OwnerDashboard = ({ setCurrentView, salons, setSalons, authToken, setAuthT
                               <h3>Callback Requests</h3>
                               <button onClick={fetchCallbacks} className="owner-outline-btn">Refresh</button>
                             </div>
-                            
+
                             {loadingCallbacks ? (
                               <p style={{ color: '#888', textAlign: 'center', padding: '20px' }}>Loading requests...</p>
                             ) : (
@@ -1988,7 +2357,7 @@ const OwnerDashboard = ({ setCurrentView, salons, setSalons, authToken, setAuthT
                                       </div>
                                       <span className={`status-badge-custom ${cb.status === 'pending' ? 'active' : ''}`}>{cb.status || 'Pending'}</span>
                                     </div>
-                                    
+
                                     <div className="appt-details-grid">
                                       <div className="appt-col-left">
                                         <div className="appt-detail-text"><strong>Requestor Name:</strong> {cb.name}</div>

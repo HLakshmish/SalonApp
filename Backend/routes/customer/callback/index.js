@@ -25,6 +25,11 @@ async function callbackRoutes(fastify, options) {
   }, async (request, reply) => {
     const { name, phoneNumber, email, services, purpose, dateTime, message, salonId, status } = request.body;
 
+    const nameRegex = /^[a-zA-Z\s]+$/;
+    if (!nameRegex.test(name)) {
+      return reply.status(400).send({ error: 'Name must contain characters and spaces only (no numbers or special characters)' });
+    }
+
     try {
       const callbackRequest = await prisma.callbackRequest.create({
         data: {

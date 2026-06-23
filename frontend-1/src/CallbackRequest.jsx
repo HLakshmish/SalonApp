@@ -13,19 +13,73 @@ const CallbackRequest = ({ salon }) => {
   const [contactDateTime, setContactDateTime] = useState('');
   const [contactMessage, setContactMessage] = useState('');
   const [contactStatus, setContactStatus] = useState('idle');
+  const [contactError, setContactError] = useState('');
+  const [contactSuccess, setContactSuccess] = useState('');
 
   const handleContactSubmit = async (e) => {
     e.preventDefault();
+    setContactError('');
+    setContactSuccess('');
+
+    // Validations
+    if (!contactName || contactName.trim().length < 2) {
+      setContactError("Name must be at least 2 characters.");
+      return;
+    }
+    const nameRegex = /^[a-zA-Z\s]+$/;
+    if (!nameRegex.test(contactName)) {
+      setContactError("Name must consist of characters only.");
+      return;
+    }
+
+    const phoneRegex = /^[6-9]\d{9}$/;
+    if (!contactPhone || !phoneRegex.test(contactPhone)) {
+      setContactError("Phone number must be a valid 10-digit Indian mobile number.");
+      return;
+    }
+
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!contactEmail || !emailRegex.test(contactEmail)) {
+      setContactError("Please enter a valid email address.");
+      return;
+    }
+
+    if (!contactDateTime) {
+      setContactError("Preferred Date/Time is required.");
+      return;
+    }
+    const selectedDateTime = new Date(contactDateTime);
+    const now = new Date();
+    if (selectedDateTime < now) {
+      setContactError("Preferred Date/Time must be in the future.");
+      return;
+    }
+
+    if (!contactServices || contactServices.trim().length === 0) {
+      setContactError("Please specify the services you are interested in.");
+      return;
+    }
+
+    if (!contactPurpose || contactPurpose.trim().length === 0) {
+      setContactError("Purpose is required.");
+      return;
+    }
+
+    if (!contactMessage || contactMessage.trim().length < 10) {
+      setContactError("Message must be at least 10 characters.");
+      return;
+    }
+
     setContactStatus('submitting');
     
     const payload = {
-      name: contactName,
-      phoneNumber: contactPhone,
-      email: contactEmail,
-      services: contactServices,
-      purpose: contactPurpose,
-      dateTime: contactDateTime ? new Date(contactDateTime).toISOString() : new Date().toISOString(),
-      message: contactMessage,
+      name: contactName.trim(),
+      phoneNumber: contactPhone.trim(),
+      email: contactEmail.trim(),
+      services: contactServices.trim(),
+      purpose: contactPurpose.trim(),
+      dateTime: new Date(contactDateTime).toISOString(),
+      message: contactMessage.trim(),
       status: "pending",
       salonId: salon?.id || 0
     };
@@ -49,16 +103,16 @@ const CallbackRequest = ({ salon }) => {
         setContactPurpose('');
         setContactDateTime('');
         setContactMessage('');
-        alert("Callback request submitted successfully.");
+        setContactSuccess("Callback request submitted successfully.");
       } else {
         const errorData = await response.json();
         setContactStatus('idle');
-        alert("Failed to submit request: " + (errorData.message || "Unknown error"));
+        setContactError("Failed to submit request: " + (errorData.message || "Unknown error"));
       }
     } catch (err) {
       console.error(err);
       setContactStatus('idle');
-      alert("Network error. Please try again.");
+      setContactError("Network error. Please try again.");
     }
   };
 
@@ -142,6 +196,8 @@ const CallbackRequest = ({ salon }) => {
       {/* Request Callback Card */}
       <div className="premium-contact-card">
         <h3 id="request-callback-heading" style={{ fontSize: '2rem', marginBottom: '35px', color: 'var(--gold-accent, #d4af37)', textAlign: 'center', fontWeight: '800', letterSpacing: '1px' }}>{t('Request a Callback')}</h3>
+        {contactError && <div className="error-message" style={{ color: '#ef4444', backgroundColor: 'rgba(239, 68, 68, 0.08)', border: '1px solid rgba(239, 68, 68, 0.15)', padding: '12px', borderRadius: '8px', marginBottom: '20px', fontSize: '13px', fontWeight: '500', display: 'flex', alignItems: 'center', gap: '8px', justifyContent: 'center' }}>{contactError}</div>}
+        {contactSuccess && <div className="success-message" style={{ color: '#34d399', backgroundColor: 'rgba(16, 185, 129, 0.08)', border: '1px solid rgba(16, 185, 129, 0.15)', padding: '12px', borderRadius: '8px', marginBottom: '20px', fontSize: '13px', fontWeight: '500', display: 'flex', alignItems: 'center', gap: '8px', justifyContent: 'center' }}>{contactSuccess}</div>}
         <form onSubmit={handleContactSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
           <div style={{ display: 'flex', gap: '20px', flexWrap: 'wrap' }}>
             <input type="text" placeholder={t("Your Name")} value={contactName} onChange={e => setContactName(e.target.value)} required className="premium-input" />

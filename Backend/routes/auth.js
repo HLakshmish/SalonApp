@@ -48,6 +48,11 @@ async function authRoutes(fastify, options) {
       return reply.status(400).send({ error: 'Name, email, phone, and password are required' });
     }
 
+    const nameRegex = /^[a-zA-Z\s]+$/;
+    if (!nameRegex.test(name)) {
+      return reply.status(400).send({ error: 'Name must contain characters and spaces only (no numbers or special characters)' });
+    }
+
     try {
       // Check if user already exists
       const existingUser = await prisma.user.findUnique({

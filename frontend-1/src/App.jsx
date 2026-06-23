@@ -306,7 +306,7 @@ const App = () => {
                       onClick={() => setShowPassword(!showPassword)}
                       aria-label={showPassword ? 'Hide password' : 'Show password'}
                     >
-                      {showPassword ? <Eye size={20} /> : <EyeOff size={20} />}
+                      {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
                     </button>
                   </div>
                   {authMode === 'login' && (
@@ -604,7 +604,7 @@ const App = () => {
         <div className="salon-grid">
           {paginatedSalons.length > 0 ? paginatedSalons.map(salon => {
             const hasValidImage = salon.bannerUrl && salon.bannerUrl !== 'null' && salon.bannerUrl !== 'undefined' && salon.bannerUrl.trim() !== '';
-            const bgImage = hasValidImage ? salon.bannerUrl : 'https://images.unsplash.com/photo-1560066984-138dadb4c035?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80';
+            const bgImage = hasValidImage ? salon.bannerUrl : '/luxury-salon-card.png';
 
             return (
               <div key={salon.id} className="premium-salon-card">

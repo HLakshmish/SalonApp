@@ -967,7 +967,7 @@ const OwnerDashboard = ({ setCurrentView, salons, setSalons, authToken, setAuthT
                       </div>
                       <form onSubmit={handleAddService} style={{display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px', marginBottom: '20px'}}>
                         <input type="text" placeholder="Service Name (e.g. Hair Cut)" className="form-input" value={serviceName} onChange={e => setServiceName(e.target.value)} required />
-                        <input type="number" placeholder="Price ($)" className="form-input" value={servicePrice} onChange={e => setServicePrice(e.target.value)} required />
+                        <input type="number" placeholder="Price (₹)" className="form-input" value={servicePrice} onChange={e => setServicePrice(e.target.value)} required />
                         <input type="number" placeholder="Duration (Mins)" className="form-input" value={serviceDuration} onChange={e => setServiceDuration(e.target.value)} required />
                         <select className="form-input" value={serviceGender} onChange={e => setServiceGender(e.target.value)} required>
                           <option value="both">Both (Unisex)</option>
@@ -984,7 +984,7 @@ const OwnerDashboard = ({ setCurrentView, salons, setSalons, authToken, setAuthT
                               <div style={{ display: 'flex', gap: '10px', width: '100%', flexWrap: 'wrap', flexDirection: 'column' }}>
                                 <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
                                   <input type="text" className="form-input" value={editServiceName} onChange={e => setEditServiceName(e.target.value)} style={{ flex: 1, minWidth: '150px' }} placeholder="Service Name" />
-                                  <input type="number" className="form-input" value={editServicePrice} onChange={e => setEditServicePrice(e.target.value)} style={{ width: '100px' }} placeholder="Price ($)" />
+                                  <input type="number" className="form-input" value={editServicePrice} onChange={e => setEditServicePrice(e.target.value)} style={{ width: '100px' }} placeholder="Price (₹)" />
                                   <input type="number" className="form-input" value={editServiceDuration} onChange={e => setEditServiceDuration(e.target.value)} style={{ width: '120px' }} placeholder="Duration (mins)" />
                                   <select className="form-input" value={editServiceGender} onChange={e => setEditServiceGender(e.target.value)} style={{ width: '100px', margin: 0 }}>
                                     <option value="both">Both</option>
@@ -1005,7 +1005,7 @@ const OwnerDashboard = ({ setCurrentView, salons, setSalons, authToken, setAuthT
                             ) : (
                               <>
                                 <div style={{ flex: 1 }}>
-                                  <div className="config-item-main">{s.service_name} <span style={{color: 'var(--gold-accent)'}}>- ${s.price}</span></div>
+                                  <div className="config-item-main">{s.service_name} <span style={{color: 'var(--gold-accent)'}}>- ₹{s.price}</span></div>
                                   <div className="config-item-sub">{s.duration_minutes} mins | {s.gender ? s.gender.charAt(0).toUpperCase() + s.gender.slice(1) : 'Both'} | {s.description}</div>
                                 </div>
                                 <div style={{ display: 'flex', gap: '10px', alignItems: 'center', flexWrap: 'wrap' }}>

@@ -8,7 +8,9 @@ import {
   Star,
   Search,
   Filter,
-  SlidersHorizontal
+  SlidersHorizontal,
+  Eye,
+  EyeOff
 } from 'lucide-react';
 import { FaFacebookF, FaTwitter, FaInstagram, FaWhatsapp } from 'react-icons/fa';
 import OwnerDashboard from './OwnerDashboard';
@@ -29,9 +31,11 @@ const App = () => {
   // Auth States
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [name, setName] = useState('');
   const [phone, setPhone] = useState('');
   const [authError, setAuthError] = useState('');
+  const [authSuccess, setAuthSuccess] = useState('');
 
   // Dashboard States
   const [salons, setSalons] = useState([]);
@@ -140,6 +144,7 @@ const App = () => {
   const handleLogin = async (e) => {
     e.preventDefault();
     setAuthError('');
+    setAuthSuccess('');
     try {
       const response = await fetch('http://localhost:3000/api/login', {
         method: 'POST',
@@ -168,6 +173,7 @@ const App = () => {
   const handleRegister = async (e) => {
     e.preventDefault();
     setAuthError('');
+    setAuthSuccess('');
     try {
       const response = await fetch('http://localhost:3000/api/register', {
         method: 'POST',
@@ -181,10 +187,34 @@ const App = () => {
           setCurrentView('subscription');
         } else {
           setAuthMode('login');
-          setAuthError('Registration successful. You can now login.');
+          setPassword('');
+          setAuthSuccess('Registration successful. You can now login.');
         }
       } else {
         setAuthError(data.error || data.message || 'Registration failed');
+      }
+    } catch (err) {
+      setAuthError('Network error. Please check your backend connection.');
+    }
+  };
+
+  const handleForgotPassword = async (e) => {
+    e.preventDefault();
+    setAuthError('');
+    setAuthSuccess('');
+    try {
+      const response = await fetch('http://localhost:3000/api/forgot-password', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, phone, newPassword: password })
+      });
+      const data = await response.json();
+      if (response.ok) {
+        setAuthMode('login');
+        setPassword('');
+        setAuthSuccess('Password reset successful. You can now login.');
+      } else {
+        setAuthError(data.error || data.message || 'Password reset failed');
       }
     } catch (err) {
       setAuthError('Network error. Please check your backend connection.');
@@ -216,43 +246,105 @@ const App = () => {
         </header>
 
         <div className="auth-container">
-          <div className="auth-box">
-            <h2 className="auth-title">Salon Owner {authMode === 'login' ? 'Login' : 'Registration'}</h2>
-            {authError && <div className="error-message">{authError}</div>}
+          <div className="auth-image-side">
+            <div className="auth-image-overlay">
+              <div className="auth-brand-text">
+                <span className="auth-brand-sub">LOOKS SALON</span>
+                <h3 className="auth-brand-title">Owner Portal</h3>
+                <p className="auth-brand-desc">
+                  Manage your salon's seats, schedules, employees, services, and bookings in one high-end, responsive system.
+                </p>
+              </div>
+            </div>
+          </div>
+          <div className="auth-form-side">
+            <div className="auth-box">
+              <h2 className="auth-title">
+                Salon Owner {authMode === 'login' ? 'Login' : authMode === 'register' ? 'Registration' : 'Reset Password'}
+              </h2>
+              {authError && <div className="error-message">{authError}</div>}
+              {authSuccess && <div className="success-message">{authSuccess}</div>}
 
-            <form onSubmit={authMode === 'login' ? handleLogin : handleRegister}>
-              {authMode === 'register' && (
-                <>
+              <form onSubmit={
+                authMode === 'login' 
+                  ? handleLogin 
+                  : authMode === 'register' 
+                    ? handleRegister 
+                    : handleForgotPassword
+              }>
+                {authMode === 'register' && (
                   <div className="form-group">
                     <label className="form-label">Full Name</label>
                     <input type="text" className="form-input" required value={name} onChange={e => setName(e.target.value)} />
                   </div>
+                )}
+                {(authMode === 'register' || authMode === 'forgot') && (
                   <div className="form-group">
                     <label className="form-label">Phone Number</label>
                     <input type="tel" className="form-input" required value={phone} onChange={e => setPhone(e.target.value)} />
                   </div>
-                </>
-              )}
-              <div className="form-group">
-                <label className="form-label">Email Address</label>
-                <input type="email" className="form-input" required value={email} onChange={e => setEmail(e.target.value)} />
-              </div>
-              <div className="form-group">
-                <label className="form-label">Password</label>
-                <input type="password" className="form-input" required value={password} onChange={e => setPassword(e.target.value)} />
-              </div>
+                )}
+                <div className="form-group">
+                  <label className="form-label">Email Address</label>
+                  <input type="email" className="form-input" required value={email} onChange={e => setEmail(e.target.value)} />
+                </div>
+                <div className="form-group">
+                  <label className="form-label">
+                    {authMode === 'forgot' ? 'New Password' : 'Password'}
+                  </label>
+                  <div className="password-input-container">
+                    <input
+                      type={showPassword ? 'text' : 'password'}
+                      className="form-input"
+                      required
+                      value={password}
+                      onChange={e => setPassword(e.target.value)}
+                    />
+                    <button
+                      type="button"
+                      className="password-toggle-btn"
+                      onClick={() => setShowPassword(!showPassword)}
+                      aria-label={showPassword ? 'Hide password' : 'Show password'}
+                    >
+                      {showPassword ? <Eye size={20} /> : <EyeOff size={20} />}
+                    </button>
+                  </div>
+                  {authMode === 'login' && (
+                    <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '10px' }}>
+                      <span
+                        onClick={() => { setAuthMode('forgot'); setAuthError(''); setAuthSuccess(''); }}
+                        style={{
+                          fontSize: '13px',
+                          color: 'rgba(255, 255, 255, 0.5)',
+                          cursor: 'pointer',
+                          fontWeight: '500',
+                          transition: 'color 0.3s ease',
+                        }}
+                        onMouseOver={e => e.target.style.color = 'var(--gold-accent)'}
+                        onMouseOut={e => e.target.style.color = 'rgba(255, 255, 255, 0.5)'}
+                      >
+                        Forgot Password?
+                      </span>
+                    </div>
+                  )}
+                </div>
 
-              <button type="submit" className="auth-btn">
-                {authMode === 'login' ? 'Sign In' : 'Create Account'}
-              </button>
-            </form>
+                <button type="submit" className="auth-btn">
+                  {authMode === 'login' ? 'Sign In' : authMode === 'register' ? 'Create Account' : 'Reset Password'}
+                </button>
+              </form>
 
-            <div className="auth-switch">
-              {authMode === 'login' ? (
-                <>Don't have an account? <span onClick={() => { setAuthMode('register'); setAuthError(''); }}>Register here</span></>
-              ) : (
-                <>Already have an account? <span onClick={() => { setAuthMode('login'); setAuthError(''); }}>Login here</span></>
-              )}
+              <div className="auth-switch">
+                {authMode === 'login' && (
+                  <>Don't have an account? <span onClick={() => { setAuthMode('register'); setAuthError(''); setAuthSuccess(''); }}>Register here</span></>
+                )}
+                {authMode === 'register' && (
+                  <>Already have an account? <span onClick={() => { setAuthMode('login'); setAuthError(''); setAuthSuccess(''); }}>Login here</span></>
+                )}
+                {authMode === 'forgot' && (
+                  <>Remember your password? <span onClick={() => { setAuthMode('login'); setAuthError(''); setAuthSuccess(''); }}>Login here</span></>
+                )}
+              </div>
             </div>
           </div>
         </div>

@@ -84,6 +84,14 @@ async function salonOwnerRoutes(fastify, options) {
         }
       }
 
+      const charRegex = /^[a-zA-Z\s]+$/;
+      if (salonData.city && !charRegex.test(salonData.city.trim())) {
+        return reply.status(400).send({ error: 'City must contain characters and spaces only' });
+      }
+      if (salonData.state && !charRegex.test(salonData.state.trim())) {
+        return reply.status(400).send({ error: 'State must contain characters and spaces only' });
+      }
+
       salonData.photosUrls = photosUrls;
       salonData.ownerId = request.user.id; // Link salon to the authenticated user
 
@@ -252,6 +260,14 @@ async function salonOwnerRoutes(fastify, options) {
 
       if (photosUrls.length > 0) {
         updateData.photosUrls = existing.photosUrls ? [...existing.photosUrls, ...photosUrls] : photosUrls;
+      }
+
+      const charRegex = /^[a-zA-Z\s]+$/;
+      if (updateData.city && !charRegex.test(updateData.city.trim())) {
+        return reply.status(400).send({ error: 'City must contain characters and spaces only' });
+      }
+      if (updateData.state && !charRegex.test(updateData.state.trim())) {
+        return reply.status(400).send({ error: 'State must contain characters and spaces only' });
       }
 
       // Remove undefined fields just in case

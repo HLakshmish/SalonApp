@@ -216,6 +216,11 @@ const SalonDetails = ({ salon, setCurrentView }) => {
       setBookingError("City is required.");
       return;
     }
+    const cityRegex = /^[a-zA-Z\s]+$/;
+    if (!cityRegex.test(city.trim())) {
+      setBookingError("City must consist of characters only.");
+      return;
+    }
 
     if (!address || address.trim().length === 0) {
       setBookingError("Address is required.");

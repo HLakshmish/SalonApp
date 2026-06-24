@@ -417,12 +417,17 @@ const OwnerDashboard = ({ setCurrentView, salons, setSalons, authToken, setAuthT
       errors.address = 'Address cannot exceed 200 characters.';
     }
 
+    const charRegex = /^[a-zA-Z\s]+$/;
     if (!data.city || data.city.trim().length === 0) {
       errors.city = 'City is required.';
+    } else if (!charRegex.test(data.city.trim())) {
+      errors.city = 'City must contain characters and spaces only.';
     }
 
     if (!data.state || data.state.trim().length === 0) {
       errors.state = 'State is required.';
+    } else if (!charRegex.test(data.state.trim())) {
+      errors.state = 'State must contain characters and spaces only.';
     }
 
     const pinRegex = /^\d{5,6}$/;

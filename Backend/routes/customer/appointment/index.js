@@ -1,3 +1,43 @@
+function getTzComponents(date, timeZone = 'Asia/Kolkata') {
+  const formatter = new Intl.DateTimeFormat('en-US', {
+    timeZone,
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
+    hour12: false
+  });
+  
+  const parts = formatter.formatToParts(date);
+  const map = new Map(parts.map(p => [p.type, p.value]));
+  
+  return {
+    year: parseInt(map.get('year')),
+    month: parseInt(map.get('month')),
+    day: parseInt(map.get('day')),
+    hour: parseInt(map.get('hour')),
+    minute: parseInt(map.get('minute')),
+    second: parseInt(map.get('second'))
+  };
+}
+
+function getTzDayOfWeek(date, timeZone = 'Asia/Kolkata') {
+  const formatter = new Intl.DateTimeFormat('en-US', {
+    timeZone,
+    weekday: 'long'
+  });
+  return formatter.format(date).toLowerCase();
+}
+
+function createDateInTz(year, month, day, hour, minute, timeZone = 'Asia/Kolkata') {
+  const utcDate = new Date(Date.UTC(year, month - 1, day, hour, minute));
+  const tzParts = getTzComponents(utcDate, timeZone);
+  const diffMs = utcDate.getTime() - Date.UTC(tzParts.year, tzParts.month - 1, tzParts.day, tzParts.hour, tzParts.minute);
+  return new Date(utcDate.getTime() + diffMs);
+}
+
 async function appointmentRoutes(fastify, options) {
   const { prisma } = options;
 
@@ -43,6 +83,11 @@ async function appointmentRoutes(fastify, options) {
     const nameRegex = /^[a-zA-Z\s]+$/;
     if (!nameRegex.test(customerName)) {
       return reply.status(400).send({ error: 'Customer name must contain characters and spaces only (no numbers or special characters)' });
+    }
+
+    const cityRegex = /^[a-zA-Z\s]+$/;
+    if (!cityRegex.test(customerCity)) {
+      return reply.status(400).send({ error: 'City must contain characters and spaces only (no numbers or special characters)' });
     }
     
     // Optional: if the user included a Bearer token and we want to attach the appointment to their account
@@ -97,8 +142,7 @@ async function appointmentRoutes(fastify, options) {
 
       // 3.5 Check operating hours
       if (salon.operatingHours) {
-        const days = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
-        const dayOfWeek = days[start.getDay()];
+        const dayOfWeek = getTzDayOfWeek(start);
         const daySchedule = salon.operatingHours[dayOfWeek];
 
         if (daySchedule && daySchedule.closed) {
@@ -106,13 +150,11 @@ async function appointmentRoutes(fastify, options) {
         }
 
         if (daySchedule && daySchedule.open && daySchedule.close) {
-          const startHours = start.getHours().toString().padStart(2, '0');
-          const startMinutes = start.getMinutes().toString().padStart(2, '0');
-          const startTimeString = `${startHours}:${startMinutes}`;
+          const startTz = getTzComponents(start);
+          const startTimeString = `${startTz.hour.toString().padStart(2, '0')}:${startTz.minute.toString().padStart(2, '0')}`;
 
-          const endHours = end.getHours().toString().padStart(2, '0');
-          const endMinutes = end.getMinutes().toString().padStart(2, '0');
-          const endTimeString = `${endHours}:${endMinutes}`;
+          const endTz = getTzComponents(end);
+          const endTimeString = `${endTz.hour.toString().padStart(2, '0')}:${endTz.minute.toString().padStart(2, '0')}`;
 
           if (startTimeString < daySchedule.open || endTimeString > daySchedule.close) {
              return reply.status(400).send({ error: `Appointment time is outside operating hours (${daySchedule.open} - ${daySchedule.close})` });
@@ -212,10 +254,9 @@ async function appointmentRoutes(fastify, options) {
       let operatingHoursForDate = null;
 
       if (seat.salon.operatingHours) {
-        const days = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
-        const [year, month, day] = date.split('-');
-        const localDate = new Date(year, month - 1, day);
-        const dayOfWeek = days[localDate.getDay()];
+        const [year, month, day] = date.split('-').map(Number);
+        const dateUtc = new Date(Date.UTC(year, month - 1, day, 12, 0, 0));
+        const dayOfWeek = getTzDayOfWeek(dateUtc);
         
         operatingHoursForDate = seat.salon.operatingHours[dayOfWeek];
         if (operatingHoursForDate && operatingHoursForDate.closed) {
@@ -246,15 +287,19 @@ async function appointmentRoutes(fastify, options) {
       let availableSlots = [];
       
       if (!isClosed) {
-        let openTime = new Date(startOfDay);
-        let closeTime = new Date(endOfDay);
+        let openTime;
+        let closeTime;
         
         if (operatingHoursForDate && operatingHoursForDate.open && operatingHoursForDate.close) {
-          const [year, month, day] = date.split('-');
-          const [openH, openM] = operatingHoursForDate.open.split(':');
-          const [closeH, closeM] = operatingHoursForDate.close.split(':');
-          openTime = new Date(year, month - 1, day, openH, openM);
-          closeTime = new Date(year, month - 1, day, closeH, closeM);
+          const [year, month, day] = date.split('-').map(Number);
+          const [openH, openM] = operatingHoursForDate.open.split(':').map(Number);
+          const [closeH, closeM] = operatingHoursForDate.close.split(':').map(Number);
+          openTime = createDateInTz(year, month, day, openH, openM);
+          closeTime = createDateInTz(year, month, day, closeH, closeM);
+        } else {
+          const [year, month, day] = date.split('-').map(Number);
+          openTime = createDateInTz(year, month, day, 0, 0);
+          closeTime = createDateInTz(year, month, day, 23, 59);
         }
 
         let currentTime = openTime;
@@ -342,10 +387,9 @@ async function appointmentRoutes(fastify, options) {
       let operatingHoursForDate = null;
 
       if (date && salon.operatingHours) {
-        const days = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
-        const [year, month, day] = date.split('-');
-        const localDate = new Date(year, month - 1, day);
-        const dayOfWeek = days[localDate.getDay()];
+        const [year, month, day] = date.split('-').map(Number);
+        const dateUtc = new Date(Date.UTC(year, month - 1, day, 12, 0, 0));
+        const dayOfWeek = getTzDayOfWeek(dateUtc);
         
         operatingHoursForDate = salon.operatingHours[dayOfWeek];
         if (operatingHoursForDate && operatingHoursForDate.closed) {
@@ -385,15 +429,19 @@ async function appointmentRoutes(fastify, options) {
 
         let availableSlots = [];
         if (date && !isClosed) {
-          let openTime = new Date(`${date}T00:00:00.000Z`);
-          let closeTime = new Date(`${date}T23:59:59.999Z`);
+          let openTime;
+          let closeTime;
           
           if (operatingHoursForDate && operatingHoursForDate.open && operatingHoursForDate.close) {
-            const [year, month, day] = date.split('-');
-            const [openH, openM] = operatingHoursForDate.open.split(':');
-            const [closeH, closeM] = operatingHoursForDate.close.split(':');
-            openTime = new Date(year, month - 1, day, openH, openM);
-            closeTime = new Date(year, month - 1, day, closeH, closeM);
+            const [year, month, day] = date.split('-').map(Number);
+            const [openH, openM] = operatingHoursForDate.open.split(':').map(Number);
+            const [closeH, closeM] = operatingHoursForDate.close.split(':').map(Number);
+            openTime = createDateInTz(year, month, day, openH, openM);
+            closeTime = createDateInTz(year, month, day, closeH, closeM);
+          } else {
+            const [year, month, day] = date.split('-').map(Number);
+            openTime = createDateInTz(year, month, day, 0, 0);
+            closeTime = createDateInTz(year, month, day, 23, 59);
           }
 
           let currentTime = openTime;

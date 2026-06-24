@@ -62,7 +62,7 @@ const App = () => {
   useEffect(() => {
     const fetchWebsiteDetails = async () => {
       try {
-        const response = await fetch('http://localhost:3000/api/website-details');
+        const response = await fetch(`${import.meta.env.VITE_API_URL}/api/website-details`);
         if (response.ok) {
           const data = await response.json();
           setWebsiteDetails(data);
@@ -125,7 +125,7 @@ const App = () => {
   useEffect(() => {
     const fetchAllSalons = async () => {
       try {
-        const response = await fetch('http://localhost:3000/api/salons');
+        const response = await fetch(`${import.meta.env.VITE_API_URL}/api/salons`);
         if (response.ok) {
           const data = await response.json();
           setAllSalons(data);
@@ -158,7 +158,7 @@ const App = () => {
     }
 
     try {
-      const response = await fetch('http://localhost:3000/api/login', {
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, password })
@@ -213,7 +213,7 @@ const App = () => {
     }
 
     try {
-      const response = await fetch('http://localhost:3000/api/register', {
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/register`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ name, email, phone, password })
@@ -258,7 +258,7 @@ const App = () => {
     }
 
     try {
-      const response = await fetch('http://localhost:3000/api/forgot-password', {
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/forgot-password`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, phone, newPassword: password })

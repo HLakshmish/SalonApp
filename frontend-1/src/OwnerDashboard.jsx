@@ -143,7 +143,7 @@ const OwnerDashboard = ({ setCurrentView, salons, setSalons, authToken, setAuthT
   useEffect(() => {
     const fetchMySalons = async () => {
       try {
-        const response = await fetch('http://localhost:3000/api/salons/my-salons', {
+        const response = await fetch(`${import.meta.env.VITE_API_URL}/api/salons/my-salons`, {
           headers: {
             'Authorization': `Bearer ${authToken}`,
             'accept': 'application/json'
@@ -167,7 +167,7 @@ const OwnerDashboard = ({ setCurrentView, salons, setSalons, authToken, setAuthT
   useEffect(() => {
     const fetchSubscription = async () => {
       try {
-        const response = await fetch('http://localhost:3000/api/subscription/me', {
+        const response = await fetch(`${import.meta.env.VITE_API_URL}/api/subscription/me`, {
           headers: { 'Authorization': `Bearer ${authToken}`, 'accept': 'application/json' }
         });
         if (response.ok) {
@@ -226,7 +226,7 @@ const OwnerDashboard = ({ setCurrentView, salons, setSalons, authToken, setAuthT
   const fetchAppointments = async () => {
     setLoadingAppointments(true);
     try {
-      const response = await fetch('http://localhost:3000/api/appointments/owner/salons', {
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/appointments/owner/salons`, {
         headers: {
           'Authorization': `Bearer ${authToken}`,
           'accept': 'application/json'
@@ -253,7 +253,7 @@ const OwnerDashboard = ({ setCurrentView, salons, setSalons, authToken, setAuthT
     if (!activeSalon) return;
     setLoadingCallbacks(true);
     try {
-      const response = await fetch(`http://localhost:3000/api/salons/${activeSalon.id}/callbacks`, {
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/salons/${activeSalon.id}/callbacks`, {
         headers: {
           'Authorization': `Bearer ${authToken}`,
           'accept': '*/*'
@@ -279,7 +279,7 @@ const OwnerDashboard = ({ setCurrentView, salons, setSalons, authToken, setAuthT
   const fetchSeats = async () => {
     if (!activeSalon) return;
     try {
-      const response = await fetch(`http://localhost:3000/api/salons/${activeSalon.id}/seats`, {
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/salons/${activeSalon.id}/seats`, {
         headers: { 'accept': 'application/json' }
       });
       if (response.ok) {
@@ -300,7 +300,7 @@ const OwnerDashboard = ({ setCurrentView, salons, setSalons, authToken, setAuthT
   const fetchServices = async () => {
     if (!activeSalon) return;
     try {
-      const response = await fetch(`http://localhost:3000/api/salons/${activeSalon.id}/services`, {
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/salons/${activeSalon.id}/services`, {
         headers: { 'accept': 'application/json' }
       });
       if (response.ok) {
@@ -321,7 +321,7 @@ const OwnerDashboard = ({ setCurrentView, salons, setSalons, authToken, setAuthT
   const fetchEmployees = async () => {
     if (!activeSalon) return;
     try {
-      const response = await fetch(`http://localhost:3000/api/salons/${activeSalon.id}/employees`, {
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/salons/${activeSalon.id}/employees`, {
         headers: { 'accept': 'application/json' }
       });
       if (response.ok) {
@@ -519,7 +519,7 @@ const OwnerDashboard = ({ setCurrentView, salons, setSalons, authToken, setAuthT
     if (files.photos) formData.append('photos', files.photos);
 
     try {
-      const response = await fetch('http://localhost:3000/api/salons', {
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/salons`, {
         method: 'POST',
         headers: { 'Authorization': `Bearer ${authToken}` },
         body: formData
@@ -620,7 +620,7 @@ const OwnerDashboard = ({ setCurrentView, salons, setSalons, authToken, setAuthT
     if (files.photos) formData.append('photos', files.photos);
 
     try {
-      const response = await fetch(`http://localhost:3000/api/salons/${activeSalon.id}`, {
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/salons/${activeSalon.id}`, {
         method: 'PUT',
         headers: { 'Authorization': `Bearer ${authToken}` },
         body: formData
@@ -644,7 +644,7 @@ const OwnerDashboard = ({ setCurrentView, salons, setSalons, authToken, setAuthT
     if (!window.confirm('Are you sure you want to delete this salon? This action cannot be undone.')) return;
 
     try {
-      const response = await fetch(`http://localhost:3000/api/salons/${activeSalon.id}`, {
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/salons/${activeSalon.id}`, {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${authToken}`,
@@ -699,7 +699,7 @@ const OwnerDashboard = ({ setCurrentView, salons, setSalons, authToken, setAuthT
     }
 
     try {
-      const res = await fetch(`http://localhost:3000/api/salons/${activeSalon.id}/seats`, {
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/salons/${activeSalon.id}/seats`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${authToken}` },
         body: JSON.stringify({ name: seatName.trim(), description: seatDesc.trim(), isActive: true })
@@ -752,7 +752,7 @@ const OwnerDashboard = ({ setCurrentView, salons, setSalons, authToken, setAuthT
     }
 
     try {
-      const res = await fetch(`http://localhost:3000/api/seats/${id}`, {
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/seats/${id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${authToken}` },
         body: JSON.stringify({ name: editSeatName.trim(), description: editSeatDesc.trim(), isActive: true })
@@ -777,7 +777,7 @@ const OwnerDashboard = ({ setCurrentView, salons, setSalons, authToken, setAuthT
     setSeatSuccessMessage('');
     if (!window.confirm('Are you sure you want to delete this seat?')) return;
     try {
-      const res = await fetch(`http://localhost:3000/api/seats/${id}`, {
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/seats/${id}`, {
         method: 'DELETE',
         headers: { 'Authorization': `Bearer ${authToken}` }
       });
@@ -831,7 +831,7 @@ const OwnerDashboard = ({ setCurrentView, salons, setSalons, authToken, setAuthT
     }
 
     try {
-      const res = await fetch(`http://localhost:3000/api/salons/${activeSalon.id}/services`, {
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/salons/${activeSalon.id}/services`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${authToken}` },
         body: JSON.stringify({
@@ -905,7 +905,7 @@ const OwnerDashboard = ({ setCurrentView, salons, setSalons, authToken, setAuthT
     }
 
     try {
-      const res = await fetch(`http://localhost:3000/api/services/${id}`, {
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/services/${id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${authToken}` },
         body: JSON.stringify({
@@ -937,7 +937,7 @@ const OwnerDashboard = ({ setCurrentView, salons, setSalons, authToken, setAuthT
     setServiceSuccessMessage('');
     if (!window.confirm('Are you sure you want to delete this service?')) return;
     try {
-      const res = await fetch(`http://localhost:3000/api/services/${id}`, {
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/services/${id}`, {
         method: 'DELETE',
         headers: { 'Authorization': `Bearer ${authToken}` }
       });
@@ -996,7 +996,7 @@ const OwnerDashboard = ({ setCurrentView, salons, setSalons, authToken, setAuthT
     }
 
     try {
-      const res = await fetch(`http://localhost:3000/api/salons/${activeSalon.id}/employees`, {
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/salons/${activeSalon.id}/employees`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${authToken}` },
         body: JSON.stringify({
@@ -1071,7 +1071,7 @@ const OwnerDashboard = ({ setCurrentView, salons, setSalons, authToken, setAuthT
     }
 
     try {
-      const res = await fetch(`http://localhost:3000/api/employees/${id}`, {
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/employees/${id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${authToken}` },
         body: JSON.stringify({
@@ -1101,7 +1101,7 @@ const OwnerDashboard = ({ setCurrentView, salons, setSalons, authToken, setAuthT
     setEmployeeSuccessMessage('');
     if (!window.confirm('Are you sure you want to delete this employee?')) return;
     try {
-      const res = await fetch(`http://localhost:3000/api/employees/${id}`, {
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/employees/${id}`, {
         method: 'DELETE',
         headers: { 'Authorization': `Bearer ${authToken}` }
       });

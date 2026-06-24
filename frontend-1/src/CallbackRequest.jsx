@@ -85,7 +85,7 @@ const CallbackRequest = ({ salon }) => {
     };
 
     try {
-      const response = await fetch('http://localhost:3000/api/callbacks', {
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/callbacks`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

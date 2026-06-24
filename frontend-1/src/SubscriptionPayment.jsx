@@ -16,7 +16,7 @@ const SubscriptionPayment = ({ userId, setCurrentView }) => {
     // Fetch plans
     const fetchPlans = async () => {
       try {
-        const response = await fetch('http://localhost:3000/api/subscription/plans');
+        const response = await fetch(`${import.meta.env.VITE_API_URL}/api/subscription/plans`);
         if (response.ok) {
           const data = await response.json();
           setPlans(data);
@@ -39,7 +39,7 @@ const SubscriptionPayment = ({ userId, setCurrentView }) => {
 
     try {
       // 1. Create order
-      const orderRes = await fetch('http://localhost:3000/api/subscription/create-order', {
+      const orderRes = await fetch(`${import.meta.env.VITE_API_URL}/api/subscription/create-order`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ userId, planId: selectedPlan })
@@ -59,7 +59,7 @@ const SubscriptionPayment = ({ userId, setCurrentView }) => {
         handler: async function (response) {
           // 3. Verify Payment
           try {
-            const verifyRes = await fetch('http://localhost:3000/api/subscription/verify', {
+            const verifyRes = await fetch(`${import.meta.env.VITE_API_URL}/api/subscription/verify`, {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({

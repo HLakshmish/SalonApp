@@ -144,7 +144,7 @@ const AdminDashboard = ({ authToken, setCurrentView }) => {
 
   const fetchPlans = async () => {
     try {
-      const response = await fetch('http://localhost:3000/api/subscription/plans');
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/subscription/plans`);
       if (response.ok) {
         const data = await response.json();
         setPlansList(data);
@@ -157,7 +157,7 @@ const AdminDashboard = ({ authToken, setCurrentView }) => {
   useEffect(() => {
     const fetchDetails = async () => {
       try {
-        const response = await fetch('http://localhost:3000/api/website-details');
+        const response = await fetch(`${import.meta.env.VITE_API_URL}/api/website-details`);
         if (response.ok) {
           const data = await response.json();
           setFormData({
@@ -239,7 +239,7 @@ const AdminDashboard = ({ authToken, setCurrentView }) => {
     }
 
     try {
-      const response = await fetch('http://localhost:3000/api/admin/website-details', {
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/admin/website-details`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -291,7 +291,7 @@ const AdminDashboard = ({ authToken, setCurrentView }) => {
   const handleDeletePlan = async (id) => {
     if (!window.confirm('Are you sure you want to delete this subscription plan?')) return;
     try {
-      const response = await fetch(`http://localhost:3000/api/subscription/plan/${id}`, {
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/subscription/plan/${id}`, {
         method: 'DELETE',
         headers: { 'Authorization': `Bearer ${authToken}` }
       });
@@ -316,8 +316,8 @@ const AdminDashboard = ({ authToken, setCurrentView }) => {
     setIsPlanSubmitting(true);
 
     const url = editingPlanId 
-      ? `http://localhost:3000/api/subscription/plan/${editingPlanId}`
-      : 'http://localhost:3000/api/subscription/plan';
+      ? `${import.meta.env.VITE_API_URL}/api/subscription/plan/${editingPlanId}`
+      : `${import.meta.env.VITE_API_URL}/api/subscription/plan`;
     const method = editingPlanId ? 'PUT' : 'POST';
 
     try {

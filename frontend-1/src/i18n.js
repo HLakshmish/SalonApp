@@ -20,7 +20,8 @@ const resources = {
       "SHOP YOUR FAVORITE BEAUTY BRANDS AT": "SHOP YOUR FAVORITE BEAUTY BRANDS AT",
       "AVAIL EXCITING OFFERS AND": "AVAIL EXCITING OFFERS AND",
       "MANY OTHER GOODIES.": "MANY OTHER GOODIES.",
-      "SHOP NOW": "SHOP NOW"
+      "SHOP NOW": "SHOP NOW",
+      "EXPLORE SALONS": "EXPLORE SALONS"
     }
   },
   kn: {
@@ -41,7 +42,8 @@ const resources = {
       "SHOP YOUR FAVORITE BEAUTY BRANDS AT": "ನಿಮ್ಮ ನೆಚ್ಚಿನ ಸೌಂದರ್ಯ ಬ್ರಾಂಡ್‌ಗಳನ್ನು ಇಲ್ಲಿ ಶಾಪಿಂಗ್ ಮಾಡಿ",
       "AVAIL EXCITING OFFERS AND": "ಆಕರ್ಷಕ ಕೊಡುಗೆಗಳನ್ನು ಮತ್ತು",
       "MANY OTHER GOODIES.": "ಹಲವು ಇತರ ಉಡುಗೊರೆಗಳನ್ನು ಪಡೆಯಿರಿ.",
-      "SHOP NOW": "ಈಗ ಶಾಪಿಂಗ್ ಮಾಡಿ"
+      "SHOP NOW": "ಈಗ ಶಾಪಿಂಗ್ ಮಾಡಿ",
+      "EXPLORE SALONS": "ಸಲೂನ್‌ಗಳನ್ನು ಅನ್ವೇಷಿಸಿ"
     }
   },
   hi: {
@@ -62,7 +64,8 @@ const resources = {
       "SHOP YOUR FAVORITE BEAUTY BRANDS AT": "अपने पसंदीदा सौंदर्य ब्रांड्स की खरीदारी यहाँ करें",
       "AVAIL EXCITING OFFERS AND": "रोमांचक ऑफ़र और",
       "MANY OTHER GOODIES.": "कई अन्य उपहार प्राप्त करें।",
-      "SHOP NOW": "अभी खरीदारी करें"
+      "SHOP NOW": "अभी खरीदारी करें",
+      "EXPLORE SALONS": "सैलून खोजें"
     }
   }
 };

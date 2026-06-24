@@ -32,14 +32,17 @@ const start = async () => {
 
     // Ensure uploads directory exists
     const fs = require('fs');
-    const uploadsDir = path.join(__dirname, 'uploads');
+    const os = require('os');
+    const isVercel = process.env.VERCEL === '1';
+    const uploadsDir = isVercel ? path.join(os.tmpdir(), 'uploads') : path.join(__dirname, 'uploads');
+    
     if (!fs.existsSync(uploadsDir)) {
       fs.mkdirSync(uploadsDir, { recursive: true });
     }
 
     // 0.2 Register Static for serving uploaded files
     await fastify.register(require('@fastify/static'), {
-      root: path.join(__dirname, 'uploads'),
+      root: uploadsDir,
       prefix: '/uploads/',
     });
 

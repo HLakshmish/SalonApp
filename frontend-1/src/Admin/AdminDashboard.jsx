@@ -128,6 +128,32 @@ const AdminDashboard = ({ authToken, setCurrentView }) => {
   const [error, setError] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  const [planData, setPlanData] = useState({
+    plan_name: '',
+    price: '',
+    duration_days: '',
+    max_salons: '',
+    is_active: true
+  });
+  const [planMessage, setPlanMessage] = useState('');
+  const [planError, setPlanError] = useState('');
+  const [isPlanSubmitting, setIsPlanSubmitting] = useState(false);
+  const [activeTab, setActiveTab] = useState('website');
+  const [plansList, setPlansList] = useState([]);
+  const [editingPlanId, setEditingPlanId] = useState(null);
+
+  const fetchPlans = async () => {
+    try {
+      const response = await fetch('http://localhost:3000/api/subscription/plans');
+      if (response.ok) {
+        const data = await response.json();
+        setPlansList(data);
+      }
+    } catch (error) {
+      console.error("Failed to fetch plans:", error);
+    }
+  };
+
   useEffect(() => {
     const fetchDetails = async () => {
       try {
@@ -150,6 +176,7 @@ const AdminDashboard = ({ authToken, setCurrentView }) => {
       }
     };
     fetchDetails();
+    fetchPlans();
   }, []);
 
   const handleChange = (e) => {
@@ -234,6 +261,96 @@ const AdminDashboard = ({ authToken, setCurrentView }) => {
       setError('Network error. Please try again.');
     } finally {
       setIsSubmitting(false);
+    }
+  };
+
+  const handlePlanChange = (e) => {
+    const value = e.target.type === 'checkbox' ? e.target.checked : e.target.value;
+    setPlanData({ ...planData, [e.target.name]: value });
+  };
+
+  const handleEditPlan = (plan) => {
+    setEditingPlanId(plan.id);
+    setPlanData({
+      plan_name: plan.plan_name,
+      price: plan.price,
+      duration_days: plan.duration_days,
+      max_salons: plan.max_salons,
+      is_active: plan.is_active
+    });
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const handleCancelEdit = () => {
+    setEditingPlanId(null);
+    setPlanData({ plan_name: '', price: '', duration_days: '', max_salons: '', is_active: true });
+    setPlanMessage('');
+    setPlanError('');
+  };
+
+  const handleDeletePlan = async (id) => {
+    if (!window.confirm('Are you sure you want to delete this subscription plan?')) return;
+    try {
+      const response = await fetch(`http://localhost:3000/api/subscription/plan/${id}`, {
+        method: 'DELETE',
+        headers: { 'Authorization': `Bearer ${authToken}` }
+      });
+      if (response.ok) {
+        setPlanMessage('Plan deleted successfully!');
+        fetchPlans();
+        setTimeout(() => setPlanMessage(''), 3000);
+      } else {
+        const data = await response.json();
+        setPlanError(data.error || 'Failed to delete plan');
+        setTimeout(() => setPlanError(''), 3000);
+      }
+    } catch (err) {
+      setPlanError('Network error. Failed to delete.');
+    }
+  };
+
+  const handlePlanSubmit = async (e) => {
+    e.preventDefault();
+    setPlanMessage('');
+    setPlanError('');
+    setIsPlanSubmitting(true);
+
+    const url = editingPlanId 
+      ? `http://localhost:3000/api/subscription/plan/${editingPlanId}`
+      : 'http://localhost:3000/api/subscription/plan';
+    const method = editingPlanId ? 'PUT' : 'POST';
+
+    try {
+      const response = await fetch(url, {
+        method,
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${authToken}`
+        },
+        body: JSON.stringify({
+          plan_name: planData.plan_name,
+          price: parseFloat(planData.price),
+          duration_days: parseInt(planData.duration_days, 10),
+          max_salons: parseInt(planData.max_salons, 10),
+          is_active: planData.is_active
+        })
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        setPlanMessage(`Subscription plan ${editingPlanId ? 'updated' : 'created'} successfully!`);
+        setPlanData({ plan_name: '', price: '', duration_days: '', max_salons: '', is_active: true });
+        setEditingPlanId(null);
+        fetchPlans(); // Refresh the plans list
+        setTimeout(() => setPlanMessage(''), 4000);
+      } else {
+        setPlanError(data.error || `Failed to ${editingPlanId ? 'update' : 'create'} plan`);
+      }
+    } catch (err) {
+      setPlanError('Network error. Please try again.');
+    } finally {
+      setIsPlanSubmitting(false);
     }
   };
 
@@ -371,7 +488,9 @@ const AdminDashboard = ({ authToken, setCurrentView }) => {
 
         .admin-grid-layout {
           display: grid;
-          grid-template-columns: 1.2fr 1.8fr;
+          grid-template-columns: 1fr;
+          max-width: 1000px;
+          margin: 0 auto;
           gap: 40px;
           position: relative;
           z-index: 1;
@@ -801,84 +920,42 @@ const AdminDashboard = ({ authToken, setCurrentView }) => {
 
       <div className="admin-grid-layout">
         
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '30px' }}>
-          
-          <div className="admin-banner-container">
-            <div className="admin-banner-image"></div>
-            <div className="admin-banner-overlay">
-              <div className="admin-banner-title">
-                <span>looks salon platform</span>
-                Global System Settings
-              </div>
-            </div>
+
+
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+          <div style={{ display: 'flex', gap: '15px', borderBottom: '1px solid rgba(184, 145, 57, 0.2)', paddingBottom: '10px' }}>
+            <button 
+              onClick={() => setActiveTab('website')}
+              style={{
+                background: 'none', border: 'none', padding: '10px 20px', cursor: 'pointer',
+                fontFamily: 'Montserrat, sans-serif', fontWeight: 600, fontSize: '15px',
+                color: activeTab === 'website' ? '#cfa856' : '#888',
+                borderBottom: activeTab === 'website' ? '2px solid #cfa856' : '2px solid transparent',
+                transition: 'all 0.3s ease'
+              }}
+            >
+              Website Details
+            </button>
+            <button 
+              onClick={() => setActiveTab('subscription')}
+              style={{
+                background: 'none', border: 'none', padding: '10px 20px', cursor: 'pointer',
+                fontFamily: 'Montserrat, sans-serif', fontWeight: 600, fontSize: '15px',
+                color: activeTab === 'subscription' ? '#cfa856' : '#888',
+                borderBottom: activeTab === 'subscription' ? '2px solid #cfa856' : '2px solid transparent',
+                transition: 'all 0.3s ease'
+              }}
+            >
+              Subscription Plans
+            </button>
           </div>
 
-          <div className="stats-grid">
-            <div className="stat-box">
-              <div className="stat-box-icon"><AdminIcon name="activity" size={18} /></div>
-              <div className="stat-box-title">System Status</div>
-              <div className="stat-box-value" style={{ display: 'flex', alignItems: 'center' }}>
-                <span className="pulse-dot"></span>
-                Online
+          {activeTab === 'website' && (
+            <div className="glass-card">
+              <div className="form-title-group">
+                <h2>Update Website Details</h2>
+                <p>Modify global contact options, about information, and external social media links.</p>
               </div>
-            </div>
-            <div className="stat-box">
-              <div className="stat-box-icon"><AdminIcon name="sparkles" size={18} /></div>
-              <div className="stat-box-title">Accents</div>
-              <div className="stat-box-value" style={{ color: '#cfa856' }}>Luxury Gold</div>
-            </div>
-            <div className="stat-box">
-              <div className="stat-box-icon"><AdminIcon name="globe" size={18} /></div>
-              <div className="stat-box-title">Language</div>
-              <div className="stat-box-value">Multilingual</div>
-            </div>
-          </div>
-
-          <div className="glass-card live-preview-section">
-            <div className="preview-header-row">
-              <AdminIcon name="eye" size={16} />
-              <span>Real-Time Website Footer Preview</span>
-            </div>
-            <p style={{ fontSize: '12px', color: '#888', marginBottom: '15px' }}>
-              This preview shows how your branding and contact information will appear in the main website's footer.
-            </p>
-            
-            <div className="mockup-footer">
-              <div className="mockup-brand">
-                {formData.websiteName ? formData.websiteName.toUpperCase() : 'LOOKS SALON'}
-              </div>
-              <p className="mockup-desc">
-                {formData.about ? formData.about : 'Experience the pinnacle of luxury hair and beauty services. Our expert stylists are dedicated to bringing out your best look in a relaxing, premium environment.'}
-              </p>
-              
-              <div className="mockup-contact-item">
-                <AdminIcon name="map-pin" size={14} />
-                <span>{formData.address ? formData.address : '123 Beauty Avenue, NY 10001'}</span>
-              </div>
-              <div className="mockup-contact-item">
-                <AdminIcon name="phone" size={14} />
-                <span>{formData.phoneNumber ? formData.phoneNumber : '+1 (555) 123-4567'}</span>
-              </div>
-              <div className="mockup-contact-item">
-                <AdminIcon name="mail" size={14} />
-                <span>{formData.email ? formData.email : 'hello@lookssalon.com'}</span>
-              </div>
-              
-              <div className="mockup-socials">
-                <AdminIcon name="globe" size={16} className={`mockup-social-icon ${formData.websiteLink ? 'active' : ''}`} />
-                <AdminIcon name="instagram" size={16} className={`mockup-social-icon ${formData.instaLink ? 'active' : ''}`} />
-                <AdminIcon name="facebook" size={16} className={`mockup-social-icon ${formData.facebookLink ? 'active' : ''}`} />
-              </div>
-            </div>
-          </div>
-
-        </div>
-
-        <div className="glass-card">
-          <div className="form-title-group">
-            <h2>Update Website Details</h2>
-            <p>Modify global contact options, about information, and external social media links.</p>
-          </div>
 
           {message && (
             <div className="alert-box alert-success">
@@ -1038,6 +1115,119 @@ const AdminDashboard = ({ authToken, setCurrentView }) => {
             </div>
 
           </form>
+        </div>
+        )}
+
+        {/* Subscription Plan Creation Card */}
+        {activeTab === 'subscription' && (
+        <div className="glass-card">
+          <div className="form-title-group">
+            <h2>{editingPlanId ? 'Edit Subscription Plan' : 'Create Subscription Plan'}</h2>
+            <p>{editingPlanId ? 'Modify the details of the selected subscription plan.' : 'Define new subscription packages for salon owners.'}</p>
+          </div>
+
+          {planMessage && (
+            <div className="alert-box alert-success">
+              <AdminIcon name="info" size={18} />
+              <span>{planMessage}</span>
+            </div>
+          )}
+          {planError && (
+            <div className="alert-box alert-error">
+              <AdminIcon name="info" size={18} />
+              <span>{planError}</span>
+            </div>
+          )}
+
+          <form onSubmit={handlePlanSubmit} style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
+            <div className="input-group">
+              <label>Plan Name</label>
+              <div className="input-wrapper-with-icon">
+                <input type="text" name="plan_name" value={planData.plan_name} onChange={handlePlanChange} required className="admin-form-input" placeholder="e.g. basic" />
+                <AdminIcon name="sparkles" size={16} />
+              </div>
+            </div>
+
+            <div className="input-group">
+              <label>Price (INR)</label>
+              <div className="input-wrapper-with-icon">
+                <input type="number" name="price" value={planData.price} onChange={handlePlanChange} required min="0" className="admin-form-input" placeholder="e.g. 100" />
+                <AdminIcon name="star" size={16} />
+              </div>
+            </div>
+
+            <div className="input-group">
+              <label>Duration (Days)</label>
+              <div className="input-wrapper-with-icon">
+                <input type="number" name="duration_days" value={planData.duration_days} onChange={handlePlanChange} required min="1" className="admin-form-input" placeholder="e.g. 365" />
+                <AdminIcon name="calendar" size={16} />
+              </div>
+            </div>
+
+            <div className="input-group">
+              <label>Max Salons Allowed</label>
+              <div className="input-wrapper-with-icon">
+                <input type="number" name="max_salons" value={planData.max_salons} onChange={handlePlanChange} required min="1" className="admin-form-input" placeholder="e.g. 1" />
+                <AdminIcon name="users" size={16} />
+              </div>
+            </div>
+
+            <div className="input-group full-width" style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+              <input type="checkbox" name="is_active" checked={planData.is_active} onChange={handlePlanChange} id="plan_is_active" style={{ width: '20px', height: '20px', accentColor: 'var(--gold-accent, #d4af37)' }} />
+              <label htmlFor="plan_is_active" style={{ margin: 0, cursor: 'pointer', fontWeight: 600, color: '#333' }}>Is Active</label>
+            </div>
+
+            <div className="full-width" style={{ marginTop: '20px', display: 'flex', gap: '15px' }}>
+              <button type="submit" className="save-btn" disabled={isPlanSubmitting}>
+                <AdminIcon name="save" size={18} />
+                {isPlanSubmitting ? 'Saving...' : (editingPlanId ? 'Update Plan' : 'Create Plan')}
+              </button>
+              {editingPlanId && (
+                <button type="button" className="save-btn" onClick={handleCancelEdit} style={{ background: 'transparent', color: '#666', border: '1px solid #ccc' }}>
+                  Cancel
+                </button>
+              )}
+            </div>
+          </form>
+
+          <div style={{ marginTop: '40px' }}>
+            <h3 style={{ fontFamily: 'Playfair Display, serif', color: '#8e722a', borderBottom: '1px solid rgba(184, 145, 57, 0.2)', paddingBottom: '10px', marginBottom: '20px' }}>Existing Plans</h3>
+            {plansList.length > 0 ? (
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: '15px' }}>
+                {plansList.map(plan => (
+                  <div key={plan.id} style={{ background: 'rgba(255, 255, 255, 0.5)', border: '1px solid rgba(184, 145, 57, 0.2)', borderRadius: '12px', padding: '15px', position: 'relative' }}>
+                    <h4 style={{ margin: '0 0 15px 0', textTransform: 'capitalize', color: '#2a251e', fontSize: '18px' }}>{plan.plan_name}</h4>
+                    <p style={{ margin: '5px 0', fontSize: '14px', color: '#555', display: 'flex', justifyContent: 'space-between' }}>
+                      <span style={{color: '#888'}}>Price:</span> <strong>₹{plan.price}</strong>
+                    </p>
+                    <p style={{ margin: '5px 0', fontSize: '14px', color: '#555', display: 'flex', justifyContent: 'space-between' }}>
+                      <span style={{color: '#888'}}>Duration:</span> <strong>{plan.duration_days} days</strong>
+                    </p>
+                    <p style={{ margin: '5px 0', fontSize: '14px', color: '#555', display: 'flex', justifyContent: 'space-between' }}>
+                      <span style={{color: '#888'}}>Max Salons:</span> <strong>{plan.max_salons}</strong>
+                    </p>
+                    <div style={{ position: 'absolute', top: '15px', right: '15px', padding: '4px 8px', borderRadius: '6px', fontSize: '10px', fontWeight: 'bold', textTransform: 'uppercase', background: plan.is_active ? 'rgba(16, 185, 129, 0.1)' : 'rgba(239, 68, 68, 0.1)', color: plan.is_active ? '#10b981' : '#ef4444' }}>
+                      {plan.is_active ? 'Active' : 'Inactive'}
+                    </div>
+                    <div style={{ display: 'flex', gap: '15px', marginTop: '15px', paddingTop: '15px', borderTop: '1px solid rgba(184, 145, 57, 0.15)' }}>
+                      <button onClick={() => handleEditPlan(plan)} style={{ background: 'none', border: 'none', color: '#8e722a', cursor: 'pointer', fontSize: '13px', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '5px' }}>
+                        <AdminIcon name="settings" size={14} /> Edit
+                      </button>
+                      <button onClick={() => handleDeletePlan(plan.id)} style={{ background: 'none', border: 'none', color: '#ef4444', cursor: 'pointer', fontSize: '13px', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '5px' }}>
+                        <AdminIcon name="info" size={14} /> Delete
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p style={{ color: '#888', fontStyle: 'italic', fontSize: '14px' }}>No plans have been created yet.</p>
+            )}
+          </div>
+
+        </div>
+        )}
+
         </div>
 
       </div>

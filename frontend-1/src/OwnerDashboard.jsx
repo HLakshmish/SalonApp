@@ -1147,8 +1147,8 @@ const OwnerDashboard = ({ setCurrentView, salons, setSalons, authToken, setAuthT
       <style>{`
         .owner-portal-wrapper {
           min-height: 100vh;
-          background: radial-gradient(circle at 50% 50%, #121212 0%, #050505 100%);
-          color: #ffffff;
+          background: radial-gradient(circle at 50% 50%, #f7f3ed 0%, #e8e0d5 100%);
+          color: #2a251e;
           font-family: 'Montserrat', sans-serif;
           position: relative;
           overflow-x: hidden;
@@ -1158,7 +1158,7 @@ const OwnerDashboard = ({ setCurrentView, salons, setSalons, authToken, setAuthT
           position: absolute;
           width: 500px;
           height: 500px;
-          background: radial-gradient(circle, rgba(207, 168, 86, 0.05) 0%, rgba(0, 0, 0, 0) 70%);
+          background: radial-gradient(circle, rgba(207, 168, 86, 0.2) 0%, rgba(255, 255, 255, 0) 70%);
           top: 10%;
           left: 10%;
           pointer-events: none;
@@ -1169,19 +1169,20 @@ const OwnerDashboard = ({ setCurrentView, salons, setSalons, authToken, setAuthT
           position: absolute;
           width: 550px;
           height: 550px;
-          background: radial-gradient(circle, rgba(207, 168, 86, 0.04) 0%, rgba(0, 0, 0, 0) 70%);
+          background: radial-gradient(circle, rgba(207, 168, 86, 0.15) 0%, rgba(255, 255, 255, 0) 70%);
           bottom: 10%;
           right: 10%;
           pointer-events: none;
           z-index: 0;
         }
         .owner-topbar {
-          background-color: #000;
+          background-color: rgba(255, 255, 255, 0.4);
+          backdrop-filter: blur(20px);
           padding: 20px 40px;
           display: flex;
           justify-content: space-between;
           align-items: center;
-          border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+          border-bottom: 1px solid rgba(184, 145, 57, 0.18);
           position: relative;
           z-index: 2;
         }
@@ -1244,7 +1245,7 @@ const OwnerDashboard = ({ setCurrentView, salons, setSalons, authToken, setAuthT
         .dashboard-title-area h1 {
           font-family: 'Playfair Display', serif;
           font-size: 38px;
-          color: #fff;
+          color: #1a1612;
           font-weight: 700;
           margin-bottom: 5px;
         }
@@ -1276,14 +1277,14 @@ const OwnerDashboard = ({ setCurrentView, salons, setSalons, authToken, setAuthT
           box-shadow: 0 8px 20px rgba(207, 168, 86, 0.35);
         }
         .salon-row-card {
-          background: rgba(18, 18, 18, 0.5);
-          backdrop-filter: blur(20px);
-          -webkit-backdrop-filter: blur(20px);
-          border: 1px solid rgba(207, 168, 86, 0.12);
+          background: rgba(255, 255, 255, 0.7);
+          backdrop-filter: blur(25px);
+          -webkit-backdrop-filter: blur(25px);
+          border: 1px solid rgba(184, 145, 57, 0.22);
           border-radius: 16px;
           display: flex;
           overflow: hidden;
-          box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+          box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
           transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
           margin-bottom: 30px;
         }
@@ -1362,7 +1363,7 @@ const OwnerDashboard = ({ setCurrentView, salons, setSalons, authToken, setAuthT
           align-items: flex-start;
           gap: 10px;
           font-size: 13px;
-          color: #ccc;
+          color: #555;
           margin-bottom: 8px;
           line-height: 1.4;
         }
@@ -1387,8 +1388,8 @@ const OwnerDashboard = ({ setCurrentView, salons, setSalons, authToken, setAuthT
         }
         .owner-outline-btn {
           background: transparent;
-          border: 1px solid rgba(255, 255, 255, 0.15);
-          color: #fff;
+          border: 1px solid rgba(184, 145, 57, 0.4);
+          color: #8e722a;
           padding: 10px 20px;
           border-radius: 6px;
           font-size: 12px;
@@ -1428,12 +1429,14 @@ const OwnerDashboard = ({ setCurrentView, salons, setSalons, authToken, setAuthT
           box-shadow: 0 0 10px rgba(239, 68, 68, 0.15);
         }
         .config-panel-container {
-          background: rgba(10, 10, 10, 0.8);
-          border: 1px solid rgba(207, 168, 86, 0.15);
+          background: rgba(255, 255, 255, 0.7);
+          backdrop-filter: blur(25px);
+          -webkit-backdrop-filter: blur(25px);
+          border: 1px solid rgba(184, 145, 57, 0.22);
           border-radius: 16px;
           overflow: hidden;
           margin-top: 25px;
-          box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+          box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
           animation: slideUp 0.4s ease;
         }
         @keyframes slideUp {
@@ -1442,8 +1445,8 @@ const OwnerDashboard = ({ setCurrentView, salons, setSalons, authToken, setAuthT
         }
         .config-tabs-bar {
           display: flex;
-          background: rgba(255, 255, 255, 0.01);
-          border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+          background: rgba(255, 255, 255, 0.4);
+          border-bottom: 1px solid rgba(184, 145, 57, 0.18);
           flex-wrap: wrap;
         }
         .config-tab-item {
@@ -1461,13 +1464,13 @@ const OwnerDashboard = ({ setCurrentView, salons, setSalons, authToken, setAuthT
           gap: 8px;
         }
         .config-tab-item:hover {
-          color: #fff;
-          background: rgba(255, 255, 255, 0.02);
+          color: #8e722a;
+          background: rgba(184, 145, 57, 0.05);
         }
         .config-tab-item.active {
           color: #cfa856;
           border-bottom-color: #cfa856;
-          background: rgba(207, 168, 86, 0.04);
+          background: rgba(184, 145, 57, 0.1);
         }
         .config-tab-content {
           padding: 30px;
@@ -1477,7 +1480,7 @@ const OwnerDashboard = ({ setCurrentView, salons, setSalons, authToken, setAuthT
           justify-content: space-between;
           align-items: center;
           margin-bottom: 25px;
-          border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+          border-bottom: 1px solid rgba(184, 145, 57, 0.18);
           padding-bottom: 15px;
         }
         .tab-title-row h3 {
@@ -1491,29 +1494,29 @@ const OwnerDashboard = ({ setCurrentView, salons, setSalons, authToken, setAuthT
           grid-template-columns: 1fr 1fr;
           gap: 15px;
           margin-bottom: 25px;
-          background: rgba(255, 255, 255, 0.01);
+          background: rgba(255, 255, 255, 0.4);
           padding: 20px;
           border-radius: 12px;
-          border: 1px solid rgba(255, 255, 255, 0.03);
+          border: 1px solid rgba(184, 145, 57, 0.18);
         }
         .form-row-flex {
           display: flex;
           gap: 15px;
           margin-bottom: 25px;
-          background: rgba(255, 255, 255, 0.01);
+          background: rgba(255, 255, 255, 0.4);
           padding: 20px;
           border-radius: 12px;
-          border: 1px solid rgba(255, 255, 255, 0.03);
+          border: 1px solid rgba(184, 145, 57, 0.18);
           flex-wrap: wrap;
         }
         .owner-form-input {
           flex: 1;
           min-width: 200px;
           padding: 12px 16px;
-          background: rgba(255, 255, 255, 0.02);
-          border: 1px solid rgba(255, 255, 255, 0.08);
+          background: rgba(255, 255, 255, 0.5);
+          border: 1px solid rgba(184, 145, 57, 0.25);
           border-radius: 8px;
-          color: #fff;
+          color: #1a1612;
           font-size: 14px;
           transition: all 0.3s;
         }
@@ -1521,14 +1524,14 @@ const OwnerDashboard = ({ setCurrentView, salons, setSalons, authToken, setAuthT
           outline: none;
           border-color: #cfa856;
           box-shadow: 0 0 0 3px rgba(207, 168, 86, 0.15);
-          background: rgba(255, 255, 255, 0.04);
+          background: rgba(255, 255, 255, 0.8);
         }
         .owner-form-select {
           padding: 12px 16px;
-          background: #111;
-          border: 1px solid rgba(255, 255, 255, 0.08);
+          background: rgba(255, 255, 255, 0.5);
+          border: 1px solid rgba(184, 145, 57, 0.25);
           border-radius: 8px;
-          color: #fff;
+          color: #1a1612;
           font-size: 14px;
           cursor: pointer;
           min-width: 150px;
@@ -1564,8 +1567,8 @@ const OwnerDashboard = ({ setCurrentView, salons, setSalons, authToken, setAuthT
           gap: 12px;
         }
         .item-list-row {
-          background: rgba(255, 255, 255, 0.02);
-          border: 1px solid rgba(255, 255, 255, 0.05);
+          background: rgba(255, 255, 255, 0.4);
+          border: 1px solid rgba(184, 145, 57, 0.18);
           border-radius: 12px;
           padding: 16px 20px;
           display: flex;
@@ -1574,18 +1577,18 @@ const OwnerDashboard = ({ setCurrentView, salons, setSalons, authToken, setAuthT
           transition: all 0.3s;
         }
         .item-list-row:hover {
-          background: rgba(255, 255, 255, 0.04);
-          border-color: rgba(207, 168, 86, 0.2);
+          background: rgba(255, 255, 255, 0.8);
+          border-color: rgba(184, 145, 57, 0.4);
         }
         .item-row-info h4 {
           font-size: 15px;
           font-weight: 600;
-          color: #fff;
+          color: #1a1612;
           margin-bottom: 4px;
         }
         .item-row-info p {
           font-size: 12px;
-          color: #888;
+          color: #555;
         }
         .item-action-group {
           display: flex;
@@ -1599,8 +1602,8 @@ const OwnerDashboard = ({ setCurrentView, salons, setSalons, authToken, setAuthT
           letter-spacing: 0.5px;
           padding: 4px 8px;
           border-radius: 4px;
-          background: rgba(255, 255, 255, 0.05);
-          color: #888;
+          background: rgba(184, 145, 57, 0.1);
+          color: #8e722a;
         }
         .status-badge-custom.active {
           background: rgba(16, 185, 129, 0.08);
@@ -1608,8 +1611,8 @@ const OwnerDashboard = ({ setCurrentView, salons, setSalons, authToken, setAuthT
           border: 1px solid rgba(16, 185, 129, 0.15);
         }
         .appt-card {
-          background: rgba(255, 255, 255, 0.01);
-          border: 1px solid rgba(255, 255, 255, 0.05);
+          background: rgba(255, 255, 255, 0.4);
+          border: 1px solid rgba(184, 145, 57, 0.18);
           border-radius: 12px;
           padding: 20px;
           margin-bottom: 15px;
@@ -1619,14 +1622,14 @@ const OwnerDashboard = ({ setCurrentView, salons, setSalons, authToken, setAuthT
           transition: all 0.3s;
         }
         .appt-card:hover {
-          background: rgba(255, 255, 255, 0.02);
-          border-color: rgba(207, 168, 86, 0.15);
+          background: rgba(255, 255, 255, 0.8);
+          border-color: rgba(184, 145, 57, 0.4);
         }
         .appt-header-row {
           display: flex;
           justify-content: space-between;
           align-items: center;
-          border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+          border-bottom: 1px solid rgba(184, 145, 57, 0.18);
           padding-bottom: 10px;
         }
         .appt-time-info {
@@ -1649,7 +1652,7 @@ const OwnerDashboard = ({ setCurrentView, salons, setSalons, authToken, setAuthT
           }
         }
         .appt-col-left {
-          border-right: 1px solid rgba(255, 255, 255, 0.05);
+          border-right: 1px solid rgba(184, 145, 57, 0.18);
           padding-right: 15px;
         }
         @media (max-width: 600px) {
@@ -1665,20 +1668,20 @@ const OwnerDashboard = ({ setCurrentView, salons, setSalons, authToken, setAuthT
         }
         .appt-detail-text {
           font-size: 13px;
-          color: #aaa;
+          color: #555;
           margin-bottom: 6px;
           line-height: 1.4;
         }
         .appt-detail-text strong {
-          color: #fff;
+          color: #1a1612;
         }
         .register-form-card {
-          background: rgba(18, 18, 18, 0.7);
+          background: rgba(255, 255, 255, 0.7);
           backdrop-filter: blur(25px);
-          border: 1px solid rgba(207, 168, 86, 0.15);
+          border: 1px solid rgba(184, 145, 57, 0.22);
           padding: 40px;
           border-radius: 20px;
-          box-shadow: 0 20px 45px rgba(0, 0, 0, 0.5);
+          box-shadow: 0 20px 45px rgba(0, 0, 0, 0.05);
           max-width: 850px;
           margin: 0 auto;
           animation: slideUp 0.4s ease;
@@ -1710,8 +1713,8 @@ const OwnerDashboard = ({ setCurrentView, salons, setSalons, authToken, setAuthT
           gap: 15px;
           align-items: center;
           padding: 8px 12px;
-          background: rgba(255, 255, 255, 0.01);
-          border: 1px solid rgba(255, 255, 255, 0.03);
+          background: rgba(255, 255, 255, 0.4);
+          border: 1px solid rgba(184, 145, 57, 0.18);
           border-radius: 8px;
           margin-bottom: 8px;
         }
@@ -1726,7 +1729,7 @@ const OwnerDashboard = ({ setCurrentView, salons, setSalons, authToken, setAuthT
           display: flex;
           align-items: center;
           gap: 8px;
-          color: #aaa;
+          color: #555;
           font-size: 13px;
           cursor: pointer;
         }
@@ -1754,8 +1757,8 @@ const OwnerDashboard = ({ setCurrentView, salons, setSalons, authToken, setAuthT
           margin-top: 40px;
           font-size: 16px;
           padding: 40px;
-          background: rgba(255, 255, 255, 0.01);
-          border: 1px dashed rgba(255, 255, 255, 0.08);
+          background: rgba(255, 255, 255, 0.4);
+          border: 1px dashed rgba(184, 145, 57, 0.3);
           border-radius: 12px;
         }
       `}</style>
@@ -1796,7 +1799,7 @@ const OwnerDashboard = ({ setCurrentView, salons, setSalons, authToken, setAuthT
 
         {isCreatingSalon && salons.length < maxSalons ? (
           <div className="register-form-card">
-            <div style={{ marginBottom: '30px', borderBottom: '1px solid rgba(255,255,255,0.08)', paddingBottom: '15px' }}>
+            <div style={{ marginBottom: '30px', borderBottom: '1px solid rgba(184, 145, 57, 0.18)', paddingBottom: '15px' }}>
               <h2 style={{ fontFamily: 'Playfair Display, serif', fontSize: '26px', color: '#cfa856', margin: 0 }}>Register New Salon</h2>
               <p style={{ fontSize: '13px', color: '#888', margin: '5px 0 0 0' }}>Provide the details below to publish your salon listing.</p>
             </div>
@@ -1843,10 +1846,10 @@ const OwnerDashboard = ({ setCurrentView, salons, setSalons, authToken, setAuthT
 
                 <div className="form-group form-full-width">
                   <label className="form-label-txt" style={{ marginBottom: '12px' }}>Operating Hours</label>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', background: 'rgba(255,255,255,0.02)', padding: '15px', borderRadius: '12px', border: '1px solid rgba(255, 255, 255, 0.05)' }}>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', background: 'rgba(255, 255, 255, 0.4)', padding: '15px', borderRadius: '12px', border: '1px solid rgba(184, 145, 57, 0.18)' }}>
                     {Object.keys(operatingHours).map(day => (
                       <div key={day} className="hours-scheduler-item hours-row-item">
-                        <span style={{ textTransform: 'capitalize', color: operatingHours[day].closed ? '#666' : '#fff', fontWeight: '700', fontSize: '13px' }}>{day}</span>
+                        <span style={{ textTransform: 'capitalize', color: operatingHours[day].closed ? '#888' : '#1a1612', fontWeight: '700', fontSize: '13px' }}>{day}</span>
                         <select className="owner-form-select" disabled={operatingHours[day].closed} value={operatingHours[day].open} onChange={(e) => handleOperatingHoursChange(day, 'open', e.target.value)} style={{ opacity: operatingHours[day].closed ? 0.3 : 1 }}>
                           {timeOptions.map(opt => <option key={`open-${opt.value}`} value={opt.value}>{opt.label}</option>)}
                         </select>
@@ -1895,7 +1898,7 @@ const OwnerDashboard = ({ setCurrentView, salons, setSalons, authToken, setAuthT
           </div>
         ) : isEditingSalon && salons.length > 0 ? (
           <div className="register-form-card">
-            <div style={{ marginBottom: '30px', borderBottom: '1px solid rgba(255,255,255,0.08)', paddingBottom: '15px' }}>
+            <div style={{ marginBottom: '30px', borderBottom: '1px solid rgba(184, 145, 57, 0.18)', paddingBottom: '15px' }}>
               <h2 style={{ fontFamily: 'Playfair Display, serif', fontSize: '26px', color: '#cfa856', margin: 0 }}>Edit Salon Details</h2>
               <p style={{ fontSize: '13px', color: '#888', margin: '5px 0 0 0' }}>Modify the details of your registered salon.</p>
             </div>
@@ -1942,10 +1945,10 @@ const OwnerDashboard = ({ setCurrentView, salons, setSalons, authToken, setAuthT
 
                 <div className="form-group form-full-width">
                   <label className="form-label-txt" style={{ marginBottom: '12px' }}>Operating Hours</label>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', background: 'rgba(255,255,255,0.02)', padding: '15px', borderRadius: '12px', border: '1px solid rgba(255, 255, 255, 0.05)' }}>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', background: 'rgba(255, 255, 255, 0.4)', padding: '15px', borderRadius: '12px', border: '1px solid rgba(184, 145, 57, 0.18)' }}>
                     {Object.keys(operatingHours).map(day => (
                       <div key={day} className="hours-row-item">
-                        <span style={{ textTransform: 'capitalize', color: operatingHours[day].closed ? '#666' : '#fff', fontWeight: '700', fontSize: '13px' }}>{day}</span>
+                        <span style={{ textTransform: 'capitalize', color: operatingHours[day].closed ? '#888' : '#1a1612', fontWeight: '700', fontSize: '13px' }}>{day}</span>
                         <select className="owner-form-select" disabled={operatingHours[day].closed} value={operatingHours[day].open} onChange={(e) => handleOperatingHoursChange(day, 'open', e.target.value)} style={{ opacity: operatingHours[day].closed ? 0.3 : 1 }}>
                           {timeOptions.map(opt => <option key={`open-${opt.value}`} value={opt.value}>{opt.label}</option>)}
                         </select>
@@ -2000,7 +2003,7 @@ const OwnerDashboard = ({ setCurrentView, salons, setSalons, authToken, setAuthT
 
               return (
                 <div key={salon.id}>
-                  <div className="salon-row-card" style={{ border: selectedSalonId === salon.id ? '1px solid var(--gold-accent, #cfa856)' : '1px solid rgba(255, 255, 255, 0.08)' }}>
+                  <div className="salon-row-card" style={{ border: selectedSalonId === salon.id ? '1px solid var(--gold-accent, #cfa856)' : '1px solid rgba(184, 145, 57, 0.18)' }}>
                     <div className="salon-cover-visual" style={{ backgroundImage: `url(${bgImg})` }}>
                       <div className="salon-logo-badge" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                         {salon.logoUrl ? (
@@ -2367,7 +2370,7 @@ const OwnerDashboard = ({ setCurrentView, salons, setSalons, authToken, setAuthT
                                       <div className="appt-col-right">
                                         <div className="appt-detail-text"><strong>Services Desired:</strong> {cb.services}</div>
                                         <div className="appt-detail-text"><strong>Purpose of Call:</strong> {cb.purpose}</div>
-                                        {cb.message && <div className="appt-detail-text" style={{ fontStyle: 'italic', background: 'rgba(255,255,255,0.02)', padding: '8px 12px', borderRadius: '6px', border: '1px solid rgba(255,255,255,0.03)' }}><strong>Notes:</strong> {cb.message}</div>}
+                                        {cb.message && <div className="appt-detail-text" style={{ fontStyle: 'italic', background: 'rgba(255, 255, 255, 0.4)', padding: '8px 12px', borderRadius: '6px', border: '1px solid rgba(184, 145, 57, 0.18)' }}><strong>Notes:</strong> {cb.message}</div>}
                                       </div>
                                     </div>
                                   </div>

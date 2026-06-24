@@ -20,6 +20,97 @@ async function subscriptionRoutes(fastify, options) {
     }
   });
 
+  // Create a new subscription plan
+  fastify.post('/api/subscription/plan', {
+    schema: {
+      body: {
+        type: 'object',
+        required: ['plan_name', 'price', 'duration_days', 'max_salons'],
+        properties: {
+          plan_name: { type: 'string' },
+          price: { type: 'number' },
+          duration_days: { type: 'number' },
+          max_salons: { type: 'number' },
+          is_active: { type: 'boolean' }
+        }
+      }
+    }
+  }, async (request, reply) => {
+    try {
+      const { plan_name, price, duration_days, max_salons, is_active } = request.body;
+      const plan = await prisma.subscriptionPlan.create({
+        data: {
+          plan_name,
+          price,
+          duration_days,
+          max_salons,
+          is_active: is_active !== undefined ? is_active : true
+        }
+      });
+      reply.status(201).send(plan);
+    } catch (error) {
+      fastify.log.error(error);
+      reply.status(500).send({ error: 'Internal Server Error' });
+    }
+  });
+
+  // Update a subscription plan
+  fastify.put('/api/subscription/plan/:id', {
+    schema: {
+      params: {
+        type: 'object',
+        required: ['id'],
+        properties: { id: { type: 'number' } }
+      },
+      body: {
+        type: 'object',
+        properties: {
+          plan_name: { type: 'string' },
+          price: { type: 'number' },
+          duration_days: { type: 'number' },
+          max_salons: { type: 'number' },
+          is_active: { type: 'boolean' }
+        }
+      }
+    }
+  }, async (request, reply) => {
+    try {
+      const { id } = request.params;
+      const data = request.body;
+      const plan = await prisma.subscriptionPlan.update({
+        where: { id: Number(id) },
+        data
+      });
+      reply.send(plan);
+    } catch (error) {
+      fastify.log.error(error);
+      reply.status(500).send({ error: 'Internal Server Error' });
+    }
+  });
+
+  // Delete a subscription plan
+  fastify.delete('/api/subscription/plan/:id', {
+    schema: {
+      params: {
+        type: 'object',
+        required: ['id'],
+        properties: { id: { type: 'number' } }
+      }
+    }
+  }, async (request, reply) => {
+    try {
+      const { id } = request.params;
+      await prisma.subscriptionPlan.delete({
+        where: { id: Number(id) }
+      });
+      reply.send({ message: 'Subscription plan deleted successfully' });
+    } catch (error) {
+      fastify.log.error(error);
+      reply.status(500).send({ error: 'Internal Server Error' });
+    }
+  });
+
+
   // Create an order
   fastify.post('/api/subscription/create-order', {
     schema: {

@@ -52,7 +52,7 @@ const SalonDetails = ({ salon, setCurrentView }) => {
     setModalTime(time);
     setSeatDetailedAvailability(null);
     try {
-      const res = await fetch(`http://localhost:3000/api/seats/${seatId}/availability?date=${date}`);
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/seats/${seatId}/availability?date=${date}`);
       if (res.ok) {
         const data = await res.json();
         setSeatDetailedAvailability(data);
@@ -114,7 +114,7 @@ const SalonDetails = ({ salon, setCurrentView }) => {
     const fetchAvailability = async () => {
       if (!date || !salon?.id) return;
       try {
-        const res = await fetch(`http://localhost:3000/api/salons/${salon.id}/seats-availability?date=${date}`);
+        const res = await fetch(`${import.meta.env.VITE_API_URL}/api/salons/${salon.id}/seats-availability?date=${date}`);
         if (res.ok) {
           const data = await res.json();
           setSeatAvailability(data.seats || []);
@@ -131,8 +131,8 @@ const SalonDetails = ({ salon, setCurrentView }) => {
     const fetchSalonData = async () => {
       try {
         const [servicesRes, seatsRes] = await Promise.all([
-          fetch(`http://localhost:3000/api/salons/${salon.id}/services`),
-          fetch(`http://localhost:3000/api/salons/${salon.id}/seats`)
+          fetch(`${import.meta.env.VITE_API_URL}/api/salons/${salon.id}/services`),
+          fetch(`${import.meta.env.VITE_API_URL}/api/salons/${salon.id}/seats`)
         ]);
         if (servicesRes.ok) {
           const servicesData = await servicesRes.json();
@@ -240,7 +240,7 @@ const SalonDetails = ({ salon, setCurrentView }) => {
     };
 
     try {
-      const response = await fetch('http://localhost:3000/api/appointments', {
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/appointments`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
